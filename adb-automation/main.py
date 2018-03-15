@@ -60,10 +60,6 @@ def adbConnectionStatus(adbpath):
     r = subprocess.check_output(r"{}adb devices".format(adbpath))
     return r
 
-def checkAdbConnectionStatus(curStatus):
-    status = curStatus != responseToNoDevice
-    return status
-
 if __name__ == '__main__':
     extension = ".apk"
     msg1 = ("Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a")
@@ -87,12 +83,8 @@ if __name__ == '__main__':
             sys.exit()
 
     print("Checking devices...")
-    canProceed = False
 
-    while canProceed == False:
-        devicesOutput = adbConnectionStatus(getPathOfAdb())
-    for i in devicesOutput.rsplit():
-        print(i)
+
 
     print("##########################################################\n\nWhat should we do now?\n")
 
