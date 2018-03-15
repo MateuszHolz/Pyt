@@ -86,21 +86,21 @@ if __name__ == '__main__':
 
 
 
-    print("##########################################################\n\nWhat should we do now?\n")
-
-    Input = input("{}\n{}\n".format(msg1, msg2))
-    correctInput = False
-
-    while correctInput == False:
-        if Input == 'a' or Input == 'A':
-            correctInput = True
-            uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb())
-            installBuilds("Installing", getPathOfBuilds(), extension, getPathOfAdb())
-        elif Input == 'b' or Input == 'B':
-            correctInput = True
-            installBuilds("Overwriting", getPathOfBuilds(), extension, getPathOfAdb())
-        else:
-            Input = input("Didn't recognize your input. Try again.\n")
-    print("\nPress any key to close program.")
-    msvcrt.getch()
-    sys.exit()
+#    print("##########################################################\n\nWhat should we do now?\n")
+#
+#    Input = input("{}\n{}\n".format(msg1, msg2))
+#    correctInput = False
+#
+#    while correctInput == False:
+#        if Input == 'a' or Input == 'A':
+#            correctInput = True
+#            uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb())
+#            installBuilds("Installing", getPathOfBuilds(), extension, getPathOfAdb())
+#        elif Input == 'b' or Input == 'B':
+#            correctInput = True
+#            installBuilds("Overwriting", getPathOfBuilds(), extension, getPathOfAdb())
+#        else:
+#            Input = input("Didn't recognize your input. Try again.\n")
+#    print("\nPress any key to close program.")
+#    msvcrt.getch()
+#    sys.exit()
