@@ -20,20 +20,19 @@ def runQuerry(connection, amountOfQuerries, shouldAddIndex, listIDS):
     localBody = copy.deepcopy(globalBody)
     createdEntries = 0
     for i in range(int(amountOfQuerries)):
-        if shouldAddIndex:
+        if shouldAddIndex == 'true':
             localBody['name'] = globalBody['name'] + str(i)
             connection.request("POST", '/ht/config/queries', body=json.dumps(localBody), headers=header)
             response = connection.getresponse()
             localResponse = response.read()
             createdEntries = createdEntries + 1
-            print("Status code: {}, message: {}".format(response.status, response.reason))
+            print("Status code: {}, message: {}, name: {}".format(response.status, response.reason, localBody['name']))
         else:
             connection.request("POST", '/ht/config/queries', body=json.dumps(globalBody), headers=header)
             response = conn.getresponse()
-            response.read()
             localResponse = response.read()
             createdEntries = createdEntries + 1
-            print("Status code: {}, message: {}".format(response.status, response.reason))
+            print("Status code: {}, message: {}, name: {}".format(response.status, response.reason, globalBody['name']))
     print("Successfully created {} entires.".format(createdEntries))
 def getConfig(idx): # 0=liczbaQuerry, 1=numerowanieID
     localFile = open("config.json", 'r')

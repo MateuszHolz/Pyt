@@ -1,2 +1,5 @@
 
 website-with-flask/site/my_site/
+request-to-http/bearer.txt
+request-to-http/body.json
+request-to-http/config.json
