@@ -1,0 +1,34 @@
+{
+  "Devices":[
+    {
+      "inv": "None",
+      "name": "HTC Explorer",
+      "id": "HT1AMVN05281"
+    },
+    {
+      "inv": "7849",
+      "name": "HTC Desire 626G dual sim",
+      "id": "CC5CJYR00285"
+    },
+    {
+      "inv": "7607",
+      "name": "HTC One",
+      "id": "SH43XW901156"
+    },
+    {
+      "inv": "",
+      "name": "",
+      "id": ""
+    },
+    {
+      "inv": "",
+      "name": "",
+      "id": ""
+    },
+    {
+      "inv": "",
+      "name": "",
+      "id": ""
+    },
+  ]
+}

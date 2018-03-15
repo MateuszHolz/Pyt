@@ -1,0 +1,10 @@
+Byl problem, liczba byla prawdopodobnie floatem. Liczba parsowana (odcinajac czesc floatowa) to 10.5. ### 0b1010, 0o12, 0xa odpowiednio system 2, 8, 16
+Byl problem, liczba byla prawdopodobnie floatem. Liczba parsowana (odcinajac czesc floatowa) to 10.2. ### 0b1010, 0o12, 0xa odpowiednio system 2, 8, 16
+Liczba parsowana to 32323. 0b111111001000011, 0o77103, 0x7e43 odpowiednio system 2, 8, 16
+Liczba parsowana to 32313123. 0b1111011010000111100100011, 0o173207443, 0x1ed0f23 odpowiednio system 2, 8, 16
+Liczba parsowana to 20. 0b10100, 0o24, 0x14 odpowiednio system 2, 8, 16
+Liczba parsowana to 20. 0b10100, 0o24, 0x14 odpowiednio system 2, 8, 16
+Byl problem, liczba byla prawdopodobnie floatem. Liczba parsowana (odcinajac czesc floatowa) to 30.5. ### 0b11110, 0o36, 0x1e odpowiednio system 2, 8, 16
+Liczba parsowana to 30. 0b11110, 0o36, 0x1e odpowiednio system 2, 8, 16
+Liczba parsowana to 40. 0b101000, 0o50, 0x28 odpowiednio system 2, 8, 16
+Byl problem, liczba byla prawdopodobnie floatem. Liczba parsowana (odcinajac czesc floatowa) to 40.2. ### 0b101000, 0o50, 0x28 odpowiednio system 2, 8, 16

@@ -1,0 +1,17 @@
+missing module named resource - imported by posix, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named posix - imported by os, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named _posixsubprocess - imported by subprocess, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named org - imported by pickle, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named readline - imported by cmd, code, pdb, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+excluded module named _frozen_importlib - imported by importlib, importlib.abc, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named _frozen_importlib_external - imported by importlib._bootstrap, importlib, importlib.abc, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named _winreg - imported by platform, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named _scproxy - imported by urllib.request
+missing module named java - imported by platform, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named 'java.lang' - imported by platform, c:\Users\mho\Desktop\Pyt\adb-automation\main.py, xml.sax._exceptions
+missing module named vms_lib - imported by platform, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named termios - imported by tty, c:\Users\mho\Desktop\Pyt\adb-automation\main.py, getpass
+missing module named grp - imported by shutil, tarfile, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
+missing module named 'org.python' - imported by copy, c:\Users\mho\Desktop\Pyt\adb-automation\main.py, xml.sax
+missing module named pwd - imported by posixpath, shutil, tarfile, http.server, webbrowser, c:\Users\mho\Desktop\Pyt\adb-automation\main.py, netrc, getpass
+missing module named _dummy_threading - imported by dummy_threading, c:\Users\mho\Desktop\Pyt\adb-automation\main.py
