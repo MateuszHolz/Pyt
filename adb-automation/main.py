@@ -3,6 +3,7 @@ import subprocess
 import sys
 import msvcrt
 import json
+import threading
 
 def getPathOfAdb():
     f = open(r"config\path.txt", 'r')
@@ -30,33 +31,38 @@ def getDeviceInfo(id, data):
         if id in data['Devices'][i]['id']:
             return data['Devices'][i]['name']
 
-def installBuilds(operation, buildsDir, ext, adbpath, listOfDevices):
+def overwrite(device):
+    installBuilds("Overwriting", getPathOfBuilds(), extension, getPathOfAdb(), device)
+
+def uninstallAndInstall(device):
+    uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb(), device)
+    installBuilds("Installing", getPathOfBuilds(), extension, getPathOfAdb(), device)
+
+def installBuilds(operation, buildsDir, ext, adbpath, device):
     print("{} builds...".format(operation))
     builds = os.listdir(buildsDir)
-    for j in listOfDevices:
-        for i in builds:
-            if ext in i:
-                print("Trying to install {} on device {}".format(i, getDeviceInfo(j, devicesJson)))
-                try:
-                    subprocess.Popen(r"{}adb -s {} install -r {}\{}".format(adbpath, j, buildsDir, i))
-                    print("Installed package {} on device {}".format(i, getDeviceInfo(j, devicesJson)))
-                except subprocess.CalledProcessError:
-                    continue
-            else:
-                print("No builds found.")
-                break
-    print("All operations are done.")
-
-def uninstallExistingBuilds(listOfPkgName, adbpath, listOfDevices):
-    print("Uninstalling builds...")
-    for j in listOfDevices:
-        for i in listOfPkgName:
+    for i in builds:
+        if ext in i:
+            print("Trying to install {} on device {}".format(i, getDeviceInfo(device, devicesJson)))
             try:
-                print("Uninstalling {} from device {}".format(i, getDeviceInfo(j, devicesJson)))
-                print(r"{}adb -s {} uninstall {}".format(adbpath, j, i))
-                subprocess.Popen(r"{}adb -s {} uninstall {}".format(adbpath, j, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
+                subprocess.check_output(r"{}adb -s {} install -r {}\{}".format(adbpath, device, buildsDir, i))
+                print("Installed package {} on device {}".format(i, getDeviceInfo(device, devicesJson)))
             except subprocess.CalledProcessError:
                 continue
+        else:
+            print("No builds found.")
+            break
+    print("All operations are done.")
+
+def uninstallExistingBuilds(listOfPkgName, adbpath, device):
+    print("Uninstalling builds...")
+    for i in listOfPkgName:
+        try:
+            print("Uninstalling {} from device {}".format(i, getDeviceInfo(device, devicesJson)))
+            print(r"{}adb -s {} uninstall {}".format(adbpath, device, i))
+            subprocess.check_output(r"{}adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
+        except subprocess.CalledProcessError:
+            continue
     print("Uninstalled all existing apps.")
 
 if __name__ == '__main__':
@@ -108,11 +114,17 @@ if __name__ == '__main__':
     while correctInput == False:
         if Input == 'a' or Input == 'A':
             correctInput = True
-            uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb(), idsList)
-            installBuilds("Installing", getPathOfBuilds(), extension, getPathOfAdb(), idsList)
+            for i in idsList:
+                print(i)
+                counter = 1
+                threading.Thread(target=uninstallAndInstall, args=(i,)).start()
+                print("\n\n\n\n\nSTARTED NEW THREAD \n\n\n\n\n\n")
+                counter = counter + 1
         elif Input == 'b' or Input == 'B':
             correctInput = True
-            installBuilds("Overwriting", getPathOfBuilds(), extension, getPathOfAdb(), idsList)
+            for i in idsList:
+                print(i)
+                threading.Thread(target=overwrite, args=(i,)).start()
         else:
             Input = input("Didn't recognize your input. Try again.\n")
     print("\nPress any key to close program.")
