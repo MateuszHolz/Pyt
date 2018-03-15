@@ -101,7 +101,7 @@ if __name__ == '__main__':
             installBuilds("Installing", getPathOfBuilds(), extension, getPathOfAdb(), idsList)
         elif Input == 'b' or Input == 'B':
             correctInput = True
-            installBuilds("Overwriting", getPathOfBuilds(), extension, getPathOfAdb())
+            installBuilds("Overwriting", getPathOfBuilds(), extension, getPathOfAdb(), idsList)
         else:
             Input = input("Didn't recognize your input. Try again.\n")
     print("\nPress any key to close program.")
