@@ -70,6 +70,7 @@ if __name__ == '__main__':
     msg2 = ("Overwrite existing builds with apks - type and enter b")
     devicesJson = loadJsonData(pathToJson)
     idsList = []
+    canProceed = False
     print("Checking adb path...")
 
     try:
@@ -88,14 +89,20 @@ if __name__ == '__main__':
             sys.exit()
 
     print("Checking devices...")
-    rawList = subprocess.check_output(r"{}adb devices".format(getPathOfAdb())).rsplit()
-    tempList = rawList[4:] #omitting first 4 elements as they are not neccesary.
-    for i in range(len(tempList)):
-        if i%2 == 0: #every second element in this list is device's ID
-            idsList.append(tempList[i].decode())
-    print("Found devices:")
-    for i in idsList:
-        print(getDeviceInfo(i, devicesJson))
+    while canProceed == False:
+        rawList = subprocess.check_output(r"{}adb devices".format(getPathOfAdb())).rsplit()
+        tempList = rawList[4:] #omitting first 4 elements as they are not neccesary.
+        if len(tempList) > 0:
+            canProceed = True
+            for i in range(len(tempList)):
+                if i%2 == 0: #every second element in this list is device's ID
+                    idsList.append(tempList[i].decode())
+            print("Found devices:")
+            for i in idsList:
+                print(getDeviceInfo(i, devicesJson))
+        else:
+            print("No devices found. Connect devices to PC and press any key to try again.")
+            msvcrt.getch()
 
     print("##########################################################\n\nWhat should we do now?\n")
 
