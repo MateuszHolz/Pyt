@@ -38,7 +38,7 @@ def installBuilds(operation, buildsDir, ext, adbpath, listOfDevices):
             if ext in i:
                 print("Trying to install {} on device {}".format(i, getDeviceInfo(j, devicesJson)))
                 try:
-                    subprocess.check_output(r"{}adb -s {} install -r {}\{}".format(adbpath, j, buildsDir, i))
+                    subprocess.Popen(r"{}adb -s {} install -r {}\{}".format(adbpath, j, buildsDir, i))
                     print("Installed package {} on device {}".format(i, getDeviceInfo(j, devicesJson)))
                 except subprocess.CalledProcessError:
                     continue
@@ -54,14 +54,10 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, listOfDevices):
             try:
                 print("Uninstalling {} from device {}".format(i, getDeviceInfo(j, devicesJson)))
                 print(r"{}adb -s {} uninstall {}".format(adbpath, j, i))
-                subprocess.check_output(r"{}adb -s {} uninstall {}".format(adbpath, j, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
+                subprocess.Popen(r"{}adb -s {} uninstall {}".format(adbpath, j, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
             except subprocess.CalledProcessError:
                 continue
     print("Uninstalled all existing apps.")
-
-def adbConnectionStatus(adbpath):
-    r = subprocess.check_output(r"{}adb devices".format(adbpath))
-    return r
 
 if __name__ == '__main__':
     pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
