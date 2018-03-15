@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import msvcrt
+import json
 
 def getPathOfAdb():
     f = open(r"config\path.txt", 'r')
@@ -19,6 +20,14 @@ def getPathOfBuilds():
     curDir = os.getcwd()
     buildsDir = r"{}\builds".format(curDir)
     return buildsDir
+
+def getListOfDevicesID():
+    listOfID = []
+    rawJsonData = open(r"\\192.168.64.200\byd-fileserver\MHO\devices.json", 'r').read()
+    jsonData = json.loads(rawJsonData)
+    for i in range(len(jsonData['Devices'])):
+        listOfID.append(jsonData['Devices'][i]['id'])
+    return listOfID
 
 def installBuilds(operation, buildsDir, ext, adbpath, listOfDevices=None):
     print("{} builds...".format(operation))
@@ -56,12 +65,10 @@ def checkAdbConnectionStatus(curStatus):
     return status
 
 if __name__ == '__main__':
-
     extension = ".apk"
-    responseToNoDevice = b'List of devices attached\r\n\r\n'
     msg1 = ("Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a")
     msg2 = ("Overwrite existing builds with apks - type and enter b")
-
+    listOfIds = getListOfDevicesID()
     print("Checking adb path...")
 
     try:
@@ -82,8 +89,8 @@ if __name__ == '__main__':
     print("Checking devices...")
     canProceed = False
 
-    #while canProceed == False:
-    devicesOutput = adbConnectionStatus(getPathOfAdb())
+    while canProceed == False:
+        devicesOutput = adbConnectionStatus(getPathOfAdb())
     for i in devicesOutput.rsplit():
         print(i)
 
