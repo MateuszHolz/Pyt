@@ -30,23 +30,26 @@ def getDeviceInfo(id, data):
     for i in range(len(data['Devices'])):
         if id in data['Devices'][i]['id']:
             return data['Devices'][i]['name']
+        else:
+            return "Unknown device."
 
 def overwrite(device):
-    installBuilds("Overwriting", getPathOfBuilds(), extension, getPathOfAdb(), device)
+    installBuilds("Overwriting", getPathOfBuilds(), extension, adbPath, device)
 
 def uninstallAndInstall(device):
-    uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb(), device)
-    installBuilds("Installing", getPathOfBuilds(), extension, getPathOfAdb(), device)
+    uninstallExistingBuilds(getListOfBuildsToUninstall(), adbPath, device)
+    installBuilds("Installing", getPathOfBuilds(), extension, adbPath, device)
 
 def installBuilds(operation, buildsDir, ext, adbpath, device):
     print("{} builds...".format(operation))
     builds = os.listdir(buildsDir)
+    localDevice = getDeviceInfo(device, devicesJson)
     for i in builds:
         if ext in i:
-            print("Trying to install {} on device {}".format(i, getDeviceInfo(device, devicesJson)))
+            print("Trying to install {} on device {}".format(i, localDevice))
             try:
                 subprocess.check_output(r"{}adb -s {} install -r {}\{}".format(adbpath, device, buildsDir, i))
-                print("Installed package {} on device {}".format(i, getDeviceInfo(device, devicesJson)))
+                print("Installed package {} on device {}".format(i, localDevice))
             except subprocess.CalledProcessError:
                 continue
         else:
@@ -55,15 +58,14 @@ def installBuilds(operation, buildsDir, ext, adbpath, device):
     print("All operations are done.")
 
 def uninstallExistingBuilds(listOfPkgName, adbpath, device):
-    print("Uninstalling builds...")
+    localDevice = getDeviceInfo(device, devicesJson)
+    print("Uninstalling builds from {}".format(localDevice))
     for i in listOfPkgName:
         try:
-            print("Uninstalling {} from device {}".format(i, getDeviceInfo(device, devicesJson)))
-            print(r"{}adb -s {} uninstall {}".format(adbpath, device, i))
             subprocess.check_output(r"{}adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
         except subprocess.CalledProcessError:
             continue
-    print("Uninstalled all existing apps.")
+    print("Uninstalled all existing apps from {}".format(localDevice))
 
 if __name__ == '__main__':
     pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
@@ -73,10 +75,11 @@ if __name__ == '__main__':
     devicesJson = loadJsonData(pathToJson)
     idsList = []
     canProceed = False
+    adbPath = getPathOfAdb()
     print("Checking adb path...")
 
     try:
-        subprocess.check_output(r"{}adb".format(getPathOfAdb()))
+        subprocess.check_output(r"{}adb".format(adbPath))
     except FileNotFoundError:
         print("Adb hasn't been found. Please enter proper adb path in path.txt file and re-run program.\nPress any key to continue...")
         msvcrt.getch()
@@ -92,7 +95,7 @@ if __name__ == '__main__':
 
     print("Checking devices...")
     while canProceed == False:
-        rawList = subprocess.check_output(r"{}adb devices".format(getPathOfAdb())).rsplit()
+        rawList = subprocess.check_output(r"{}adb devices".format(adbPath)).rsplit()
         tempList = rawList[4:] #omitting first 4 elements as they are not neccesary.
         if len(tempList) > 0:
             canProceed = True
@@ -100,8 +103,9 @@ if __name__ == '__main__':
                 if i%2 == 0: #every second element in this list is device's ID
                     idsList.append(tempList[i].decode())
             print("Found devices:")
-            for i in idsList:
-                print(getDeviceInfo(i, devicesJson))
+            if len(idsList) > 0:
+                for i in idsList:
+                    print(getDeviceInfo(i, devicesJson))
         else:
             print("No devices found. Connect devices to PC and press any key to try again.")
             msvcrt.getch()
