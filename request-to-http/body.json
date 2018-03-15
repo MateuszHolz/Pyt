@@ -1,34 +1,32 @@
 {
-  "Devices":[
+  "query_id": "",
+  "version_id": "",
+  "active": true,
+  "description": "a",
+  "start": "2018-03-15",
+  "end": "2018-03-18",
+  "schedule": "Daily 00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23",
+  "check_data": false,
+  "user": "mateusz.szmigiero@huuugegames.com",
+  "fbca_update_mode": false,
+  "fbca_id_type": "",
+  "fbca_app_ids": "",
+  "fbca_account": "",
+  "has_sql_changed": true,
+  "historical_version": "",
+  "modified_at": null,
+  "test_run": "False",
+  "folder_id": 1,
+  "in_trash": 0,
+  "tags": "stress test #",
+  "private": true,
+  "name": "mss",
+  "_parsedEmails": [
     {
-      "inv": "None",
-      "name": "HTC Explorer",
-      "id": "HT1AMVN05281"
-    },
-    {
-      "inv": "7849",
-      "name": "HTC Desire 626G dual sim",
-      "id": "CC5CJYR00285"
-    },
-    {
-      "inv": "7607",
-      "name": "HTC One",
-      "id": "SH43XW901156"
-    },
-    {
-      "inv": "",
-      "name": "",
-      "id": ""
-    },
-    {
-      "inv": "",
-      "name": "",
-      "id": ""
-    },
-    {
-      "inv": "",
-      "name": "",
-      "id": ""
-    },
-  ]
+      "email": "mateusz.szmigiero@huuugegames.com",
+      "results": "notification"
+    }
+  ],
+  "_emails": "{\"email\":\"mateusz.szmigiero@huuugegames.com\",\"results\":\"notification\"}",
+  "emails": "{\"email\":\"mateusz.szmigiero@huuugegames.com\",\"results\":\"notification\"}"
 }
