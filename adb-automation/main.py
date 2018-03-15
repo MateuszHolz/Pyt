@@ -25,16 +25,21 @@ def loadJsonData(file):
     jsonData = json.loads(open(file, 'r').read())
     return jsonData
 
+def getDeviceInfo(id, data):
+    for i in range(len(data['Devices'])):
+        if id in data['Devices'][i]['id']:
+            return data['Devices'][i]['name']
+
 def installBuilds(operation, buildsDir, ext, adbpath, listOfDevices):
     print("{} builds...".format(operation))
     builds = os.listdir(buildsDir)
     for j in listOfDevices:
         for i in builds:
             if ext in i:
-                print("Trying to install {} on device {}".format(i, j))
+                print("Trying to install {} on device {}".format(i, getDeviceInfo(j, devicesJson)))
                 try:
                     subprocess.check_output(r"{}adb -s {} install -r {}\{}".format(adbpath, j, buildsDir, i))
-                    print("Installed package {} on device {}".format(i, j))
+                    print("Installed package {} on device {}".format(i, getDeviceInfo(j, devicesJson)))
                 except subprocess.CalledProcessError:
                     continue
             else:
@@ -47,7 +52,7 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, listOfDevices):
     for j in listOfDevices:
         for i in listOfPkgName:
             try:
-                print("Uninstalling {} from device {}".format(i, j))
+                print("Uninstalling {} from device {}".format(i, getDeviceInfo(j, devicesJson)))
                 print(r"{}adb -s {} uninstall {}".format(adbpath, j, i))
                 subprocess.check_output(r"{}adb -s {} uninstall {}".format(adbpath, j, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
             except subprocess.CalledProcessError:
@@ -88,6 +93,9 @@ if __name__ == '__main__':
     for i in range(len(tempList)):
         if i%2 == 0: #every second element in this list is device's ID
             idsList.append(tempList[i].decode())
+    print("Found devices:")
+    for i in idsList:
+        print(getDeviceInfo(i, devicesJson))
 
     print("##########################################################\n\nWhat should we do now?\n")
 
