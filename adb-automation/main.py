@@ -144,7 +144,7 @@ if __name__ == '__main__':
         if Input == 'a' or Input == 'A':
             correctInput = True
             for i in idsList:
-                localThread = threading.Thread(target=uninstallAndInstall, args=(i,), name=i)
+                localThread = threading.Thread(target=uninstallAndInstall, args=(i,))
                 threads.append(localThread)
                 localThread.start()
         elif Input == 'b' or Input == 'B':
