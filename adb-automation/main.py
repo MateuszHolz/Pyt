@@ -17,10 +17,16 @@ def getListOfBuildsToUninstall():
     f.close()
     return fx
 
-def getPathOfBuilds():
-    curDir = os.getcwd()
-    buildsDir = r"{}\builds".format(curDir)
-    return buildsDir
+def getPathOfBuilds(option):
+    localBuildsDir = ""
+    if option == "a":
+        localBuildsDir = r"{}\builds".format(os.getcwd())
+    elif option == "b":
+        localBuildsDir = r"C:\users\{}\downloads".format(os.getenv('USERNAME'))
+    elif option == "c":
+        localBuildsDir = open(r"config\buildsdir.txt", 'r').read().rsplit
+    print("Buildsdir: {}".format(localBuildsDir))
+    return localBuildsDir
 
 def loadJsonData(file):
     jsonData = json.loads(open(file, 'r').read())
@@ -32,27 +38,34 @@ def getDeviceInfo(id, data):
             return data['Devices'][i]['name']
 
 def overwrite(device):
-    installBuilds("Overwriting", getPathOfBuilds(), extension, adbPath, device)
+    installBuilds("Overwriting", getPathOfBuilds("a"), extension, adbPath, device)
 
 def uninstallAndInstall(device):
     uninstallExistingBuilds(getListOfBuildsToUninstall(), adbPath, device)
-    installBuilds("Installing", getPathOfBuilds(), extension, adbPath, device)
+    installBuilds("Installing", getPathOfBuilds("b"), extension, adbPath, device)
+
+def getBuildsToInstall(buildsDir, ext):
+    builds = []
+    for i in os.listdir(buildsDir):
+        if ext in i:
+            builds.append("{}\{}".format(buildsDir, i))
+    print(builds)
+    return builds
 
 def installBuilds(operation, buildsDir, ext, adbpath, device):
-    builds = os.listdir(buildsDir)
     localDevice = getDeviceInfo(device, devicesJson)
-    for i in builds:
-        if ext in i:
+    builds = getBuildsToInstall(buildsDir, ext)
+    if len(builds)>0:
+        for i in builds:
             print("Trying to install {} on device {}".format(i, localDevice))
             try:
-                subprocess.check_output(r"{}adb -s {} install -r {}\{}".format(adbpath, device, buildsDir, i))
+                subprocess.check_output(r"{}adb -s {} install -r {}".format(adbpath, device, i))
                 print("Installed package {} on device {}".format(i, localDevice))
             except subprocess.CalledProcessError:
                 continue
-        else:
-            print("No builds found.")
-            break
-    print("Sucessfully installed all builds on {}".format(localDevice))
+        print("Sucessfully installed all builds on {}".format(localDevice))
+    else:
+        print("No builds found.")
 
 def uninstallExistingBuilds(listOfPkgName, adbpath, device):
     localDevice = getDeviceInfo(device, devicesJson)
@@ -73,6 +86,7 @@ if __name__ == '__main__':
     idsList = []
     canProceed = False
     adbPath = getPathOfAdb()
+    threads = []
     print("Checking adb path...")
 
     try:
@@ -116,17 +130,17 @@ if __name__ == '__main__':
         if Input == 'a' or Input == 'A':
             correctInput = True
             for i in idsList:
-                print(i)
-                counter = 1
-                threading.Thread(target=uninstallAndInstall, args=(i,)).start()
-                counter = counter + 1
+                localThread = threading.Thread(target=uninstallAndInstall, args=(i,), name=i).start()
+                threads.append(localThread)
         elif Input == 'b' or Input == 'B':
             correctInput = True
             for i in idsList:
-                print(i)
-                threading.Thread(target=overwrite, args=(i,)).start()
+                localThread = threading.Thread(target=overwrite, args=(i,)).start()
+                threads.append(localThread)
         else:
             Input = input("Didn't recognize your input. Try again.\n")
-    print("\nPress any key to close program.")
+    for i in threads:
+        i.join()
+    Print("All jobs done. Press any key to exit program.")
     msvcrt.getch()
     sys.exit()
