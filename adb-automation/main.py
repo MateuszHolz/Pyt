@@ -39,7 +39,6 @@ def uninstallAndInstall(device):
     installBuilds("Installing", getPathOfBuilds(), extension, adbPath, device)
 
 def installBuilds(operation, buildsDir, ext, adbpath, device):
-    print("{} builds...".format(operation))
     builds = os.listdir(buildsDir)
     localDevice = getDeviceInfo(device, devicesJson)
     for i in builds:
@@ -53,7 +52,7 @@ def installBuilds(operation, buildsDir, ext, adbpath, device):
         else:
             print("No builds found.")
             break
-    print("All operations are done.")
+    print("Sucessfully installed all builds on {}".format(localDevice))
 
 def uninstallExistingBuilds(listOfPkgName, adbpath, device):
     localDevice = getDeviceInfo(device, devicesJson)
@@ -84,7 +83,7 @@ if __name__ == '__main__':
         sys.exit()
     except subprocess.CalledProcessError as err:
         if len(err.output) > 5000: #very large output means that everything is fine.
-            print("adb found")
+            print("Adb found.")
             pass
         else:
             print("Something went really wrong.\nPress anything to continue...")
