@@ -49,7 +49,6 @@ def getBuildsToInstall(buildsDir, ext):
     for i in os.listdir(buildsDir):
         if ext in i:
             builds.append("{}\{}".format(buildsDir, i))
-    print(builds)
     return builds
 
 def installBuilds(operation, buildsDir, ext, adbpath, device):
