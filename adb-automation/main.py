@@ -130,13 +130,15 @@ if __name__ == '__main__':
         if Input == 'a' or Input == 'A':
             correctInput = True
             for i in idsList:
-                localThread = threading.Thread(target=uninstallAndInstall, args=(i,), name=i).start()
+                localThread = threading.Thread(target=uninstallAndInstall, args=(i,), name=i)
                 threads.append(localThread)
+                localThread.start()
         elif Input == 'b' or Input == 'B':
             correctInput = True
             for i in idsList:
-                localThread = threading.Thread(target=overwrite, args=(i,)).start()
+                localThread = threading.Thread(target=overwrite, args=(i,))
                 threads.append(localThread)
+                localThread.start()
         else:
             Input = input("Didn't recognize your input. Try again.\n")
     for i in threads:
