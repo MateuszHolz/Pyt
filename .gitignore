@@ -7,4 +7,3 @@ request-to-http/config.json
 request-to-http/config.json
 request-to-http/bearer.txt
 *.apk
-adb-automation/test_multiple_command_lines.py
