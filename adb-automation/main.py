@@ -30,8 +30,6 @@ def getDeviceInfo(id, data):
     for i in range(len(data['Devices'])):
         if id in data['Devices'][i]['id']:
             return data['Devices'][i]['name']
-        else:
-            return "Unknown device."
 
 def overwrite(device):
     installBuilds("Overwriting", getPathOfBuilds(), extension, adbPath, device)
@@ -122,7 +120,6 @@ if __name__ == '__main__':
                 print(i)
                 counter = 1
                 threading.Thread(target=uninstallAndInstall, args=(i,)).start()
-                print("\n\n\n\n\nSTARTED NEW THREAD \n\n\n\n\n\n")
                 counter = counter + 1
         elif Input == 'b' or Input == 'B':
             correctInput = True
