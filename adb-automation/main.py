@@ -24,8 +24,12 @@ def getPathOfBuilds(option):
     elif option == "b":
         localBuildsDir = r"C:\users\{}\downloads".format(os.getenv('USERNAME'))
     elif option == "c":
-        localBuildsDir = open(r"config\buildsdir.txt", 'r').read().rsplit
-    print("Buildsdir: {}".format(localBuildsDir))
+        try:
+            localBuildsDir = open(r"config\buildsdir.txt", 'r').read().rsplit
+        except FileNotFoundError:
+            print("File buildsdir.txt not found. Press any key to terminate program and try again.")
+            msvcrt.getch()
+            sys.exit()
     return localBuildsDir
 
 def loadJsonData(file):
@@ -38,11 +42,11 @@ def getDeviceInfo(id, data):
             return data['Devices'][i]['name']
 
 def overwrite(device):
-    installBuilds("Overwriting", getPathOfBuilds("a"), extension, adbPath, device)
+    installBuilds("Overwriting", getPathOfBuilds(input1), extension, adbPath, device)
 
 def uninstallAndInstall(device):
     uninstallExistingBuilds(getListOfBuildsToUninstall(), adbPath, device)
-    installBuilds("Installing", getPathOfBuilds("b"), extension, adbPath, device)
+    installBuilds("Installing", getPathOfBuilds(input1), extension, adbPath, device)
 
 def getBuildsToInstall(buildsDir, ext):
     builds = []
@@ -79,11 +83,15 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
 if __name__ == '__main__':
     pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
     extension = ".apk"
-    msg1 = ("Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a")
-    msg2 = ("Overwrite existing builds with apks - type and enter b")
+    msg1 = "Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a"
+    msg2 = "Overwrite existing builds with apks - type and enter b"
+    buildInfo1 = r"To get builds from default folder builds in applications directory - type and enter a"
+    buildInfo2 = r"To get builds from downloads folder from your PC - type and enter b (downloads directory = c:\users\current_user\downloads)"
+    buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
     devicesJson = loadJsonData(pathToJson)
     idsList = []
     canProceed = False
+    correctInput = False
     adbPath = getPathOfAdb()
     threads = []
     print("Checking adb path...")
@@ -106,7 +114,7 @@ if __name__ == '__main__':
     print("Checking devices...")
     while canProceed == False:
         rawList = subprocess.check_output(r"{}adb devices".format(adbPath)).rsplit()
-        tempList = rawList[4:] #omitting first 4 elements as they are not neccesary.
+        tempList = rawList[4:] #omitting first 4 elements as they are static & not neccesary.
         if len(tempList) > 0:
             canProceed = True
             for i in range(len(tempList)):
@@ -119,6 +127,13 @@ if __name__ == '__main__':
         else:
             print("No devices found. Connect devices to PC and press any key to try again.")
             msvcrt.getch()
+
+    while correctInput == False:
+        input1 = input("{}\n{}\n{}\n".format(buildInfo1, buildInfo2, buildInfo3))
+        if input1 == 'a' or input1 == 'b' or input1 == 'c':
+            correctInput = True
+        else:
+            print("Incorrect input, please try again.")
 
     print("##########################################################\n\nWhat should we do now?\n")
 
@@ -142,6 +157,6 @@ if __name__ == '__main__':
             Input = input("Didn't recognize your input. Try again.\n")
     for i in threads:
         i.join()
-    Print("All jobs done. Press any key to exit program.")
+    print("All jobs done. Press any key to exit program.")
     msvcrt.getch()
     sys.exit()
