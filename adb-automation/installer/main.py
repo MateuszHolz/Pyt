@@ -129,20 +129,20 @@ def askForInputAboutOptionToInstall():
     Input = input("{}\n{}\n".format(msg1, msg2))
     return Input
 
-def finalInstallationFlow(idList, userInput):
+def finalInstallationFlow(idList, inputInstallOption, inputBuildsDirOption):
     correctInput = False
     threads = []
     while correctInput == False:
-        if userInput == 'a' or userInput == 'A':
+        if inputInstallOption == 'a' or inputInstallOption == 'A':
             correctInput = True
             for i in idList:
-                localThread = threading.Thread(target=uninstallAndInstall, args=(i, userInput))
+                localThread = threading.Thread(target=uninstallAndInstall, args=(i, inputBuildsDirOption))
                 threads.append(localThread)
                 localThread.start()
-        elif userInput == 'b' or userInput == 'B':
+        elif inputInstallOption == 'b' or inputInstallOption == 'B':
             correctInput = True
             for i in idList:
-                localThread = threading.Thread(target=overwrite, args=(i, userInput))
+                localThread = threading.Thread(target=overwrite, args=(i, inputBuildsDirOption))
                 threads.append(localThread)
                 localThread.start()
         else:
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     userBuildsOptionChosen = getUserBuildsOption()
 
     ### Asking user to chose option
-    finalInstallationFlow(idsList, askForInputAboutOptionToInstall())
+    finalInstallationFlow(idsList, askForInputAboutOptionToInstall(), userBuildsOptionChosen)
 
     ### ~ Waiting for all threads to finish ~ ###
     print("All jobs done. Press any key to exit program.")
