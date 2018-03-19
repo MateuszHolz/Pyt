@@ -106,7 +106,8 @@ def checkAdbConnection(adbPath):
             msvcrt.getch()
             sys.exit()
 
-def getDevicesList(idsList, adbPath):
+def getDevicesList(adbPath):
+    idsList = []
     canProceed = False
     while canProceed == False:
         rawList = subprocess.check_output(r"{}adb devices".format(adbPath)).rsplit()
@@ -164,13 +165,12 @@ if __name__ == '__main__':
 
     ### Checking status of connected devices ###
     print("Checking devices...")
-    idsList = getDevicesList(idsList, getPathOfAdb())
+    idsList = getDevicesList(getPathOfAdb())
 
     ### Asking user for his input regarding installing builds from different directories ###
     userBuildsOptionChosen = getUserBuildsOption()
 
-    print("##########################################################\n\nWhat should we do now?\n")
-
+    ### Asking user to chose option
     finalInstallationFlow(idsList, askForInputAboutOptionToInstall())
     print("All jobs done. Press any key to exit program.")
     msvcrt.getch()
