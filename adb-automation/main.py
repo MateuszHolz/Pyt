@@ -172,6 +172,8 @@ if __name__ == '__main__':
 
     ### Asking user to chose option
     finalInstallationFlow(idsList, askForInputAboutOptionToInstall())
+
+    ### ~ Waiting for all threads to finish ~ ###
     print("All jobs done. Press any key to exit program.")
     msvcrt.getch()
     sys.exit()
