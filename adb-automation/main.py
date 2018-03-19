@@ -41,12 +41,12 @@ def getDeviceInfo(id, data):
         if id in data['Devices'][i]['id']:
             return data['Devices'][i]['name']
 
-def overwrite(device):
-    installBuilds("Overwriting", getPathOfBuilds(input1), extension, getPathOfAdb(), device)
+def overwrite(device, optionChosen):
+    installBuilds("Overwriting", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
 
-def uninstallAndInstall(device):
+def uninstallAndInstall(device, optionChosen):
     uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb(), device)
-    installBuilds("Installing", getPathOfBuilds(input1), extension, getPathOfAdb(), device)
+    installBuilds("Installing", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
 
 def getBuildsToInstall(buildsDir, ext):
     builds = []
@@ -54,6 +54,16 @@ def getBuildsToInstall(buildsDir, ext):
         if ext in i:
             builds.append("{}\{}".format(buildsDir, i))
     return builds
+
+def getUserBuildsOption():
+    correctInput = False
+    while correctInput == False:
+        input1 = input("{}\n{}\n{}\n".format(buildInfo1, buildInfo2, buildInfo3))
+        if input1 == 'a' or input1 == 'b' or input1 == 'c':
+            correctInput = True
+            return input1
+        else:
+            print("Incorrect input, please try again.")
 
 def installBuilds(operation, buildsDir, ext, adbpath, device):
     localDevice = getDeviceInfo(device, devicesJson)
@@ -114,6 +124,30 @@ def getDevicesList(idsList, adbPath):
         else:
             print("No devices found. Connect devices to PC and press any key to try again.")
             msvcrt.getch()
+def askForInputAboutOptionToInstall():
+    Input = input("{}\n{}\n".format(msg1, msg2))
+    return Input
+
+def finalInstallationFlow(idList, userInput):
+    correctInput = False
+    threads = []
+    while correctInput == False:
+        if userInput == 'a' or userInput == 'A':
+            correctInput = True
+            for i in idList:
+                localThread = threading.Thread(target=uninstallAndInstall, args=(i, userInput))
+                threads.append(localThread)
+                localThread.start()
+        elif userInput == 'b' or userInput == 'B':
+            correctInput = True
+            for i in idList:
+                localThread = threading.Thread(target=overwrite, args=(i, userInput))
+                threads.append(localThread)
+                localThread.start()
+        else:
+            userInput = askForInputAboutOptionToInstall()
+    for i in threads:
+        i.join()
 
 if __name__ == '__main__':
     pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
@@ -125,45 +159,20 @@ if __name__ == '__main__':
     buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
     devicesJson = loadJsonData(pathToJson)
     idsList = []
-    correctInput = False
-    threads = []
+    ### Checking adb path ###
     print("Checking adb path...")
-
     checkAdbConnection(getPathOfAdb())
 
+    ### Checking status of connected devices ###
     print("Checking devices...")
-
     idsList = getDevicesList(idsList, getPathOfAdb())
 
-    while correctInput == False:
-        input1 = input("{}\n{}\n{}\n".format(buildInfo1, buildInfo2, buildInfo3))
-        if input1 == 'a' or input1 == 'b' or input1 == 'c':
-            correctInput = True
-        else:
-            print("Incorrect input, please try again.")
+    ### Asking user for his input regarding installing builds from different directories ###
+    userBuildsOptionChosen = getUserBuildsOption()
 
     print("##########################################################\n\nWhat should we do now?\n")
 
-    Input = input("{}\n{}\n".format(msg1, msg2))
-    correctInput = False
-
-    while correctInput == False:
-        if Input == 'a' or Input == 'A':
-            correctInput = True
-            for i in idsList:
-                localThread = threading.Thread(target=uninstallAndInstall, args=(i,))
-                threads.append(localThread)
-                localThread.start()
-        elif Input == 'b' or Input == 'B':
-            correctInput = True
-            for i in idsList:
-                localThread = threading.Thread(target=overwrite, args=(i,))
-                threads.append(localThread)
-                localThread.start()
-        else:
-            Input = input("Didn't recognize your input. Try again.\n")
-    for i in threads:
-        i.join()
+    finalInstallationFlow(idsList, askForInputAboutOptionToInstall())
     print("All jobs done. Press any key to exit program.")
     msvcrt.getch()
     sys.exit()
