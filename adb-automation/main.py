@@ -80,22 +80,7 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
             continue
     print("Uninstalled all existing apps from {}".format(localDevice))
 
-if __name__ == '__main__':
-    pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
-    extension = ".apk"
-    msg1 = "Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a"
-    msg2 = "Overwrite existing builds with apks - type and enter b"
-    buildInfo1 = r"To get builds from default folder builds in applications directory - type and enter a"
-    buildInfo2 = r"To get builds from downloads folder from your PC - type and enter b (downloads directory = c:\users\current_user\downloads)"
-    buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
-    devicesJson = loadJsonData(pathToJson)
-    idsList = []
-    canProceed = False
-    correctInput = False
-    adbPath = getPathOfAdb()
-    threads = []
-    print("Checking adb path...")
-
+def checkAdbConnection(adbPath):
     try:
         subprocess.check_output(r"{}adb".format(adbPath))
     except FileNotFoundError:
@@ -111,7 +96,8 @@ if __name__ == '__main__':
             msvcrt.getch()
             sys.exit()
 
-    print("Checking devices...")
+def getDevicesList(idsList, adbPath):
+    canProceed = False
     while canProceed == False:
         rawList = subprocess.check_output(r"{}adb devices".format(adbPath)).rsplit()
         tempList = rawList[4:] #omitting first 4 elements as they are static & not neccesary.
@@ -124,9 +110,31 @@ if __name__ == '__main__':
             if len(idsList) > 0:
                 for i in idsList:
                     print(getDeviceInfo(i, devicesJson))
+            return idsList
         else:
             print("No devices found. Connect devices to PC and press any key to try again.")
             msvcrt.getch()
+
+if __name__ == '__main__':
+    pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
+    extension = ".apk"
+    msg1 = "Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a"
+    msg2 = "Overwrite existing builds with apks - type and enter b"
+    buildInfo1 = r"To get builds from default folder builds in applications directory - type and enter a"
+    buildInfo2 = r"To get builds from downloads folder from your PC - type and enter b (downloads directory = c:\users\current_user\downloads)"
+    buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
+    devicesJson = loadJsonData(pathToJson)
+    idsList = []
+    correctInput = False
+    adbPath = getPathOfAdb()
+    threads = []
+    print("Checking adb path...")
+
+    checkAdbConnection(adbPath)
+
+    print("Checking devices...")
+
+    idsList = getDevicesList(idsList, adbPath)
 
     while correctInput == False:
         input1 = input("{}\n{}\n{}\n".format(buildInfo1, buildInfo2, buildInfo3))
