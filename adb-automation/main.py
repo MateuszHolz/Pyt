@@ -158,7 +158,6 @@ if __name__ == '__main__':
     buildInfo2 = r"To get builds from downloads folder from your PC - type and enter b (downloads directory = c:\users\current_user\downloads)"
     buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
     devicesJson = loadJsonData(pathToJson)
-    idsList = []
     ### Checking adb path ###
     print("Checking adb path...")
     checkAdbConnection(getPathOfAdb())
