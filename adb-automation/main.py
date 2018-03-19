@@ -42,11 +42,11 @@ def getDeviceInfo(id, data):
             return data['Devices'][i]['name']
 
 def overwrite(device):
-    installBuilds("Overwriting", getPathOfBuilds(input1), extension, adbPath, device)
+    installBuilds("Overwriting", getPathOfBuilds(input1), extension, getPathOfAdb(), device)
 
 def uninstallAndInstall(device):
-    uninstallExistingBuilds(getListOfBuildsToUninstall(), adbPath, device)
-    installBuilds("Installing", getPathOfBuilds(input1), extension, adbPath, device)
+    uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb(), device)
+    installBuilds("Installing", getPathOfBuilds(input1), extension, getPathOfAdb(), device)
 
 def getBuildsToInstall(buildsDir, ext):
     builds = []
@@ -126,15 +126,14 @@ if __name__ == '__main__':
     devicesJson = loadJsonData(pathToJson)
     idsList = []
     correctInput = False
-    adbPath = getPathOfAdb()
     threads = []
     print("Checking adb path...")
 
-    checkAdbConnection(adbPath)
+    checkAdbConnection(getPathOfAdb())
 
     print("Checking devices...")
 
-    idsList = getDevicesList(idsList, adbPath)
+    idsList = getDevicesList(idsList, getPathOfAdb())
 
     while correctInput == False:
         input1 = input("{}\n{}\n{}\n".format(buildInfo1, buildInfo2, buildInfo3))
