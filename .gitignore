@@ -7,3 +7,4 @@ request-to-http/config.json
 request-to-http/config.json
 request-to-http/bearer.txt
 *.apk
+adb-automation/__pycache__/installer.cpython-36.pyc
