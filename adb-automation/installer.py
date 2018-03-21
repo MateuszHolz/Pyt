@@ -22,9 +22,15 @@ def getPathOfBuilds(option):
         localBuildsDir = r"C:\users\{}\downloads".format(os.getenv('USERNAME'))
     elif option == "c":
         try:
-            localBuildsDir = open(r"data\config\buildsdir.txt", 'r').read().rsplit
+            localBuildsDir = open(r"data\config\buildsdir.txt", 'r').read().rsplit()[0]
+            if len(localBuildsDir) > 0:
+                pass
+            else:
+                print("Error occured. Make sure proper path to builds is provided. Press any key to exit.")
+                msvcrt.getch()
+                sys.exit()
         except FileNotFoundError:
-            print("File buildsdir.txt not found. Press any key to terminate program and try again.")
+            print("File buildsdir.txt not found. Make sure proper path is provided. Press any key to terminate program and try again.")
             msvcrt.getch()
             sys.exit()
     return localBuildsDir
@@ -91,7 +97,7 @@ def checkAdbConnection(adbPath):
     try:
         subprocess.check_output(r"{}\adb".format(adbPath))
     except FileNotFoundError:
-        print("Adb hasn't been found. Please enter proper adb path in path.txt file and re-run program.\nPress any key to continue...")
+        print("Adb hasn't been found. Please re-run program. If problem persists - contact MHO")
         msvcrt.getch()
         sys.exit()
     except subprocess.CalledProcessError as err:
