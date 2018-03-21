@@ -6,13 +6,10 @@ import json
 import threading
 
 def getPathOfAdb():
-    f = open(r"config\path.txt", 'r')
-    fx = f.read()
-    f.close()
-    return fx.rstrip()
+    return r"data\platform-tools"
 
 def getListOfBuildsToUninstall():
-    f = open(r"config\projects.txt", 'r')
+    f = open(r"data\config\projects.txt", 'r')
     fx = f.read().rsplit()
     f.close()
     return fx
@@ -20,12 +17,12 @@ def getListOfBuildsToUninstall():
 def getPathOfBuilds(option):
     localBuildsDir = ""
     if option == "a":
-        localBuildsDir = r"{}\builds".format(os.getcwd())
+        localBuildsDir = r"{}\data\builds".format(os.getcwd())
     elif option == "b":
         localBuildsDir = r"C:\users\{}\downloads".format(os.getenv('USERNAME'))
     elif option == "c":
         try:
-            localBuildsDir = open(r"config\buildsdir.txt", 'r').read().rsplit
+            localBuildsDir = open(r"data\config\buildsdir.txt", 'r').read().rsplit
         except FileNotFoundError:
             print("File buildsdir.txt not found. Press any key to terminate program and try again.")
             msvcrt.getch()
@@ -72,7 +69,7 @@ def installBuilds(operation, buildsDir, ext, adbpath, device):
         for i in builds:
             print("Trying to install {} on device {}".format(i, localDevice))
             try:
-                subprocess.check_output(r"{}adb -s {} install -r {}".format(adbpath, device, i))
+                subprocess.check_output(r"{}\adb -s {} install -r {}".format(adbpath, device, i))
                 print("Installed package {} on device {}".format(i, localDevice))
             except subprocess.CalledProcessError:
                 continue
@@ -85,14 +82,14 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
     print("Uninstalling builds from {}".format(localDevice))
     for i in listOfPkgName:
         try:
-            subprocess.check_output(r"{}adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
+            subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
         except subprocess.CalledProcessError:
             continue
     print("Uninstalled all existing apps from {}".format(localDevice))
 
 def checkAdbConnection(adbPath):
     try:
-        subprocess.check_output(r"{}adb".format(adbPath))
+        subprocess.check_output(r"{}\adb".format(adbPath))
     except FileNotFoundError:
         print("Adb hasn't been found. Please enter proper adb path in path.txt file and re-run program.\nPress any key to continue...")
         msvcrt.getch()
@@ -110,7 +107,7 @@ def getDevicesList(adbPath):
     idsList = []
     canProceed = False
     while canProceed == False:
-        rawList = subprocess.check_output(r"{}adb devices".format(adbPath)).rsplit()
+        rawList = subprocess.check_output(r"{}\adb devices".format(adbPath)).rsplit()
         tempList = rawList[4:] #omitting first 4 elements as they are static & not neccesary.
         if len(tempList) > 0:
             canProceed = True
@@ -146,7 +143,7 @@ def finalInstallationFlow(idList, inputInstallOption, inputBuildsDirOption):
                 threads.append(localThread)
                 localThread.start()
         else:
-            userInput = askForInputAboutOptionToInstall()
+            inputInstallOption = askForInputAboutOptionToInstall()
     for i in threads:
         i.join()
 
