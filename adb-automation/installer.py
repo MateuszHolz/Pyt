@@ -23,14 +23,12 @@ def getPathOfBuilds(option):
     elif option == "c":
         try:
             localBuildsDir = open(r"data\config\buildsdir.txt", 'r').read().rsplit()[0]
-            if len(localBuildsDir) > 0:
-                pass
-            else:
-                print("Error occured. Make sure proper path to builds is provided. Press any key to exit.")
-                msvcrt.getch()
-                sys.exit()
+        except IndexError:
+            print("Error occured. File buildsdir.txt can't be empty.")
+            msvcrt.getch()
+            sys.exit()
         except FileNotFoundError:
-            print("File buildsdir.txt not found. Make sure proper path is provided. Press any key to terminate program and try again.")
+            print("File buildsdir.txt not found. Make sure file exists. Press any key to terminate program and try again.")
             msvcrt.getch()
             sys.exit()
     return localBuildsDir
@@ -53,9 +51,14 @@ def uninstallAndInstall(device, optionChosen):
 
 def getBuildsToInstall(buildsDir, ext):
     builds = []
-    for i in os.listdir(buildsDir):
-        if ext in i:
-            builds.append("{}\{}".format(buildsDir, i))
+    try:
+        for i in os.listdir(buildsDir):
+            if ext in i:
+                builds.append("{}\{}".format(buildsDir, i))
+    except FileNotFoundError:
+        print("Path '{}' not found. Please provide correct path in buildsdir.txt".format(buildsDir))
+        msvcrt.getch()
+        sys.exit()
     return builds
 
 def getUserBuildsOption():
