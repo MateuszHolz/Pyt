@@ -5,6 +5,14 @@ import msvcrt
 import json
 import threading
 
+class unauthorizedIndex():
+    def __init__(self):
+        self.index = 0
+    def addUnauthIndex(self):
+        self.index += 1
+    def getUnauthIndex(self):
+        return self.index
+
 def getPathOfAdb():
     return r"data\platform-tools"
 
@@ -76,7 +84,7 @@ def installBuilds(operation, buildsDir, ext, adbpath, device):
         for i in builds:
             print("Trying to install {} on device {}".format(i, localDevice))
             try:
-                subprocess.check_output(r"{}\adb -s {} install -r {}".format(adbpath, device, i))
+                subprocess.check_output(r'{}\adb -s {} install -r "{}"'.format(adbpath, device, i), timeout=60)
                 print("Installed package {} on device {}".format(i, localDevice))
             except subprocess.CalledProcessError:
                 continue
@@ -89,7 +97,7 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
     print("Uninstalling builds from {}".format(localDevice))
     for i in listOfPkgName:
         try:
-            subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
+            subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT, timeout=60) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
         except subprocess.CalledProcessError:
             continue
     print("Uninstalled all existing apps from {}".format(localDevice))
@@ -157,6 +165,28 @@ def finalInstallationFlow(idList, inputBuildsDirOption):
     for i in threads:
         i.join()
 
+def checkAuthorization(deviceID, adbpath, keyWord, index):
+    print("Checking authorization of {}".format(getDeviceInfo(deviceID, devicesJson)))
+    try:
+        subprocess.check_output(r'{}\adb -s {} get-state'.format(adbpath, deviceID), stderr=subprocess.STDOUT)
+        print("Device {} authorized.".format(deviceID))
+    except subprocess.CalledProcessError as err:
+        if keyWord.encode() in err.output:
+            print("Device {} unauthorized. Program will now exit. Press any key.".format(getDeviceInfo(deviceID, devicesJson)))
+            index.addUnauthIndex()
+            msvcrt.getch()
+        else:
+            print("Device {} authorized.".format(deviceID))
+
+def createAuthThreads(deviceList, index):
+    localThreads = []
+    for i in deviceList:
+        localThread = threading.Thread(target=checkAuthorization, args=(i, getPathOfAdb(), unauthorizedKeyWord, index))
+        localThreads.append(localThread)
+        localThread.start()
+    for i in localThreads:
+        i.join()
+
 if __name__ == '__main__':
     pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
     extension = ".apk"
@@ -165,6 +195,7 @@ if __name__ == '__main__':
     buildInfo1 = r"To get builds from default folder builds in applications directory - type and enter a"
     buildInfo2 = r"To get builds from downloads folder from your PC - type and enter b (downloads directory = c:\users\current_user\downloads)"
     buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
+    unauthorizedKeyWord = "unauthorized"
     devicesJson = loadJsonData(pathToJson)
     ### Checking adb path ###
     print("Checking adb path...")
@@ -174,6 +205,12 @@ if __name__ == '__main__':
     print("Checking devices...")
     idsList = getDevicesList(getPathOfAdb())
 
+    ### Checking authorization of all devices ###
+    index = unauthorizedIndex()
+    createAuthThreads(idsList, index)
+    if index.getUnauthIndex() > 0:
+        sys.exit()
+
     ### Asking user for his input regarding installing builds from different directories ###
     userBuildsOptionChosen = getUserBuildsOption()
 
@@ -181,6 +218,6 @@ if __name__ == '__main__':
     finalInstallationFlow(idsList, userBuildsOptionChosen)
 
     ### ~ Waiting for all threads to finish ~ ###
-    print("All jobs done. Press any key to exit program.")
+    print("Press any key to exit program.")
     msvcrt.getch()
     sys.exit()
