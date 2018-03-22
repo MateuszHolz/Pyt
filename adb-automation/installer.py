@@ -16,11 +16,11 @@ def getListOfBuildsToUninstall():
 
 def getPathOfBuilds(option):
     localBuildsDir = ""
-    if option == "a":
+    if option == "a" or option == "A":
         localBuildsDir = r"{}\data\builds".format(os.getcwd())
-    elif option == "b":
+    elif option == "b" or option == "B":
         localBuildsDir = r"C:\users\{}\downloads".format(os.getenv('USERNAME'))
-    elif option == "c":
+    elif option == "c" or option == "C":
         try:
             localBuildsDir = open(r"data\config\buildsdir.txt", 'r').read().rsplit()[0]
         except IndexError:
@@ -135,10 +135,11 @@ def askForInputAboutOptionToInstall():
     Input = input("{}\n{}\n".format(msg1, msg2))
     return Input
 
-def finalInstallationFlow(idList, inputInstallOption, inputBuildsDirOption):
+def finalInstallationFlow(idList, inputBuildsDirOption):
     correctInput = False
     threads = []
     while correctInput == False:
+        inputInstallOption = askForInputAboutOptionToInstall()
         if inputInstallOption == 'a' or inputInstallOption == 'A':
             correctInput = True
             for i in idList:
@@ -152,7 +153,8 @@ def finalInstallationFlow(idList, inputInstallOption, inputBuildsDirOption):
                 threads.append(localThread)
                 localThread.start()
         else:
-            inputInstallOption = askForInputAboutOptionToInstall()
+            print("Incorrect input, please try again.")
+
     for i in threads:
         i.join()
 
@@ -177,7 +179,7 @@ if __name__ == '__main__':
     userBuildsOptionChosen = getUserBuildsOption()
 
     ### Asking user to chose option
-    finalInstallationFlow(idsList, askForInputAboutOptionToInstall(), userBuildsOptionChosen)
+    finalInstallationFlow(idsList, userBuildsOptionChosen)
 
     ### ~ Waiting for all threads to finish ~ ###
     print("All jobs done. Press any key to exit program.")
