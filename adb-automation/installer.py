@@ -61,7 +61,7 @@ def getBuildsToInstall(buildsDir, ext):
     try:
         for i in os.listdir(buildsDir):
             if ext in i:
-                builds.append("{}\{}".format(buildsDir, i))
+                builds.append(r"{}\{}".format(buildsDir, i))
     except FileNotFoundError:
         print("Path '{}' not found. Please provide correct path in buildsdir.txt".format(buildsDir))
         sys.exit()
@@ -102,7 +102,7 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
         try:
             print("Uninstalling {} on {}".format(i, localDevice))
             subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT, timeout=15) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
-        except subprocess.CalledProcessError as err:
+        except subprocess.CalledProcessError:
             continue
         except subprocess.TimeoutExpired:
             print("Device {} timed out.".format(localDevice))
