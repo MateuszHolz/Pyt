@@ -4,6 +4,7 @@ import sys
 import msvcrt
 import json
 import threading
+import time
 
 class unauthorizedIndex():
     def __init__(self):
@@ -96,8 +97,9 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
     print("Uninstalling builds from {}".format(localDevice))
     for i in listOfPkgName:
         try:
-            subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT, timeout=60) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
-        except subprocess.CalledProcessError:
+            print("Uninstalling {} on {}".format(i, localDevice))
+            subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT, timeout=90) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
+        except subprocess.CalledProcessError as err:
             continue
     print("Uninstalled all existing apps from {}".format(localDevice))
 
@@ -152,6 +154,7 @@ def finalInstallationFlow(idList, inputBuildsDirOption):
                 localThread = threading.Thread(target=uninstallAndInstall, args=(i, inputBuildsDirOption))
                 threads.append(localThread)
                 localThread.start()
+                time.sleep(1)
         elif inputInstallOption == 'b' or inputInstallOption == 'B':
             correctInput = True
             for i in idList:
