@@ -25,11 +25,9 @@ def getPathOfBuilds(option):
             localBuildsDir = open(r"data\config\buildsdir.txt", 'r').read().rsplit()[0]
         except IndexError:
             print("Error occured. File buildsdir.txt can't be empty.")
-            msvcrt.getch()
             sys.exit()
         except FileNotFoundError:
             print("File buildsdir.txt not found. Make sure file exists. Press any key to terminate program and try again.")
-            msvcrt.getch()
             sys.exit()
     return localBuildsDir
 
@@ -82,7 +80,7 @@ def installBuilds(operation, buildsDir, ext, adbpath, device):
                 print("Installed package {} on device {}".format(i, localDevice))
             except subprocess.CalledProcessError:
                 continue
-        print("Sucessfully installed all builds on {}".format(localDevice))
+        print("Finished all jobs on {}".format(localDevice))
     else:
         print("No builds found.")
 
@@ -131,6 +129,7 @@ def getDevicesList(adbPath):
         else:
             print("No devices found. Connect devices to PC and press any key to try again.")
             msvcrt.getch()
+
 def askForInputAboutOptionToInstall():
     Input = input("{}\n{}\n".format(msg1, msg2))
     return Input
