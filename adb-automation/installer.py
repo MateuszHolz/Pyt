@@ -1,10 +1,11 @@
+import json
+import msvcrt
 import os
 import subprocess
 import sys
-import msvcrt
-import json
 import threading
 import time
+
 
 class unauthorizedIndex():
     def __init__(self):
@@ -14,14 +15,17 @@ class unauthorizedIndex():
     def getUnauthIndex(self):
         return self.index
 
+
 def getPathOfAdb():
     return r"data\platform-tools"
+
 
 def getListOfBuildsToUninstall():
     f = open(r"data\config\projects.txt", 'r')
     fx = f.read().rsplit()
     f.close()
     return fx
+
 
 def getPathOfBuilds(option):
     localBuildsDir = ""
@@ -40,21 +44,26 @@ def getPathOfBuilds(option):
             sys.exit()
     return localBuildsDir
 
+
 def loadJsonData(file):
     jsonData = json.loads(open(file, 'r').read())
     return jsonData
+
 
 def getDeviceInfo(id, data):
     for i in range(len(data['Devices'])):
         if id in data['Devices'][i]['id']:
             return data['Devices'][i]['name']
 
+
 def overwrite(device, optionChosen):
     installBuilds("Overwriting", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
+
 
 def uninstallAndInstall(device, optionChosen):
     uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb(), device)
     installBuilds("Installing", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
+
 
 def getBuildsToInstall(buildsDir, ext):
     builds = []
@@ -67,6 +76,7 @@ def getBuildsToInstall(buildsDir, ext):
         sys.exit()
     return builds
 
+
 def getUserBuildsOption():
     correctInput = False
     while correctInput == False:
@@ -76,6 +86,7 @@ def getUserBuildsOption():
             return input1
         else:
             print("Incorrect input, please try again.")
+
 
 def installBuilds(operation, buildsDir, ext, adbpath, device):
     localDevice = getDeviceInfo(device, devicesJson)
@@ -95,6 +106,7 @@ def installBuilds(operation, buildsDir, ext, adbpath, device):
     else:
         print("No builds found.")
 
+
 def uninstallExistingBuilds(listOfPkgName, adbpath, device):
     localDevice = getDeviceInfo(device, devicesJson)
     print("Uninstalling builds from {}".format(localDevice))
@@ -108,6 +120,7 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
             print("Device {} timed out.".format(localDevice))
             sys.exit()
     print("Uninstalled all existing apps from {}".format(localDevice))
+
 
 def checkAdbConnection(adbPath):
     try:
@@ -124,6 +137,7 @@ def checkAdbConnection(adbPath):
             print("Something went really wrong.\nPress anything to continue...")
             msvcrt.getch()
             sys.exit()
+
 
 def getDevicesList(adbPath):
     idsList = []
@@ -145,9 +159,11 @@ def getDevicesList(adbPath):
             print("No devices found. Connect devices to PC and press any key to try again.")
             msvcrt.getch()
 
+
 def askForInputAboutOptionToInstall():
     Input = input("{}\n{}\n".format(msg1, msg2))
     return Input
+
 
 def finalInstallationFlow(idList, inputBuildsDirOption):
     correctInput = False
@@ -169,9 +185,9 @@ def finalInstallationFlow(idList, inputBuildsDirOption):
                 localThread.start()
         else:
             print("Incorrect input, please try again.")
-
     for i in threads:
         i.join()
+
 
 def checkAuthorization(deviceID, adbpath, keyWord, index):
     print("Checking authorization of {}".format(getDeviceInfo(deviceID, devicesJson)))
@@ -186,6 +202,7 @@ def checkAuthorization(deviceID, adbpath, keyWord, index):
         else:
             print("Device {} authorized.".format(getDeviceInfo(deviceID, devicesJson)))
 
+
 def createAuthThreads(deviceList, index):
     localThreads = []
     for i in deviceList:
@@ -194,6 +211,7 @@ def createAuthThreads(deviceList, index):
         localThread.start()
     for i in localThreads:
         i.join()
+
 
 if __name__ == '__main__':
     pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
@@ -205,6 +223,7 @@ if __name__ == '__main__':
     buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
     unauthorizedKeyWord = "unauthorized"
     devicesJson = loadJsonData(pathToJson)
+    
     ### Checking adb path ###
     print("Checking adb path...")
     checkAdbConnection(getPathOfAdb())
