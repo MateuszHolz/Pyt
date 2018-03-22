@@ -63,7 +63,6 @@ def getBuildsToInstall(buildsDir, ext):
                 builds.append("{}\{}".format(buildsDir, i))
     except FileNotFoundError:
         print("Path '{}' not found. Please provide correct path in buildsdir.txt".format(buildsDir))
-        msvcrt.getch()
         sys.exit()
     return builds
 
@@ -169,14 +168,14 @@ def checkAuthorization(deviceID, adbpath, keyWord, index):
     print("Checking authorization of {}".format(getDeviceInfo(deviceID, devicesJson)))
     try:
         subprocess.check_output(r'{}\adb -s {} get-state'.format(adbpath, deviceID), stderr=subprocess.STDOUT)
-        print("Device {} authorized.".format(deviceID))
+        print("Device {} authorized.".format(getDeviceInfo(deviceID, devicesJson)))
     except subprocess.CalledProcessError as err:
         if keyWord.encode() in err.output:
             print("Device {} unauthorized. Program will now exit. Press any key.".format(getDeviceInfo(deviceID, devicesJson)))
             index.addUnauthIndex()
             msvcrt.getch()
         else:
-            print("Device {} authorized.".format(deviceID))
+            print("Device {} authorized.".format(getDeviceInfo(deviceID, devicesJson)))
 
 def createAuthThreads(deviceList, index):
     localThreads = []
