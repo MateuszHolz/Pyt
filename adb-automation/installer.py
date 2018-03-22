@@ -88,6 +88,9 @@ def installBuilds(operation, buildsDir, ext, adbpath, device):
                 print("Installed package {} on device {}".format(i, localDevice))
             except subprocess.CalledProcessError:
                 continue
+            except subprocess.TimeoutExpired:
+                print("Device {} timed out (60s).".format(localDevice))
+                sys.exit()
         print("Finished all jobs on {}".format(localDevice))
     else:
         print("No builds found.")
@@ -98,9 +101,12 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
     for i in listOfPkgName:
         try:
             print("Uninstalling {} on {}".format(i, localDevice))
-            subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT, timeout=90) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
+            subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT, timeout=15) #"stderr=subprocess.STDOUT" <- silences java exceptions that occur when we try to uninstall non-existent build
         except subprocess.CalledProcessError as err:
             continue
+        except subprocess.TimeoutExpired:
+            print("Device {} timed out.".format(localDevice))
+            sys.exit()
     print("Uninstalled all existing apps from {}".format(localDevice))
 
 def checkAdbConnection(adbPath):
