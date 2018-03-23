@@ -14,10 +14,13 @@ outputFile = r"ip_adresses.txt"
 class unauthorizedIndex():
     def __init__(self):
         self.index = 0
+
     def addUnauthIndex(self):
         self.index += 1
+
     def getUnauthIndex(self):
         return self.index
+
 
 def getJsonData(dataPath):
     jsonData = json.loads(open(dataPath, 'r').read())
@@ -60,6 +63,7 @@ def checkAuthorization(deviceID, adbpath, keyWord, index, devicesJson):
         else:
             print("Device {} authorized.".format(getDeviceInfo(deviceID, devicesJson)))
 
+
 def createAuthThreads(deviceList, index, adbpath, authFunction, devicesJson):
     localThreads = []
     for i in deviceList:
@@ -89,6 +93,7 @@ def getDevicesList(adbPath, devicesJson):
         else:
             print("No devices found. Connect devices to PC and press any key to try again.")
             msvcrt.getch()
+
 
 def writeIpAdresses(deviceIdList, deviceDataDict, adbpath, outputFile):
     with open(outputFile, 'w') as file:
