@@ -6,6 +6,14 @@ import sys
 import threading
 import time
 
+pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
+extension = ".apk"
+msg1 = "Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a"
+msg2 = "Overwrite existing builds with apks - type and enter b"
+buildInfo1 = r"To get builds from default folder builds in applications directory - type and enter a"
+buildInfo2 = r"To get builds from downloads folder from your PC - type and enter b (downloads directory = c:\users\current_user\downloads)"
+buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
+unauthorizedKeyWord = "unauthorized"
 
 class unauthorizedIndex():
     def __init__(self):
@@ -214,21 +222,13 @@ def createAuthThreads(deviceList, index):
 
 
 if __name__ == '__main__':
-    pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
-    extension = ".apk"
-    msg1 = "Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a"
-    msg2 = "Overwrite existing builds with apks - type and enter b"
-    buildInfo1 = r"To get builds from default folder builds in applications directory - type and enter a"
-    buildInfo2 = r"To get builds from downloads folder from your PC - type and enter b (downloads directory = c:\users\current_user\downloads)"
-    buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
-    unauthorizedKeyWord = "unauthorized"
-    devicesJson = loadJsonData(pathToJson)
     
     ### Checking adb path ###
     print("Checking adb path...")
     checkAdbConnection(getPathOfAdb())
 
     ### Checking status of connected devices ###
+    devicesJson = loadJsonData(pathToJson)
     print("Checking devices...")
     idsList = getDevicesList(getPathOfAdb())
 
