@@ -6,7 +6,6 @@ import sys
 import threading
 import time
 
-pathToJson = r"\\192.168.64.200\byd-fileserver\MHO\devices.json"
 extension = ".apk"
 msg1 = "Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a"
 msg2 = "Overwrite existing builds with apks - type and enter b"
@@ -17,7 +16,7 @@ unauthorizedKeyWord = "unauthorized"
 
 
 class unauthorizedIndex():
-    
+
     def __init__(self):
         self.index = 0
 
@@ -63,7 +62,7 @@ def loadJsonData(file):
         jsonData = json.loads(open(file, 'r').read())
         return jsonData
     except FileNotFoundError:
-        print("Couldn't find {}".format(pathToJson))
+        print("Couldn't find {} directory.\nIf you're not from BYD consider creating one yourself (pm @mho on slack for more info),\nplace it in fileserver directory and copy its path to data/config/devicesdir.txt file.\nIf you are from BDG and you this msg - contact @mho.".format(getDevicesDir()))
         return jsonData
 
 
@@ -237,6 +236,10 @@ def createAuthThreads(deviceList, index):
         i.join()
 
 
+def getDevicesDir():
+    return open(r"data\config\devicesdir.txt", 'r').read().rstrip()
+
+
 if __name__ == '__main__':
     
     ### Checking adb path ###
@@ -244,7 +247,7 @@ if __name__ == '__main__':
     checkAdbConnection(getPathOfAdb())
 
     ### Checking status of connected devices ###
-    devicesJson = loadJsonData(pathToJson)
+    devicesJson = loadJsonData(getDevicesDir())
     print("Checking devices...")
     idsList = getDevicesList(getPathOfAdb(), devicesJson)
 
