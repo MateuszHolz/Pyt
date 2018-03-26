@@ -15,11 +15,15 @@ buildInfo2 = r"To get builds from downloads folder from your PC - type and enter
 buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
 unauthorizedKeyWord = "unauthorized"
 
+
 class unauthorizedIndex():
+    
     def __init__(self):
         self.index = 0
+
     def addUnauthIndex(self):
         self.index += 1
+
     def getUnauthIndex(self):
         return self.index
 
@@ -54,14 +58,23 @@ def getPathOfBuilds(option):
 
 
 def loadJsonData(file):
-    jsonData = json.loads(open(file, 'r').read())
-    return jsonData
+    jsonData = {}
+    try:
+        jsonData = json.loads(open(file, 'r').read())
+        return jsonData
+    except FileNotFoundError:
+        print("Couldn't find {}".format(pathToJson))
+        return jsonData
 
 
 def getDeviceInfo(id, data):
-    for i in range(len(data['Devices'])):
-        if id in data['Devices'][i]['id']:
-            return data['Devices'][i]['name']
+    try:
+        for i in range(len(data['Devices'])):
+            if id in data['Devices'][i]['id']:
+                return data['Devices'][i]['name']
+        return id
+    except KeyError:
+        return id
 
 
 def overwrite(device, optionChosen):
@@ -147,7 +160,7 @@ def checkAdbConnection(adbPath):
             sys.exit()
 
 
-def getDevicesList(adbPath):
+def getDevicesList(adbPath, devJson):
     idsList = []
     canProceed = False
     while canProceed == False:
@@ -161,7 +174,10 @@ def getDevicesList(adbPath):
             print("Found devices:")
             if len(idsList) > 0:
                 for i in idsList:
-                    print(getDeviceInfo(i, devicesJson))
+                    if len(devJson) > 0:
+                        print(getDeviceInfo(i, devJson))
+                    else:
+                        print(i)
             return idsList
         else:
             print("No devices found. Connect devices to PC and press any key to try again.")
@@ -230,7 +246,7 @@ if __name__ == '__main__':
     ### Checking status of connected devices ###
     devicesJson = loadJsonData(pathToJson)
     print("Checking devices...")
-    idsList = getDevicesList(getPathOfAdb())
+    idsList = getDevicesList(getPathOfAdb(), devicesJson)
 
     ### Checking authorization of all devices ###
     index = unauthorizedIndex()
