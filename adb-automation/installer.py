@@ -92,7 +92,7 @@ def getBuildsToInstall(buildsDir, ext):
             if ext in i:
                 builds.append(r"{}\{}".format(buildsDir, i))
     except FileNotFoundError:
-        print("Path '{}' not found. Please provide correct path in buildsdir.txt".format(buildsDir))
+        print("Path '{}' not found.".format(buildsDir))
         sys.exit()
     return builds
 
@@ -254,7 +254,7 @@ if __name__ == '__main__':
     ### Checking authorization of all devices ###
     index = unauthorizedIndex()
     createAuthThreads(idsList, index)
-    if index.getUnauthIndex() > 0:
+    if index.getUnauthIndex() > 0: # true means that at least one device is unauthorized
         sys.exit()
 
     ### Asking user for his input regarding installing builds from different directories ###
