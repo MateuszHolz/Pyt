@@ -13,6 +13,8 @@ buildInfo1 = r"To get builds from default folder builds in applications director
 buildInfo2 = r"To get builds from downloads folder from your PC - type and enter b (downloads directory = c:\users\current_user\downloads)"
 buildInfo3 = r"To get builds from specified path in buildsdir.txt file in config folder - type and enter c"
 unauthorizedKeyWord = "unauthorized"
+devicesDataDir = r"data\config\devicesdir.txt"
+projectsDataDir = r"data\config\projects.txt"
 
 
 class unauthorizedIndex():
@@ -31,11 +33,13 @@ def getPathOfAdb():
     return r"data\platform-tools"
 
 
-def getListOfBuildsToUninstall():
-    f = open(r"data\config\projects.txt", 'r')
-    fx = f.read().rsplit()
-    f.close()
-    return fx
+def getListOfBuildsToUninstall(projectsDir):
+    try:
+        return open(projectsDir, 'r').read().rsplit()
+    except FileNotFoundError:
+        print("{} not found. Press any key...".format(projectsDir))
+        msvcrt.getch()
+        sys.exit()
 
 
 def getPathOfBuilds(option):
@@ -62,7 +66,7 @@ def loadJsonData(file):
         jsonData = json.loads(open(file, 'r').read())
         return jsonData
     except FileNotFoundError:
-        print("Couldn't find {} directory.\nIf you're not from BYD consider creating one yourself (pm @mho on slack for more info),\nplace it in fileserver directory and copy its path to data/config/devicesdir.txt file.\nIf you are from BDG and you this msg - contact @mho.".format(getDevicesDir()))
+        print("Couldn't find {} directory.\nIf you're not from BYD consider creating one yourself (pm @mho on slack for more info),\nplace it in fileserver directory and copy its path to data/config/devicesdir.txt file.\nIf you are from BDG and you this msg - contact @mho.".format(getDevicesDir(devicesDataDir)))
         return jsonData
 
 
@@ -81,7 +85,7 @@ def overwrite(device, optionChosen):
 
 
 def uninstallAndInstall(device, optionChosen):
-    uninstallExistingBuilds(getListOfBuildsToUninstall(), getPathOfAdb(), device)
+    uninstallExistingBuilds(getListOfBuildsToUninstall(projectsDataDir), getPathOfAdb(), device)
     installBuilds("Installing", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
 
 
@@ -100,12 +104,16 @@ def getBuildsToInstall(buildsDir, ext):
 def getUserBuildsOption():
     correctInput = False
     while correctInput == False:
-        input1 = input("{}\n{}\n{}\n".format(buildInfo1, buildInfo2, buildInfo3))
-        if input1 == 'a' or input1 == 'b' or input1 == 'c':
-            correctInput = True
-            return input1
-        else:
+        try:
+            input1 = input("{}\n{}\n{}\n".format(buildInfo1, buildInfo2, buildInfo3))
+            if input1 == 'a' or input1 == 'b' or input1 == 'c':
+                correctInput = True
+                return input1
+            else:
+                print("Incorrect input, please try again.")
+        except EOFError:
             print("Incorrect input, please try again.")
+            pass
 
 
 def installBuilds(operation, buildsDir, ext, adbpath, device):
@@ -124,7 +132,7 @@ def installBuilds(operation, buildsDir, ext, adbpath, device):
                 sys.exit()
         print("Finished all jobs on {}".format(localDevice))
     else:
-        print("No builds found.")
+        print("No builds found in directory: {}".format(buildsDir))
 
 
 def uninstallExistingBuilds(listOfPkgName, adbpath, device):
@@ -184,7 +192,13 @@ def getDevicesList(adbPath, devJson):
 
 
 def askForInputAboutOptionToInstall():
-    Input = input("{}\n{}\n".format(msg1, msg2))
+    correctInput = False
+    while correctInput == False:
+        try:
+            Input = input("{}\n{}\n".format(msg1, msg2))
+            correctInput = True
+        except EOFError:
+            print("Incorrect input, please try again.")
     return Input
 
 
@@ -236,8 +250,13 @@ def createAuthThreads(deviceList, index):
         i.join()
 
 
-def getDevicesDir():
-    return open(r"data\config\devicesdir.txt", 'r').read().rstrip()
+def getDevicesDir(devicesDir):
+    try:
+        return open(devicesDir, 'r').read().rstrip()
+    except FileNotFoundError:
+        print("{} not found. Press any key to close program.".format(devicesDir))
+        msvcrt.getch()
+        sys.exit()
 
 
 if __name__ == '__main__':
@@ -247,7 +266,7 @@ if __name__ == '__main__':
     checkAdbConnection(getPathOfAdb())
 
     ### Checking status of connected devices ###
-    devicesJson = loadJsonData(getDevicesDir())
+    devicesJson = loadJsonData(getDevicesDir(devicesDataDir))
     print("Checking devices...")
     idsList = getDevicesList(getPathOfAdb(), devicesJson)
 

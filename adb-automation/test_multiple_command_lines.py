@@ -1,18 +1,16 @@
-class unauthorizedIndex():
-    print("initialzied class")
-    def __init__(self):
-        self.index = 0
-    def addUnauthIndex(self):
-        self.index += 1
-    def getUnauthIndex(self):
-        return self.index
+import json
+import msvcrt
+import os
+import subprocess
+import sys
+import threading
+import time
 
 
 
-d = unauthorizedIndex()
-print(d)
-d.addUnauthIndex()
 
-print(d.getUnauthIndex())
-d.addUnauthIndex()
-print(d.getUnauthIndex())
+listOfPackages = subprocess.check_output(r"adb -s ce09171919df3833047e shell pm list packages -f")
+for i in listOfPackages.decode().split():
+    if "huuuge" in i or "gamelion" in i:
+        print(i)
+
