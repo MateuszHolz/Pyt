@@ -66,7 +66,7 @@ def loadJsonData(file):
         jsonData = json.loads(open(file, 'r').read())
         return jsonData
     except FileNotFoundError:
-        print("Couldn't find {} directory.\nIf you're not from BYD consider creating one yourself (pm @mho on slack for more info),\nplace it in fileserver directory and copy its path to data/config/devicesdir.txt file.\nIf you are from BDG and you this msg - contact @mho.".format(getDevicesDir(devicesDataDir)))
+        print("Couldn't find {} directory.\nIf you're not from BYD consider creating one yourself (pm @mho on slack for more info),\nplace it in fileserver directory and copy its path to data/config/devicesdir.txt file.\nIf you are from BDG and see this msg - contact @mho.".format(getDevicesDir(devicesDataDir)))
         return jsonData
 
 
@@ -252,7 +252,15 @@ def createAuthThreads(deviceList, index):
 
 def getDevicesDir(devicesDir):
     try:
-        return open(devicesDir, 'r').read().rstrip()
+        data = open(devicesDir, 'r').read().rstrip()
+        if len(data) > 0:
+            return data
+        else:
+            userInput = input("File {} is empty! Enter y to proceed, enter any other character to terminate program. ".format(devicesDir))
+            if userInput == 'Y' or userInput == 'y':
+                return 'Empty_Dir'
+            else:
+                sys.exit()
     except FileNotFoundError:
         print("{} not found. Press any key to close program.".format(devicesDir))
         msvcrt.getch()

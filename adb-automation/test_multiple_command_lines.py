@@ -5,12 +5,18 @@ import subprocess
 import sys
 import threading
 import time
+import re
 
+keyWords = ["huuuge", "gamelion"]
 
+listOfPkg = []
 
-
-listOfPackages = subprocess.check_output(r"adb -s ce09171919df3833047e shell pm list packages -f")
+listOfPackages = subprocess.check_output(r"adb shell pm list packages -f")
 for i in listOfPackages.decode().split():
-    if "huuuge" in i or "gamelion" in i:
-        print(i)
+    for j in keyWords:
+        if j in i:
+            print(i)
+            localS = i.replace('=', ' ').split()
+            listOfPkg.append(localS[len(localS)-1])
 
+print(listOfPkg)
