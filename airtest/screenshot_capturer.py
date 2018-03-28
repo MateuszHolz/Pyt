@@ -1,6 +1,5 @@
 import subprocess
 import sys
-import installer
 import threading
 import os
 
@@ -16,7 +15,7 @@ indx = getCurFileIndx()
 fileDir = r"/sdcard/"
 fileName = r"screen_{}.png".format(indx)
 destinationDir = os.getcwd()
-pathOfAdb = r"data\platform-tools"
+pathOfAdb = r"c:\users\mho\desktop\pyt\adb-automation\data\platform-tools"
 
 adb_shell = subprocess.Popen(r"{}\adb shell".format(pathOfAdb), stdin = subprocess.PIPE)
 print("1")
