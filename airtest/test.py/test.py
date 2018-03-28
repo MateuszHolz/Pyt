@@ -8,7 +8,7 @@ def constructTemplate(file):
     return Template(r"{}\testsc\{}\{}".format(os.getcwd(), test_section, file))
 
 def _waitAndTouch(file):
-    touch(wait(constructTemplate(file), interval = 1))
+    touch(wait(constructTemplate(file), interval = 1, timeout = 60))
     sleep(1)
 
 def _swipe(startPoint, endPoint, option):
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     install(r"{}\builds\HuuugeStars-0.1.248-master-(4d73c26f241bf1efb26eba008adae91be768e129)-release.apk".format(os.getcwd()))
     start_app("com.huuuge.stars.slots")
     test_section = "age_confirm"
-    _waitAndTouch("allow-button.png")
+    #_waitAndTouch("allow-button.png")
     _waitAndTouch("green-ok.png")
     _waitAndTouch("day-1.png")
     _waitAndTouch("day-3.png")
