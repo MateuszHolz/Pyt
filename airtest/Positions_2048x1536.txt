@@ -1,0 +1,7 @@
+allow-button.png, 1391x842
+green-ok.png, 1026x1306
+day-1.png, 591x799
+day-3.png, 554x1036
+month-jan.png, 1008x800
+month-mar.png, 1004x1034
+year-2010.png, 1457x801
