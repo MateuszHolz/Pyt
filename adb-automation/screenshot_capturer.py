@@ -1,27 +1,10 @@
 import subprocess
-import sys
-import installer
-import threading
 import os
+from datetime import datetime
 
-def getCurFileIndx():
-    with open('indx.txt', 'r') as f:
-        return int(f.read())
-
-def setCurFileIndx():
-    with open('indx.txt', 'w') as f:
-        f.write(str(indx+1))
-
-indx = getCurFileIndx()
-fileDir = r"/sdcard/"
-fileName = r"screen_{}.png".format(indx)
+fileDir = r"/sdcard"
+fileName = r"screen_{}.png".format(datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
 destinationDir = os.getcwd()
-pathOfAdb = r"data\platform-tools"
 
-adb_shell = subprocess.Popen(r"{}\adb shell".format(pathOfAdb), stdin = subprocess.PIPE)
-print("1")
-output = adb_shell.communicate(r"screencap {}\{}".format(fileDir, fileName).encode())
-setCurFileIndx()
-print("2")
-subprocess.Popen(r"{}\adb pull {}{} {}".format(pathOfAdb, fileDir, fileName, destinationDir))
-print("Done")
+subprocess.check_output(r'adb shell screencap "{}/{}"'.format(fileDir, fileName))
+subprocess.check_output(r'adb pull "{}/{}" {}'.format(fileDir, fileName, destinationDir))

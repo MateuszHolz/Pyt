@@ -18,10 +18,10 @@ def constructTemplate(file, test_section = None):
     return Template(r"{}\testsc\{}\{}".format(os.getcwd(), test_section, file))
 
 def _waitAndTouch(file, test_section, savePos = False, posCont = None):
-    if(savePos):
-        localPos = wait(constructTemplate(file, test_section), interval = 1, timeout = 60)
+    localPos = wait(constructTemplate(file, test_section), interval = 1, timeout = 60)
+    touch(localPos, duration = 0.2)
+    if(savePos):        
         posCont.addToContainer(localPos, file)
-        touch(localPos, duration = 0.10)
     sleep(1)
     return
 

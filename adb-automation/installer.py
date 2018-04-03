@@ -80,11 +80,11 @@ def getDeviceInfo(id, data):
         return id
 
 
-def overwrite(device, optionChosen):
+def overwrite(device, optionChosen, builds = None):
     installBuilds("Overwriting", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
 
 
-def uninstallAndInstall(device, optionChosen):
+def uninstallAndInstall(device, optionChosen, builds = None):
     uninstallExistingBuilds(getListOfBuildsToUninstall(projectsDataDir), getPathOfAdb(), device)
     installBuilds("Installing", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
 
@@ -116,9 +116,14 @@ def getUserBuildsOption():
             pass
 
 
-def installBuilds(operation, buildsDir, ext, adbpath, device):
+def installBuilds(operation, buildsDir, ext, adbpath, device, builds = None):
     localDevice = getDeviceInfo(device, devicesJson)
-    builds = getBuildsToInstall(buildsDir, ext)
+    if not builds:
+        builds = getBuildsToInstall(buildsDir, ext)
+    else:
+        print("Installing builds from drag and drop:")
+        for i in builds:
+            print("{}\n".format(i))
     if len(builds)>0:
         for i in builds:
             print("Trying to install {} on device {}".format(i, localDevice))
@@ -202,7 +207,7 @@ def askForInputAboutOptionToInstall():
     return Input
 
 
-def finalInstallationFlow(idList, inputBuildsDirOption):
+def finalInstallationFlow(idList, inputBuildsDirOption, builds = None):
     correctInput = False
     threads = []
     while correctInput == False:
@@ -210,14 +215,14 @@ def finalInstallationFlow(idList, inputBuildsDirOption):
         if inputInstallOption == 'a' or inputInstallOption == 'A':
             correctInput = True
             for i in idList:
-                localThread = threading.Thread(target=uninstallAndInstall, args=(i, inputBuildsDirOption))
+                localThread = threading.Thread(target=uninstallAndInstall, args=(i, inputBuildsDirOption, builds))
                 threads.append(localThread)
                 localThread.start()
                 time.sleep(1)
         elif inputInstallOption == 'b' or inputInstallOption == 'B':
             correctInput = True
             for i in idList:
-                localThread = threading.Thread(target=overwrite, args=(i, inputBuildsDirOption))
+                localThread = threading.Thread(target=overwrite, args=(i, inputBuildsDirOption, builds))
                 threads.append(localThread)
                 localThread.start()
         else:
@@ -268,11 +273,14 @@ def getDevicesDir(devicesDir):
 
 
 if __name__ == '__main__':
-    
+
+    _builds = None
+
     ### Checking adb path ###
     print("Checking adb path...")
     checkAdbConnection(getPathOfAdb())
-
+    print("DEBUG"+devicesDataDir)
+    print(os.getcwd())
     ### Checking status of connected devices ###
     devicesJson = loadJsonData(getDevicesDir(devicesDataDir))
     print("Checking devices...")
@@ -284,11 +292,19 @@ if __name__ == '__main__':
     if index.getUnauthIndex() > 0: # true means that at least one device is unauthorized
         sys.exit()
 
-    ### Asking user for his input regarding installing builds from different directories ###
-    userBuildsOptionChosen = getUserBuildsOption()
+    ### Checking if user has dropped builds to install. If so, prompting all builds that were dropped, checking if all end with .apk ###
+    if len(sys.argv) > 1:
+        for i in sys.argv[1:]:
+            if not ".apk" in i:
+                print("{} <----- is not a build. Please drag only builds. Press any key to exit...".format(i))
+                msvcrt.getch()
+                exit()
+        _builds = sys.argv
+    else:
+        ### Asking user for his input regarding installing builds from different directories ###
+        userBuildsOptionChosen = getUserBuildsOption()
 
-    ### Asking user to chose option
-    finalInstallationFlow(idsList, userBuildsOptionChosen)
+    finalInstallationFlow(idsList, userBuildsOptionChosen, _builds)
 
     ### ~ Waiting for all threads to finish ~ ###
     print("Press any key to exit program.")
