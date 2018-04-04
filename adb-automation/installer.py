@@ -81,12 +81,12 @@ def getDeviceInfo(id, data):
 
 
 def overwrite(device, optionChosen, builds = None):
-    installBuilds("Overwriting", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
+    installBuilds("Overwriting", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device, builds)
 
 
 def uninstallAndInstall(device, optionChosen, builds = None):
     uninstallExistingBuilds(getListOfBuildsToUninstall(projectsDataDir), getPathOfAdb(), device)
-    installBuilds("Installing", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device)
+    installBuilds("Installing", getPathOfBuilds(optionChosen), extension, getPathOfAdb(), device, builds)
 
 
 def getBuildsToInstall(buildsDir, ext):
@@ -118,12 +118,8 @@ def getUserBuildsOption():
 
 def installBuilds(operation, buildsDir, ext, adbpath, device, builds = None):
     localDevice = getDeviceInfo(device, devicesJson)
-    if not builds:
+    if len(builds) == 0:
         builds = getBuildsToInstall(buildsDir, ext)
-    else:
-        print("Installing builds from drag and drop:")
-        for i in builds:
-            print("{}\n".format(i))
     if len(builds)>0:
         for i in builds:
             print("Trying to install {} on device {}".format(i, localDevice))
@@ -273,14 +269,13 @@ def getDevicesDir(devicesDir):
 
 
 if __name__ == '__main__':
-
     _builds = None
+    userBuildsOptionChosen = None
+    os.chdir(os.path.dirname(sys.argv[0]))
 
     ### Checking adb path ###
     print("Checking adb path...")
     checkAdbConnection(getPathOfAdb())
-    print("DEBUG"+devicesDataDir)
-    print(os.getcwd())
     ### Checking status of connected devices ###
     devicesJson = loadJsonData(getDevicesDir(devicesDataDir))
     print("Checking devices...")
@@ -290,6 +285,8 @@ if __name__ == '__main__':
     index = unauthorizedIndex()
     createAuthThreads(idsList, index)
     if index.getUnauthIndex() > 0: # true means that at least one device is unauthorized
+        print("At least one device unauthorized. Press any key to exit.")
+        msvcrt.getch()
         sys.exit()
 
     ### Checking if user has dropped builds to install. If so, prompting all builds that were dropped, checking if all end with .apk ###
@@ -299,7 +296,10 @@ if __name__ == '__main__':
                 print("{} <----- is not a build. Please drag only builds. Press any key to exit...".format(i))
                 msvcrt.getch()
                 exit()
-        _builds = sys.argv
+        _builds = sys.argv[1:]
+        print("Following builds will be installed:")
+        for i in _builds:
+            print(i)
     else:
         ### Asking user for his input regarding installing builds from different directories ###
         userBuildsOptionChosen = getUserBuildsOption()
