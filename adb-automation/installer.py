@@ -285,8 +285,6 @@ if __name__ == '__main__':
     index = unauthorizedIndex()
     createAuthThreads(idsList, index)
     if index.getUnauthIndex() > 0: # true means that at least one device is unauthorized
-        print("At least one device unauthorized. Press any key to exit.")
-        msvcrt.getch()
         sys.exit()
 
     ### Checking if user has dropped builds to install. If so, prompting all builds that were dropped, checking if all end with .apk ###
