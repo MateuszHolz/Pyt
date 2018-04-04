@@ -1,1 +1,0 @@
-\\192.168.64.200\byd-fileserver\MHO\devices.json
