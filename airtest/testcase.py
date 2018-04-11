@@ -16,7 +16,7 @@ if __name__ == "__main__":
     for i in range(50):
         start_app("com.huuuge.stars.slots")
         test_section = "age_confirm"
-        test._waitAndTouch("allow-button-{}.png".format(dev.getprop("ro.build.version.release")[0]), test_section)
+        #test._waitAndTouch("allow-button-{}.png".format(dev.getprop("ro.build.version.release")[0]), test_section)
         test._waitAndTouch("green-ok.png", test_section)
         test._waitAndTouch("year-2010.png", test_section)
         swipePoint1=exists(test.constructTemplate("age-confirm-year-2007.png", test_section))

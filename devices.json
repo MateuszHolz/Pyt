@@ -1,0 +1,419 @@
+{
+  "Devices":[
+    {
+      "inv": "None",
+      "name": "HTC Explorer",
+      "id": "HT1AMVN05281"
+    },
+    {
+      "inv": "7849",
+      "name": "HTC Desire 626G dual sim",
+      "id": "CC5CJYR00285"
+    },
+    {
+      "inv": "7607",
+      "name": "HTC One",
+      "id": "SH43XW901156"
+    },
+    {
+      "inv": "7758",
+      "name": "ASUS Zenfone 5",
+      "id": "EBAZCY059393"
+    },
+    {
+      "inv": "None",
+      "name": "ASUS Fonepad",
+      "id": "MedfieldBDD5FAA7"
+    },
+    {
+      "inv": "9118",
+      "name": "HUAWEI Ascend G510",
+      "id": "E8CD2D3E6932"
+    },
+    {
+      "inv": "8229",
+      "name": "HUAWEI Y3II",
+      "id": "WTM9KA96A1206223"
+    },
+    {
+      "inv": "9128",
+      "name": "HUAWEI Y6II",
+      "id": "LHTDU17515001437"
+    },
+    {
+      "inv": "8376",
+      "name": "HUAWEI P8 lite",
+      "id": "W3D4C16902005138"
+    },
+    {
+      "inv": "8377",
+      "name": "HUAWEI P9 lite",
+      "id": "BUC4C17214000708"
+    },
+    {
+      "inv": "9116",
+      "name": "HUAWEI P10 lite",
+      "id": "H3R4C17A18003499"
+    },
+    {
+      "inv": "9107",
+      "name": "HUAWEI P10",
+      "id": "7EX0217927000542"
+    },
+    {
+      "inv": "9111",
+      "name": "HUAWEI Mate 10 Pro",
+      "id": "AQH0217A27000562"
+    },
+    {
+      "inv": "9131",
+      "name": "HUAWEI Mate 10 Pro",
+      "id": "AQH0217A27001668"
+    },
+    {
+      "inv": "9132",
+      "name": "HUAWEI MediaPad M3 Lite",
+      "id": "PFSNU17901105503"
+    },
+    {
+      "inv": "6780",
+      "name": "LG Optimus 2X",
+      "id": "036c208842df8117"
+    },
+    {
+      "inv": "7762",
+      "name": "LG L70",
+      "id": "LGD3208bac5398"
+    },
+    {
+      "inv": "9117",
+      "name": "LG L70",
+      "id": "LGD3207a10b8c"
+    },
+    {
+      "inv": "7763",
+      "name": "LG Leon",
+      "id": "TKJFAEQCVGKNDIYT"
+    },
+    {
+      "inv": "8431",
+      "name": "LG K7",
+      "id": "69VW4DBA5LWW4LU8"
+    },
+    {
+      "inv": "8659",
+      "name": "LG K10",
+      "id": "LGK420b2bf68df"
+    },
+    {
+      "inv": "9164",
+      "name": "LG Aristo",
+      "id": "LGM210ee71ec0d"
+    },
+    {
+      "inv": "6781",
+      "name": "LG Optimus G",
+      "id": "LGF180L9249f161"
+    },
+    {
+      "inv": "7459",
+      "name": "LG G3",
+      "id": "LGD855b0e6082"
+    },
+    {
+      "inv": "7850",
+      "name": "LG G4s Dual",
+      "id": "LGH7361bcfe46b"
+    },
+    {
+      "inv": "7775",
+      "name": "LG G4",
+      "id": "LGH81589dcadaa"
+    },
+    {
+      "inv": "8470",
+      "name": "LG G6",
+      "id": "LGH870b06050c9"
+    },
+    {
+      "inv": "7609",
+      "name": "Motorola Moto E",
+      "id": "ZX1B2396NX"
+    },
+    {
+      "inv": "None",
+      "name": "Motorola RAZR i",
+      "id": "TA32408JNC"
+    },
+    {
+      "inv": "7774",
+      "name": "Motorola Moto G 2nd Gen",
+      "id": "ZX1D23F7J7"
+    },
+    {
+      "inv": "9125",
+      "name": "Motorola Moto E4 Plus",
+      "id": "ZH33C287LJ"
+    },
+    {
+      "inv": "7765",
+      "name": "Motorola Moto X 2nd Gen",
+      "id": "TA99300XO9"
+    },
+    {
+      "inv": "8502",
+      "name": "Google Pixel XL",
+      "id": "HT6BH0202687"
+    },
+    {
+      "inv": "9263",
+      "name": "Google Pixel 2",
+      "id": "HT7AD1A03009"
+    },
+    {
+      "inv": "9264",
+      "name": "Google Pixel 2",
+      "id": "HT7AD1A03039"
+    },
+    {
+      "inv": "6767",
+      "name": "Google Nexus 7",
+      "id": "015d21d4fe47f80b"
+    },
+    {
+      "inv": "7562",
+      "name": "Google Nexus 7",
+      "id": "015d2109895bfa0b"
+    },
+    {
+      "inv": "7688",
+      "name": "Google Nexus 9",
+      "id": "HT4AKJT02264"
+    },
+    {
+      "inv": "7686",
+      "name": "Samsung Galaxy Young 2",
+      "id": "4203118ddc2f9100"
+    },
+    {
+      "inv": "7962",
+      "name": "Samsung Galaxy Young 2",
+      "id": "420323d7cafea100"
+    },
+    {
+      "inv": "9123",
+      "name": "Samsung Galaxy Ace 4 G357FZ",
+      "id": "3a1dc68a"
+    },
+    {
+      "inv": "6814",
+      "name": "Samsung Galaxy S II",
+      "id": "001990e522045e"
+    },
+    {
+      "inv": "7606",
+      "name": "Samsung Galaxy S II",
+      "id": "001922bc07561f"
+    },
+    {
+      "inv": "7961",
+      "name": "Samsung Galaxy S II",
+      "id": "0019db8c4c3b9e"
+    },
+    {
+      "inv": "7574",
+      "name": "Samsung Galaxy S4 mini",
+      "id": "2802ddeb"
+    },
+    {
+      "inv": "7776",
+      "name": "Samsung Galaxy S5 mini",
+      "id": "520009dcbef932eb"
+    },
+    {
+      "inv": "7584",
+      "name": "Samsung Galaxy Note",
+      "id": "000eded664689f"
+    },
+    {
+      "inv": "7123",
+      "name": "Samsung Galaxy Note II",
+      "id": "4df7588339f511cd"
+    },
+    {
+      "inv": "7583",
+      "name": "Samsung Galaxy Note 3",
+      "id": "9f134f3b"
+    },
+    {
+      "inv": "9127",
+      "name": "Samsung Galaxy Note8",
+      "id": "ce091719159e010d017e"
+    },
+    {
+      "inv": "9126",
+      "name": "Samsung Galaxy Note8",
+      "id": "ce09171919df3833047e"
+    },
+    {
+      "inv": "7581",
+      "name": "Samsung Galaxy Grand 2 LTE",
+      "id": "6ea69842"
+    },
+    {
+      "inv": "8658",
+      "name": "Samsung Galaxy A5 2016",
+      "id": "3300fe50be2ca3e1"
+    },
+    {
+      "inv": "8632",
+      "name": "Samsung Galaxy J3 2016",
+      "id": "42003ae9c4ac4400"
+    },
+    {
+      "inv": "8629",
+      "name": "Samsung Galaxy J5 2016",
+      "id": "0603ce7d"
+    },
+    {
+      "inv": "7782",
+      "name": "Samsung Galaxy J7",
+      "id": "33007ce63be6929b"
+    },
+    {
+      "inv": "7937",
+      "name": "Samsung Galaxy J7 2016",
+      "id": "31001beb29a3433b"
+    },
+    {
+      "inv": "9054",
+      "name": "Samsung Galaxy On5",
+      "id": "420051c7c45c63ab"
+    },
+    {
+      "inv": "6923",
+      "name": "Samsung Galaxy S4",
+      "id": "ba0cb0b7"
+    },
+    {
+      "inv": "8716",
+      "name": "Samsung Galaxy S5",
+      "id": "328ebad5"
+    },
+    {
+      "inv": "7768",
+      "name": "Samsung Galaxy S6",
+      "id": "0915f9e166102105"
+    },
+    {
+      "inv": "8630",
+      "name": "Samsung Galaxy S6 edge",
+      "id": "011711586e3d3401"
+    },
+    {
+      "inv": "7896",
+      "name": "Samsung Galaxy S7 edge",
+      "id": "988678333834544559"
+    },
+    {
+      "inv": "7903",
+      "name": "Samsung Galaxy S7",
+      "id": "9886784d344f585352"
+    },
+    {
+      "inv": "8476",
+      "name": "Samsung Galaxy S8",
+      "id": "ce031713d8e06c100d"
+    },
+    {
+      "inv": "8697",
+      "name": "Samsung Galaxy S8+",
+      "id": "ce051715441ad22001"
+    },
+    {
+      "inv": "9109",
+      "name": "Samsung Galaxy S8+",
+      "id": "9889d64547504e4352"
+    },
+    {
+      "inv": "6816",
+      "name": "Samsung Galaxy Tab 2",
+      "id": "c0808c00ec7a2af"
+    },
+    {
+      "inv": "8005",
+      "name": "Samsung Galaxy Tab A",
+      "id": "18b5e811"
+    },
+    {
+      "inv": "7434",
+      "name": "Samsung Galaxy Tab 3 dev",
+      "id": "43006d0debe45000"
+    },
+    {
+      "inv": "7582",
+      "name": "Samsung Galaxy Tab 3",
+      "id": "3200de8e310ec000"
+    },
+    {
+      "inv": "8382",
+      "name": "Samsung Galaxy Tab 4",
+      "id": "5a9b092a"
+    },
+    {
+      "inv": "8381",
+      "name": "Samsung Galaxy Tab S2",
+      "id": "0b30fc6696f529c9"
+    },
+    {
+      "inv": "7575",
+      "name": "Samsung Galaxy Tab Pro",
+      "id": "5c0c2a0905f3e62d"
+    },
+    {
+      "inv": "7856",
+      "name": "Sony Xperia miro",
+      "id": "YT9104BK7U"
+    },
+    {
+      "inv": "9119",
+      "name": "Sony Xperia E4",
+      "id": "WUJ01LBSTT"
+    },
+    {
+      "inv": "9120",
+      "name": "Sony Xperia E4",
+      "id": "WUJ01LAF9R"
+    },
+    {
+      "inv": "6822",
+      "name": "Sony Xperia S",
+      "id": "CB511WW0QU"
+    },
+    {
+      "inv": "7743",
+      "name": "Sony Xperia Z1 Compact",
+      "id": "CB5A1XSPZQ"
+    },
+    {
+      "inv": "7773",
+      "name": "Sony Xperia Z5 Compact",
+      "id": "CB5A2AH3KH"
+    },
+    {
+      "inv": "7769",
+      "name": "Sony Xperia Z2",
+      "id": "CB5A25KL5L"
+    },
+    {
+      "inv": "None",
+      "name": "Xiaomi Redmi Note 4",
+      "id": "YHEE79V4SWYD8LBE"
+    },
+    {
+      "inv": "9124",
+      "name": "Xiaomi Mi A1",
+      "id": "05fbd2ae0504"
+    }
+  ]
+}
