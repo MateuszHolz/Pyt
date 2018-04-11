@@ -22,14 +22,14 @@ def _waitAndTouch(file, test_section, savePos = False, posCont = None):
     touch(localPos, duration = 0.2)
     if(savePos):        
         posCont.addToContainer(localPos, file)
-    sleep(1)
+    sleep(4)
     return
 
 def _swipe(startPoint, endPoint, option, test_section):
     if option == "files":
-        swipe(v1 = constructTemplate(startPoint, test_section), v2 = constructTemplate(endPoint, test_section), duration = 2)
+        swipe(v1 = constructTemplate(startPoint, test_section), v2 = constructTemplate(endPoint, test_section), duration = 5)
     elif option == "points":
         swipe(v1 = startPoint, v2 = endPoint)
 
 def _takeScrnShot(filename, screenRes):
-    snapshot(r"{}\output\{}-{}".format(os.getcwd(), screenRes, filename))
+    snapshot(r"{}\output\{}-{}.png".format(os.getcwd(), screenRes, filename))
