@@ -1,7 +1,12 @@
 import os
-
 from airtest.core.api import *
 from airtest.core.device import *
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
+from email.mime.application import MIMEApplication
+import smtplib
+import re
 
 class posContainer():
     def __init__(self, screenRes):
@@ -18,11 +23,24 @@ def constructTemplate(file, test_section = None):
     return Template(r"{}\testsc\{}\{}".format(os.getcwd(), test_section, file))
 
 def _waitAndTouch(file, test_section, savePos = False, posCont = None):
-    localPos = wait(constructTemplate(file, test_section), interval = 1, timeout = 60)
-    touch(localPos, duration = 0.2)
-    if(savePos):        
-        posCont.addToContainer(localPos, file)
-    sleep(4)
+    try:
+        localPos = wait(constructTemplate(file, test_section), interval = 1, timeout = 10)
+        touch(localPos, duration = 0.2)
+        if(savePos):        
+            posCont.addToContainer(localPos, file)
+        sleep(4)
+    except Exception as err:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login("testergamelion66@gmail.com", "dupa1212")
+        msg = MIMEMultipart()
+        msgText = MIMEText(str(err))
+        msg.attach(getErrorImage())
+        msg.attach(msgText)
+        msg.attach(MIMEApplication(open(getLogcat()).read()))
+        msg['Subject'] = 'Test failed.'
+        server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
+        raise err
     return
 
 def _swipe(startPoint, endPoint, option, test_section):
@@ -31,5 +49,26 @@ def _swipe(startPoint, endPoint, option, test_section):
     elif option == "points":
         swipe(v1 = startPoint, v2 = endPoint)
 
-def _takeScrnShot(filename, screenRes):
-    snapshot(r"{}\output\{}-{}.png".format(os.getcwd(), screenRes, filename))
+def _takeScrnShot(filename, screenRes = False):
+    if screenRes:
+        fileDir = r"{}\output\{}-{}.png".format(os.getcwd(), screenRes, filename)
+    else:
+        fileDir = r"{}\output\{}.png".format(os.getcwd(), filename)
+    snapshot(fileDir)
+    return fileDir
+
+def getErrorImage():
+    errorImg = _takeScrnShot("error")
+    attachment = open(errorImg, 'rb')
+    _attachment = MIMEImage(attachment.read())
+    attachment.close()
+    return _attachment
+
+def getLogcat():
+    dir = '{}\logcat.txt'.format(os.getcwd())
+    char1 = r'\\'
+    char2 = r'/'
+    formattedDir = re.sub(char1, char2, dir)
+    print(dir)
+    shell('logcat -d > {}'.format(formattedDir))
+    return dir

@@ -146,8 +146,12 @@ def uninstallExistingBuilds(listOfPkgName, adbpath, device):
         except subprocess.CalledProcessError:
             continue
         except subprocess.TimeoutExpired:
-            print("Device {} timed out.".format(localDevice))
-            sys.exit()
+            print("Device {} timed out. Trying to uninstall {} once again".format(localDevice, i))
+            try:
+                subprocess.check_output(r"{}\adb -s {} uninstall {}".format(adbpath, device, i), stderr=subprocess.STDOUT, timeout=15)
+            except subprocess.TimeoutExpired:
+                print("Device {} timed out once again. Omitting {}.".format(localDevice, i))
+                pass
     print("Uninstalled all existing apps from {}".format(localDevice))
 
 

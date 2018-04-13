@@ -1,6 +1,9 @@
 import extended_airtest as test
 from airtest.core.api import *
 from airtest.core.device import *
+from datetime import datetime
+from email.mime.text import MIMEText
+import smtplib
 
 if __name__ == "__main__":
     test_section = ""
@@ -12,11 +15,15 @@ if __name__ == "__main__":
     else:
         clear_app("com.huuuge.stars.slots")
         pass
-    
     for i in range(50):
+        shell('logcat -c')
+        time1 = datetime.now()
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login("testergamelion66@gmail.com", "dupa1212")
         start_app("com.huuuge.stars.slots")
         test_section = "age_confirm"
-        #test._waitAndTouch("allow-button-{}.png".format(dev.getprop("ro.build.version.release")[0]), test_section)
+        test._waitAndTouch("allow-button-{}.png".format(dev.getprop("ro.build.version.release")[0]), test_section)
         test._waitAndTouch("green-ok.png", test_section)
         test._waitAndTouch("year-2010.png", test_section)
         swipePoint1=exists(test.constructTemplate("age-confirm-year-2007.png", test_section))
@@ -51,3 +58,10 @@ if __name__ == "__main__":
         sleep(2.0)
         test._waitAndTouch("submit.png", test_section)
         clear_app("com.huuuge.stars.slots")
+        time2 = datetime.now()
+        msg = MIMEText("")
+        msg['Subject'] = 'Koniec testu #{}. Czas wykonania: {}'.format((i+1), str((time2-time1))[:7])
+        print("\n\n\n\n############# {} ##################\n\n\n\n".format(msg))
+        server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
+        print("-----------------------------------------SENT-----------------------------------------")
+        server.quit()
