@@ -12,5 +12,7 @@ import subprocess
 
 
 connect_device("android:///")
-with open(r'c:\users\armin\desktop\testczydziala3.txt', 'w', encoding='utf-8') as f:
-    f.write(subprocess.check_output(r'c:\users\armin\airtest\airtest\core\android\static\adb\windows\adb.exe -s ce0317131229b80603 logcat -d').decode('utf-8'))
+def getLogcat(dir, serialNo):
+    with open(dir, 'w', encoding='utf-8') as f:
+        f.write(subprocess.check_output(r'c:\users\armin\airtest\airtest\core\android\static\adb\windows\adb.exe -s {} logcat -d'.format(serialNo)).decode('utf-8'))
+    return dir
