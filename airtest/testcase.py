@@ -4,15 +4,12 @@ from airtest.core.device import *
 from datetime import datetime
 from email.mime.text import MIMEText
 import smtplib
-import subprocess
 
 if __name__ == "__main__":
     test_section = ""
     dev = connect_device("android:///")
-    subprocess.check_output(r'c:\users\armin\airtest\airtest\core\android\static\adb\windows\adb.exe -s {} logcat -d > {}'.format(test.getSerialNo(), r'c:\users\armin\desktop\tuchatest.txt'))
-    print("posze")
     wake()
-    sleep(20)
+    sleep(5)
     if dev.check_app("com.huuuge.stars.slots") == False:
         install(r"{}\builds\HuuugeStars-0.1.248-master-(4d73c26f241bf1efb26eba008adae91be768e129)-release.apk".format(os.getcwd()))
     else:

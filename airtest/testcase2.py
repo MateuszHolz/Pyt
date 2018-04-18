@@ -1,16 +1,20 @@
-import os
+import extended_airtest as test
 from airtest.core.api import *
 from airtest.core.device import *
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
-from email.mime.application import MIMEApplication
 import smtplib
-import re
-import time
-import subprocess
+from datetime import datetime
 
-
-connect_device("android:///")
-with open(r'c:\users\armin\desktop\testczydziala3.txt', 'w', encoding='utf-8') as f:
-    f.write(subprocess.check_output(r'c:\users\armin\airtest\airtest\core\android\static\adb\windows\adb.exe -s ce0317131229b80603 logcat -d').decode('utf-8'))
+if __name__ == "__main__":
+    time1 = datetime.now()
+    connect_device("android:///")
+    for i in range(200):
+        test_section = "retest"
+        test._waitAndTouch("socialBtn.png", test_section)
+        test._waitAndTouch("backBtn.png", test_section)
+    time2 = datetime.now()
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login("testergamelion66@gmail.com", "dupa1212")
+    msg['Subject'] = 'Koniec retestu. Wynik - ok. Czas: {}'.format((str(time2-time1))[:7])
+    server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())

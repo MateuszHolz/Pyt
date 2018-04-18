@@ -7,8 +7,6 @@ from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 import smtplib
 import re
-import time
-import subprocess
 
 class posContainer():
     def __init__(self, screenRes):
@@ -39,8 +37,7 @@ def _waitAndTouch(file, test_section, savePos = False, posCont = None):
         msgText = MIMEText(str(err))
         msg.attach(getErrorImage())
         msg.attach(msgText)
-        logcatFile = getLogcat()
-        msg.attach(MIMEApplication(open(logcatFile, 'rb').read()))
+        msg.attach(MIMEApplication(open(getLogcat()).read()))
         msg['Subject'] = 'Test failed.'
         server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
         raise err
@@ -72,11 +69,6 @@ def getLogcat():
     char1 = r'\\'
     char2 = r'/'
     formattedDir = re.sub(char1, char2, dir)
-    try:
-        subprocess.check_output(r'c:\users\armin\airtest\airtest\core\android\static\adb\windows\adb.exe -s {} logcat -d > {}'.format(getSerialNo(), formattedDir))
-    except Exception as err:
-        print('\n\n\n {} \n\n\n'.format(err.output))
+    print(dir)
+    shell('logcat -d > {}'.format(formattedDir))
     return dir
-
-def getSerialNo():
-    return device().getprop("ro.serialno")
