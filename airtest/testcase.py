@@ -9,8 +9,10 @@ import subprocess
 if __name__ == "__main__":
     test_section = ""
     dev = connect_device("android:///")
+    subprocess.check_output(r'c:\users\armin\airtest\airtest\core\android\static\adb\windows\adb.exe -s {} logcat -d > {}'.format(test.getSerialNo(), r'c:\users\armin\desktop\tuchatest.txt'))
+    print("posze")
     wake()
-    sleep(3)
+    sleep(20)
     if dev.check_app("com.huuuge.stars.slots") == False:
         install(r"{}\builds\HuuugeStars-0.1.248-master-(4d73c26f241bf1efb26eba008adae91be768e129)-release.apk".format(os.getcwd()))
     else:
@@ -62,6 +64,7 @@ if __name__ == "__main__":
         time2 = datetime.now()
         msg = MIMEText("")
         msg['Subject'] = 'Koniec testu #{}. Czas wykonania: {}'.format((i+1), str((time2-time1))[:7])
+        print("\n\n\n\n############# {} ##################\n\n\n\n".format(msg))
         server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
         print("-----------------------------------------SENT-----------------------------------------")
         server.quit()

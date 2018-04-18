@@ -39,7 +39,7 @@ def _waitAndTouch(file, test_section, savePos = False, posCont = None):
         msgText = MIMEText(str(err))
         msg.attach(getErrorImage())
         msg.attach(msgText)
-        logcatFile = getLogcat("{}\logcat.txt".format(os.getcwd()), getSerialNo())
+        logcatFile = getLogcat()
         msg.attach(MIMEApplication(open(logcatFile, 'rb').read()))
         msg['Subject'] = 'Test failed.'
         server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
@@ -67,9 +67,15 @@ def getErrorImage():
     attachment.close()
     return _attachment
 
-def getLogcat(dir, serialNo):
-    with open(dir, 'w', encoding='utf-8') as f:
-        f.write(subprocess.check_output(r'c:\users\armin\airtest\airtest\core\android\static\adb\windows\adb.exe -s {} logcat -d'.format(serialNo)).decode('utf-8'))
+def getLogcat():
+    dir = '{}\logcat.txt'.format(os.getcwd())
+    char1 = r'\\'
+    char2 = r'/'
+    formattedDir = re.sub(char1, char2, dir)
+    try:
+        subprocess.check_output(r'c:\users\armin\airtest\airtest\core\android\static\adb\windows\adb.exe -s {} logcat -d > {}'.format(getSerialNo(), formattedDir))
+    except Exception as err:
+        print('\n\n\n {} \n\n\n'.format(err.output))
     return dir
 
 def getSerialNo():
