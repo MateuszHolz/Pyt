@@ -20,4 +20,3 @@ com.huuuge.casino.texas
 com.huuuge.city
 com.huuuge.billionairesaga
 com.huuuge.casino.slots
-com.huuuge.solipro

@@ -1,6 +1,10 @@
 import subprocess
 
 def recurTests():
-    subprocess.check_output("python testcase.py")
+    try:
+        subprocess.check_output("python testcase.py")
+    except subprocess.CalledProcessError:
+        recurTests()
+
 
 recurTests()

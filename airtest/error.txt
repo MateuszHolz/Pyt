@@ -1,1 +1,0 @@
-{"Error_txt": "'Picture Template(C:\\\\Users\\\\mho\\\\Desktop\\\\Pyt\\\\airtest\\\\testsc\\\\age_confirm\\\\year-2010.png) not found in screen'"}
