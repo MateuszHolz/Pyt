@@ -25,24 +25,6 @@ class posContainer():
 def constructTemplate(file, test_section = None):
     return Template(r"{}\testsc\{}\{}".format(os.getcwd(), test_section, file))
 
-def sendMail(jsonData):
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login("testergamelion66@gmail.com", "dupa1212")
-    msg = MIMEMultipart()
-    #TEXT#
-    msgText = MIMEText(jsonData['Error_txt'])
-    msg.attach(msgText)
-    #IMG#
-    msg.attach(getErrorImage(jsonData['Error_img']))
-    #LOGCAT#
-    logcatAttachment = MIMEApplication(open(jsonData['Logcat'], 'rb').read())
-    logcatAttachment['Content-Disposition'] = 'attachment; filename="logcat.txt"'
-    msg.attach(logcatAttachment)
-    msg['Subject'] = 'Test failed.'
-    server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
-
-
 def _waitAndTouch(file, test_section, savePos = False, posCont = None):
     try:
         localPos = wait(constructTemplate(file, test_section), interval = 1, timeout = 2)
@@ -53,13 +35,24 @@ def _waitAndTouch(file, test_section, savePos = False, posCont = None):
     except Exception as err:
         errDict = {}
         errDict['Error_txt'] = str(err)
-        errDict['Error_img'] = _takeScrnShot('error')
-        errDict['Logcat'] = getLogcat("{}\logcat.txt".format(os.getcwd()), getSerialNo())
         print('\n\n\n error(inside script): \n {} \n\n\n'.format(str(err)))
-        with open('error.json', 'w') as f:
+        print('boooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo')
+        with open('error.txt', 'w') as f:
             f.write(json.dumps(errDict))
-        print(errDict)
-        return 1
+        #server = smtplib.SMTP('smtp.gmail.com', 587)
+        #server.starttls()
+        #server.login("testergamelion66@gmail.com", "dupa1212")
+        #msg = MIMEMultipart()
+        #msgText = MIMEText(str(err))
+        #msg.attach(getErrorImage())
+        #msg.attach(msgText)
+        #logcatFile = getLogcat("{}\logcat.txt".format(os.getcwd()), getSerialNo())
+        #logcatAttachment = MIMEApplication(open(logcatFile, 'rb').read())
+        #logcatAttachment['Content-Disposition'] = 'attachment; filename="logcat.txt"'
+        #msg.attach(logcatAttachment)
+        #msg['Subject'] = 'Test failed.'
+        #server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
+        raise err
 
 def _swipe(startPoint, endPoint, option, test_section):
     if option == "files":
@@ -75,7 +68,8 @@ def _takeScrnShot(filename, screenRes = False):
     snapshot(fileDir)
     return fileDir
 
-def getErrorImage(errorImg):
+def getErrorImage():
+    errorImg = _takeScrnShot("error")
     attachment = open(errorImg, 'rb')
     _attachment = MIMEImage(attachment.read())
     attachment.close()
