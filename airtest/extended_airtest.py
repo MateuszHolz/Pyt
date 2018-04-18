@@ -7,6 +7,7 @@ from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 import smtplib
 import re
+import subprocess
 
 class posContainer():
     def __init__(self, screenRes):
@@ -23,25 +24,11 @@ def constructTemplate(file, test_section = None):
     return Template(r"{}\testsc\{}\{}".format(os.getcwd(), test_section, file))
 
 def _waitAndTouch(file, test_section, savePos = False, posCont = None):
-    try:
-        localPos = wait(constructTemplate(file, test_section), interval = 1, timeout = 10)
-        touch(localPos, duration = 0.2)
-        if(savePos):        
-            posCont.addToContainer(localPos, file)
-        sleep(4)
-    except Exception as err:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login("testergamelion66@gmail.com", "dupa1212")
-        msg = MIMEMultipart()
-        msgText = MIMEText(str(err))
-        msg.attach(getErrorImage())
-        msg.attach(msgText)
-        msg.attach(MIMEApplication(open(getLogcat()).read()))
-        msg['Subject'] = 'Test failed.'
-        server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
-        raise err
-    return
+    localPos = wait(constructTemplate(file, test_section), interval = 1, timeout = 60)
+    touch(localPos, duration = 0.2)
+    if(savePos):        
+        posCont.addToContainer(localPos, file)
+    sleep(4)
 
 def _swipe(startPoint, endPoint, option, test_section):
     if option == "files":
@@ -64,11 +51,7 @@ def getErrorImage():
     attachment.close()
     return _attachment
 
-def getLogcat():
-    dir = '{}\logcat.txt'.format(os.getcwd())
-    char1 = r'\\'
-    char2 = r'/'
-    formattedDir = re.sub(char1, char2, dir)
-    print(dir)
-    shell('logcat -d > {}'.format(formattedDir))
+def getLogcat(dir, serialNo):
+    with open(dir, 'w', encoding='utf-8') as f:
+        f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(serialNo)).decode('utf-8'))
     return dir
