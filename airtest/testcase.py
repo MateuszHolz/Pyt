@@ -9,23 +9,26 @@ from email.mime.application import MIMEApplication
 import smtplib
 import sys
 
-def deployTest():
+credentianals = ('testergamelion66@gmail.com', 'dupa1212')
+
+def deployTest(build = None, recur = False):
     try:
         test_section = ""
-        dev = connect_device("android:///")
+        dev = connect_device("android:///3300fe50be2ca3e1") # samsung galaxy a5
         wake()
         sleep(5)
-        if dev.check_app("com.huuuge.stars.slots") == False:
-            install(r"{}\builds\HuuugeStars-0.1.248-master-(4d73c26f241bf1efb26eba008adae91be768e129)-release.apk".format(os.getcwd()))
+        if build:
+            uninstall('com.huuuge.stars.slots')
+            install(build)
         else:
-            clear_app("com.huuuge.stars.slots")
-            pass
-        for i in range(50):
+            if dev.check_app("com.huuuge.stars.slots") == False:
+                install(r"{}\builds\HuuugeStars-0.1.248-master-(4d73c26f241bf1efb26eba008adae91be768e129)-release.apk".format(os.getcwd()))
+            else:
+                clear_app("com.huuuge.stars.slots")
+                pass
+        for i in range(1):
             shell('logcat -c')
             time1 = datetime.now()
-            server = smtplib.SMTP('smtp.gmail.com', 587)
-            server.starttls()
-            server.login("testergamelion66@gmail.com", "dupa1212")
             start_app("com.huuuge.stars.slots")
             test_section = "age_confirm"
             test._waitAndTouch("allow-button-{}.png".format(dev.getprop("ro.build.version.release")[0]), test_section)
@@ -47,6 +50,7 @@ def deployTest():
             test_section = "tutorial"
             sleep(2.0)
             test._waitAndTouch("profile_play.png", test_section)
+            sleep(10.0)
             test._waitAndTouch("tap_to_spin.png", test_section)
             sleep(2.0)
             test._waitAndTouch("tap_to_set_bet.png", test_section)
@@ -64,27 +68,20 @@ def deployTest():
             test._waitAndTouch("submit.png", test_section)
             clear_app("com.huuuge.stars.slots")
             time2 = datetime.now()
-            msg = MIMEText("")
-            msg['Subject'] = 'Koniec testu #{}. Czas wykonania: {}'.format((i+1), str((time2-time1))[:7])
-            print("\n\n\n\n############# {} ##################\n\n\n\n".format(msg))
-            server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
-            print("-----------------------------------------SENT-----------------------------------------")
-            server.quit()
+            mailSubject = 'Koniec testu na buildzie: {}. Czas wykonania: {}'.format((build), str((time2-time1))[:7])
+            test.sendMail(credentianals, subject = mailSubject)
     except Exception as exc:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login("testergamelion66@gmail.com", "dupa1212")
-        msg = MIMEMultipart()
-        msgText = MIMEText(str(exc))
-        msg.attach(msgText)
-        msg.attach(test.getErrorImage())
-        logcat = MIMEApplication(open(test.getLogcat('logcat.txt', dev.getprop("ro.serialno"))).read())
-        logcat['Content-Disposition'] = 'attachment; filename="logcat.txt"'
-        msg.attach(logcat)
-        msg['Subject'] = 'Test failed.'
-        server.sendmail("testergamelion66@gmail.com", "mateusz.holz@huuugegames.com", msg.as_string())
+        if build:
+            sub = 'Tests failed. Build: {}'.format(build)
+        else:
+            sub = 'Tests failed.'
+        test.sendMail(credentianals, serialNo = dev.getprop("ro.serialno"), bodyTxt = str(exc), subject = sub, takeImage = True)
+        if recur:
+            deployTest()
+        else:
+            uninstall('com.huuuge.stars.slots')
+    if recur:
         deployTest()
-    deployTest()
 
 if __name__ == "__main__":
-    deployTest()
+    deployTest(recur = True)

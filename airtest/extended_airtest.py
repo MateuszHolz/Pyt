@@ -46,12 +46,31 @@ def _takeScrnShot(filename, screenRes = False):
 
 def getErrorImage():
     errorImg = _takeScrnShot("error")
-    attachment = open(errorImg, 'rb')
-    _attachment = MIMEImage(attachment.read())
-    attachment.close()
+    with open(errorImg, 'rb') as f:
+        _attachment = MIMEImage(f.read())
     return _attachment
 
 def getLogcat(dir, serialNo):
     with open(dir, 'w', encoding='utf-8') as f:
-        f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(serialNo)).decode('utf-8'))
+        f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(serialNo)).decode('utf-8', errors='backslashreplace'))
     return dir
+
+
+def sendMail(auth, takeImage = None, serialNo = None, bodyTxt = None, subject = None):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(auth[0], auth[1])
+    msg = MIMEMultipart()
+    if bodyTxt:
+        msgText = MIMEText(bodyTxt)
+        msg.attach(msgText)
+    if takeImage:
+        msg.attach(getErrorImage())
+    if serialNo:
+        with open(getLogcat('logcat.txt', serialNo), encoding='utf-8') as f:
+            logcat = MIMEApplication(f.read())
+        logcat['Content-Disposition'] = 'attachment; filename="logcat.txt"'
+        msg.attach(logcat)
+    if subject:
+        msg['Subject'] = subject
+    server.sendmail(auth[0], "mateusz.holz@huuugegames.com", msg.as_string())
