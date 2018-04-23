@@ -54,5 +54,5 @@ if __name__ == '__main__':
             print('New build has been found - {}. Starting tests.'.format(nameContainer.getName()))
             testcase.deployTest(nameContainer.getName())
         else:
-            print('Didnt find any new build. Waiting 10 minutes...')
-            time.sleep(600)
+            print('Didnt find any new build. Waiting 20 minutes...')
+            time.sleep(1200)
