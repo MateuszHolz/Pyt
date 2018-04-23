@@ -74,6 +74,3 @@ def sendMail(auth, takeImage = None, serialNo = None, bodyTxt = None, subject = 
     if subject:
         msg['Subject'] = subject
     server.sendmail(auth[0], "mateusz.holz@huuugegames.com", msg.as_string())
-
-def lockScreen(serialNo):
-    subprocess.check_output('adb -s {} shell input keyevent 26')

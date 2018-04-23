@@ -78,7 +78,7 @@ def deployTest(build = None, recur = False):
         if recur:
             deployTest()
         else:
-            test.lockScreen(dev.getprop('ro.serialno'))
+            dev.keyevent('KEYCODE_POWER')
             uninstall('com.huuuge.stars.slots')
     if recur:
         deployTest()
