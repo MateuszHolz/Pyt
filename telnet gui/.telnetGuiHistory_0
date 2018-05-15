@@ -1,0 +1,11 @@
+SetServerAddress 192.168.64.139:1045
+onConnect
+Lua_listGlobals function
+help |  grep wc
+help
+set
+Lua_printTable function
+Lua_printValue registry
+Lua_listGlobals
+Lua_listGlobals table
+Lua_listGlobals | filter '[table]'

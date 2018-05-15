@@ -5,6 +5,7 @@ import subprocess
 import sys
 import threading
 import time
+from tkinter import *
 
 extension = ".apk"
 msg1 = "Uninstall all builds from device (specified in config/builds.txt) and install new apks - type and enter a"
@@ -173,6 +174,7 @@ def checkAdbConnection(adbPath):
 
 
 def getDevicesList(adbPath, devJson):
+    print("DUpa")
     idsList = []
     canProceed = False
     while canProceed == False:
@@ -232,17 +234,17 @@ def finalInstallationFlow(idList, inputBuildsDirOption, builds = None):
 
 
 def checkAuthorization(deviceID, adbpath, keyWord, index):
-    print("Checking authorization of {}".format(getDeviceInfo(deviceID, devicesJson)))
+    print("\nChecking authorization of {}".format(getDeviceInfo(deviceID, devicesJson)))
     try:
         subprocess.check_output(r'{}\adb -s {} get-state'.format(adbpath, deviceID), stderr=subprocess.STDOUT)
-        print("Device {} authorized.".format(getDeviceInfo(deviceID, devicesJson)))
+        print("\nDevice {} authorized.".format(getDeviceInfo(deviceID, devicesJson)))
     except subprocess.CalledProcessError as err:
         if keyWord.encode() in err.output:
-            print("Device {} unauthorized. Program will now exit. Press any key.".format(getDeviceInfo(deviceID, devicesJson)))
+            print("\nDevice {} unauthorized. Program will now exit. Press any key.".format(getDeviceInfo(deviceID, devicesJson)))
             index.addUnauthIndex()
             msvcrt.getch()
         else:
-            print("Device {} authorized.".format(getDeviceInfo(deviceID, devicesJson)))
+            print("\nDevice {} authorized.".format(getDeviceInfo(deviceID, devicesJson)))
 
 
 def createAuthThreads(deviceList, index):
@@ -251,8 +253,8 @@ def createAuthThreads(deviceList, index):
         localThread = threading.Thread(target=checkAuthorization, args=(i, getPathOfAdb(), unauthorizedKeyWord, index))
         localThreads.append(localThread)
         localThread.start()
-    for i in localThreads:
-        i.join()
+    #for i in localThreads:
+    #    i.join()
 
 
 def getDevicesDir(devicesDir):
@@ -271,26 +273,42 @@ def getDevicesDir(devicesDir):
         msvcrt.getch()
         sys.exit()
 
+def redirector(inputStr):
+    textbox.insert(INSERT, inputStr)
+    textbox.see(END)
+
+def callToTextField(func, params):
+    return lambda: func(*params)
 
 if __name__ == '__main__':
+    print(sys.argv)
+    index = unauthorizedIndex()
+    devicesJson = loadJsonData(getDevicesDir(devicesDataDir))
+    idsList = getDevicesList(getPathOfAdb(), devicesJson)
     _builds = None
     userBuildsOptionChosen = None
-    os.chdir(os.path.dirname(sys.argv[0]))
-
+    #os.chdir(os.path.dirname(sys.argv[0]))
+    root = Tk()
+    textbox=Text(root)
+    textbox.pack()
+    sys.stdout.write = redirector #redirecting all printed text into text frame
+    button1 = Button(root, text='test', command=callToTextField(getDevicesList, (getPathOfAdb(), devicesJson)))
+    button2 = Button(root, text='authThreads', command=callToTextField(createAuthThreads, (idsList, index)))
+    button1.pack()
+    button2.pack()
     ### Checking adb path ###
     print("Checking adb path...")
     checkAdbConnection(getPathOfAdb())
     ### Checking status of connected devices ###
     devicesJson = loadJsonData(getDevicesDir(devicesDataDir))
     print("Checking devices...")
-    idsList = getDevicesList(getPathOfAdb(), devicesJson)
+    root.mainloop()
 
     ### Checking authorization of all devices ###
-    index = unauthorizedIndex()
-    createAuthThreads(idsList, index)
+    
+    #createAuthThreads(idsList, index)
     if index.getUnauthIndex() > 0: # true means that at least one device is unauthorized
         sys.exit()
-
     ### Checking if user has dropped builds to install. If so, prompting all builds that were dropped, checking if all end with .apk ###
     if len(sys.argv) > 1:
         for i in sys.argv[1:]:
@@ -312,3 +330,4 @@ if __name__ == '__main__':
     print("Press any key to exit program.")
     msvcrt.getch()
     sys.exit()
+    root.mainloop()

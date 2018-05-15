@@ -1,0 +1,68 @@
+# vim: set syntax=cfg:
+[Global]
+sortCommands = 1
+syntaxHighlight = 1
+defaultLabel = [$HOST:$PORT]
+defaultHost = 127.0.0.1
+defaultPort = 1337
+defaultPreConnectCommand = adb forward tcp:1337 tcp:1337
+timeStampDateFormat = [%d.%m.%y %H:%M:%S]
+editor = %windir%\system32\notepad.exe
+commandPattern0 = ^(\w+)$
+commandPattern1 = ^([A-Za-z0-9\-_]+):
+commandPattern2 = ^\s*\d+\. ([A-Za-z ]+):
+
+[CommandWidget0]
+type = 0
+name = LuaGlobalTables
+listItemTitle = Tables
+listItemCommand = Lua_printTable $$
+listItemCommandEditable = 1
+listBuildCommand = Lua_listGlobals | filter '[table]' | grep -o '[A-Za-z_\-]+$' | sort
+listBuildCommandEditable = 1
+listBuildDescription = Receive list of global Lua tables
+outputHighlighting = telnetOutput
+hint = Select variable and click to show its content
+[CommandWidget1]
+type = 0
+name = LuaStrings
+listItemTitle = Strings
+listItemCommand = Lua_printValue $$
+listItemCommandEditable = 1
+listBuildCommand = Lua_listGlobals | filter '[string]' | grep -o '[A-Za-z_\-]+$' | sort
+listBuildCommandEditable = 1
+listBuildDescription = Receive list of Lua strings
+outputHighlighting = telnetOutput
+hint = Select variable and click to show its content
+[CommandWidget2]
+type = 1
+name = LuaEval
+inputDescription = Lua code to evaluate (press shift-enter to eval or hit button at the bottom)
+inputHighlighting = lua
+loadScriptButtonLabel = Insert content of Lua file
+outputDescription = Lua output
+outputCommand = Lua_eval '$$'
+outputCommandDescription = Output command, $$ denotes input.
+outputBuildDescription = Eval Lua code
+joinLines = 1
+outputHighlighting = telnetOutput
+[CommandWidget3]
+type = 1
+name = TScriptEval
+inputDescription = List of telnet commands
+inputHighlighting = tscript
+loadScriptButtonLabel = Insert content of TScript file
+outputDescription = Output
+outputCommand = $$
+outputCommandDescription = <No command - input directly goes to TScript>
+outputBuildDescription = Execute TScript code
+outputHighlighting = telnetOutput
+
+
+[Tab0]
+label = $STATUS2 [$HOST:$PORT]
+host = 127.0.0.1
+port = 1337
+preConnectCommand = adb forward tcp:1337 tcp:1337
+preConnectCommandEnabled = 0
+bookmarksSet = uhn

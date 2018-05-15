@@ -1,0 +1,10 @@
+onConnect
+help |  grep wc
+help
+set
+Lua_listGlobals function
+Lua_printTable function
+Lua_printValue registry
+Lua_listGlobals
+Lua_listGlobals table
+Lua_listGlobals | filter '[table]'
