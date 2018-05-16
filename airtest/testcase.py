@@ -1,4 +1,4 @@
-import extended_airtest as test
+import extended_airtest
 from airtest.core.api import *
 from airtest.core.device import *
 from datetime import datetime
@@ -11,49 +11,24 @@ import sys
 
 credentianals = ('testergamelion66@gmail.com', 'dupa1212')
 
-def prepareDevice():
-    try:
-        dev = connect_device('android:///3300fe50be2ca3e1') # samsung galaxy a5
-    except Exception:
-        dev = connect_device('android:///3300fe50be2ca3e1') # samsung galaxy a5
-    wake()
-    return dev
+automat = extended_airtest.airtestAutomation('3300fe50be2ca3e1', 'com.huuuge.stars.slots')
+automat.runShellCommand('logcat -c')
+######################################################################################
+######################################TEST CASE#######################################
+######################################################################################
+automat.setTestSection('full_tutorial')
+automat.waitAndTouch('allow-button-7')
+automat.waitAndTouch('lang_ok', sleepTime = 40)
+automat.waitAndTouch('profile_play', sleepTime = 15)
+automat.waitAndTouch('tut_1', sleepTime = 5)
+automat.waitAndTouch('tut_2', sleepTime = 5)
+automat.waitAndTouch('tut_3', sleepTime = 5)
+automat.waitAndTouch('tut_4', sleepTime = 5)
+automat.waitAndTouch('tut_5', sleepTime = 25)
+automat.waitAndTouch('tut_6', sleepTime = 7)
+automat.setTestSection('clubs')
 
-def deployTest(build = None, recur = False, dev = None, index=0):
-    try:
-        if build:
-            uninstall('com.huuuge.stars.slots')
-            install(build)
-        else:
-            if dev.check_app('com.huuuge.stars.slots') == False:
-                install(r'{}\builds\HuuugeStars-0.1.248-master-(4d73c26f241bf1efb26eba008adae91be768e129)-release.apk'.format(os.getcwd()))
-            else:
-                clear_app('com.huuuge.stars.slots')
-                pass
-        shell('logcat -c')
-        time1 = datetime.now()
-        start_app('com.huuuge.stars.slots')
-        ######################################################################################
-        ######################################TEST CASE#######################################
-        ######################################################################################
-        test_section = 'full_tutorial'
-        test._waitAndTouch('allow-button-{}.png'.format(dev.getprop('ro.build.version.release')[0]), test_section)
-        test._waitAndTouch('lang_ok.png', test_section)
-        sleep(35)
-        test._waitAndTouch('profile_play.png', test_section)
-        sleep(10)
-        test._waitAndTouch('tut_1.png', test_section)
-        sleep(2)
-        test._waitAndTouch('tut_2.png', test_section)
-        sleep(2)
-        test._waitAndTouch('tut_3.png', test_section)
-        sleep(2)
-        test._waitAndTouch('tut_4.png', test_section)
-        sleep(2)
-        test._waitAndTouch('tut_5.png', test_section)
-        sleep(20)
-        test._waitAndTouch('tut_6.png', test_section)
-        sleep(5)
+""" def deployTest(build = None, recur = False, dev = None, index=0):
         test_section = 'clubs'
         test._waitAndTouch('lobby_button.png', test_section)
         test._waitAndTouch('get_started.png', test_section)
@@ -84,9 +59,4 @@ def deployTest(build = None, recur = False, dev = None, index=0):
             dev.keyevent('KEYCODE_POWER')
             uninstall('com.huuuge.stars.slots')
     if recur:
-        deployTest(recur = True, dev = dev, index = index+1)
-
-
-if __name__ == '__main__':
-    device = prepareDevice()
-    deployTest(recur = True, dev = device, index=15)
+        deployTest(recur = True, dev = dev, index = index+1) """
