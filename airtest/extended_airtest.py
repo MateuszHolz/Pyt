@@ -6,7 +6,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 import smtplib
-import re
 import subprocess
 
 class airtestAutomation():
@@ -26,8 +25,11 @@ class airtestAutomation():
         wake()
         return device
 
-    def clearAppData(self):
-        clear_app(self.packageName)
+    def clearAppData(self, optionalPckName = None):
+        if optionalPckName:
+            clear_app(optionalPckName)
+        else:
+            clear_app(self.packageName)
 
     def runApp(self):
         start_app(self.packageName)
@@ -49,11 +51,8 @@ class airtestAutomation():
         elif option == "points":
             swipe(v1 = startPoint, v2 = endPoint)
 
-    def takeScreenShot(self, filename, screenRes = False):
-        if screenRes:
-            fileDir = r"{}\output\{}-{}.png".format(os.getcwd(), screenRes, filename)
-        else:
-            fileDir = r"{}\output\{}.png".format(os.getcwd(), filename)
+    def takeScreenShot(self, filename):
+        fileDir = r"{}\output\{}.png".format(os.getcwd(), filename)
         snapshot(fileDir)
         return fileDir
 
@@ -68,7 +67,7 @@ class airtestAutomation():
             f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(self.devId)).decode('utf-8', errors='backslashreplace'))
         return dir
 
-    def sendMail(self, auth, takeImage = None, serialNo = None, bodyTxt = None, subject = None):
+    def sendMail(self, auth, takeImage = None, getLogcat = None, bodyTxt = None, subject = None):
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(auth[0], auth[1])
@@ -78,7 +77,7 @@ class airtestAutomation():
             msg.attach(msgText)
         if takeImage:
             msg.attach(self.getErrorImage())
-        if serialNo:
+        if getLogcat:
             with open(self.getLogcat('logcat.txt'), encoding='utf-8') as f:
                 logcat = MIMEApplication(f.read())
             logcat['Content-Disposition'] = 'attachment; filename="logcat.txt"'
