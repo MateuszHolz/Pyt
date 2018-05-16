@@ -16,7 +16,11 @@ def takeScreenShot(device):
 
 def getDevices():
     devices = []
-    rawList = subprocess.check_output(r"adb devices").rsplit()
+    try:
+        _l = subprocess.check_output(r"adb devices")
+    except subprocess.CalledProcessError:
+        _l = subprocess.check_output(r"adb devices")
+    rawList = _l.rsplit()
     tempList = rawList[4:]
     for i in range(len(tempList)):
         if i%2 == 0:
@@ -49,4 +53,7 @@ def getResolution(device):
 
 if __name__ == "__main__":
     jsonData = getJsonData(devicesDataPath)
-    createThreads(takeScreenShot, getDevices())
+    try:
+        createThreads(takeScreenShot, getDevices())
+    except:
+        createThreads(takeScreenShot, getDevices())

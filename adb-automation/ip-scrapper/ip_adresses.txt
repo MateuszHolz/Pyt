@@ -1,4 +1,4 @@
+HUAWEI P10 - 192.168.65.65
 Samsung Galaxy A5 2016 - 192.168.65.153
-Samsung Galaxy Tab S2 - 192.168.67.142
-Samsung Galaxy S7 edge - 192.168.65.193
-Samsung Galaxy S8 - 192.168.67.141
+Samsung Galaxy S8+ - 192.168.65.165
+Samsung Galaxy Tab S2 - 192.168.67.78
