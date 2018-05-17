@@ -6,71 +6,97 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 import smtplib
-import re
 import subprocess
 
-class posContainer():
-    def __init__(self, screenRes):
-        self.container = {}
-        self.screenRes = screenRes
+class airtestAutomation():
+    def __init__(self, devId, packageName, runApp = None, clearData = None):
+        self.devId = devId
+        self.packageName = packageName
+        self.testSection = None
+        self.device = self.connectToDevice()
+        self.index = 0
+        if clearData:
+            self.clearAppData()
+        if runApp:
+            self.runApp()
 
-    def addToContainer(self, positions, file):
-        self.container['{}'.format(file)] = '{}x{}'.format(positions[0], positions[1])
+    def connectToDevice(self):
+        try:
+            device = connect_device('android:///{}'.format(self.devId))
+        except Exception:
+            device = connect_device('android:///{}'.format(self.devId))
+        wake()
+        return device
 
-    def getPosContainer(self):
-        return self.container
+    def clearAppData(self, optionalPckName = None):
+        if optionalPckName:
+            clear_app(optionalPckName)
+        else:
+            clear_app(self.packageName)
 
-def constructTemplate(file, test_section = None):
-    return Template(r"{}\testsc\{}\{}".format(os.getcwd(), test_section, file))
+    def runApp(self):
+        start_app(self.packageName)
 
-def _waitAndTouch(file, test_section, savePos = False, posCont = None):
-    localPos = wait(constructTemplate(file, test_section), interval = 1, timeout = 60)
-    touch(localPos, duration = 0.2)
-    if(savePos):        
-        posCont.addToContainer(localPos, file)
-    sleep(4)
+    def setTestSection(self, testSection):
+        self.testSection = testSection
 
-def _swipe(startPoint, endPoint, option, test_section):
-    if option == "files":
-        swipe(v1 = constructTemplate(startPoint, test_section), v2 = constructTemplate(endPoint, test_section), duration = 5)
-    elif option == "points":
-        swipe(v1 = startPoint, v2 = endPoint)
+    def waitAndTouch(self, file, sleepTime = 4, timeout = 60):
+        localPos = wait(self.constructTemplate(file), interval = 1, timeout = 60)
+        touch(localPos, duration = 0.2)
+        sleep(sleepTime)
 
-def _takeScrnShot(filename, screenRes = False):
-    if screenRes:
-        fileDir = r"{}\output\{}-{}.png".format(os.getcwd(), screenRes, filename)
-    else:
+    def constructTemplate(self, file):
+        return Template(r"{}\testsc\{}\{}.png".format(os.getcwd(), self.testSection, file))
+
+    def swipe(self, startPoint, endPoint, option):
+        if option == "files":
+            swipe(v1 = self.constructTemplate(startPoint), v2 = self.constructTemplate(endPoint), duration = 5)
+        elif option == "points":
+            swipe(v1 = startPoint, v2 = endPoint)
+
+    def takeScreenShot(self, filename):
         fileDir = r"{}\output\{}.png".format(os.getcwd(), filename)
-    snapshot(fileDir)
-    return fileDir
+        snapshot(fileDir)
+        return fileDir
 
-def getErrorImage():
-    errorImg = _takeScrnShot("error")
-    with open(errorImg, 'rb') as f:
-        _attachment = MIMEImage(f.read())
-    return _attachment
+    def getErrorImage(self):
+        errorImg = self.takeScreenShot("error")
+        with open(errorImg, 'rb') as f:
+            _attachment = MIMEImage(f.read())
+        return _attachment
 
-def getLogcat(dir, serialNo):
-    with open(dir, 'w', encoding='utf-8') as f:
-        f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(serialNo)).decode('utf-8', errors='backslashreplace'))
-    return dir
+    def getLogcat(self, dir):
+        with open(dir, 'w', encoding='utf-8') as f:
+            f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(self.devId)).decode('utf-8', errors='backslashreplace'))
+        return dir
 
+    def sendMail(self, auth, takeImage = None, getLogcat = None, bodyTxt = None, subject = None):
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(auth[0], auth[1])
+        msg = MIMEMultipart()
+        if bodyTxt:
+            msgText = MIMEText(bodyTxt)
+            msg.attach(msgText)
+        if takeImage:
+            msg.attach(self.getErrorImage())
+        if getLogcat:
+            with open(self.getLogcat('logcat.txt'), encoding='utf-8') as f:
+                logcat = MIMEApplication(f.read())
+            logcat['Content-Disposition'] = 'attachment; filename="logcat.txt"'
+            msg.attach(logcat)
+        if subject:
+            msg['Subject'] = subject
+        server.sendmail(auth[0], "mateusz.holz@huuugegames.com", msg.as_string())
+        
+    def runShellCommand(self, cmd):
+        shell(cmd)
 
-def sendMail(auth, takeImage = None, serialNo = None, bodyTxt = None, subject = None):
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(auth[0], auth[1])
-    msg = MIMEMultipart()
-    if bodyTxt:
-        msgText = MIMEText(bodyTxt)
-        msg.attach(msgText)
-    if takeImage:
-        msg.attach(getErrorImage())
-    if serialNo:
-        with open(getLogcat('logcat.txt', serialNo), encoding='utf-8') as f:
-            logcat = MIMEApplication(f.read())
-        logcat['Content-Disposition'] = 'attachment; filename="logcat.txt"'
-        msg.attach(logcat)
-    if subject:
-        msg['Subject'] = subject
-    server.sendmail(auth[0], "mateusz.holz@huuugegames.com", msg.as_string())
+    def type(self, txt):
+        text(txt)
+
+    def setIndex(self, index):
+        self.index = index
+
+    def getIndex(self):
+        return self.index
