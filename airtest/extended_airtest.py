@@ -9,13 +9,16 @@ import smtplib
 import subprocess
 
 class airtestAutomation():
-    def __init__(self, devId, packageName):
+    def __init__(self, devId, packageName, runApp = None, clearData = None):
         self.devId = devId
         self.packageName = packageName
         self.testSection = None
         self.device = self.connectToDevice()
-        self.clearAppData()
-        self.runApp()
+        self.index = 0
+        if clearData:
+            self.clearAppData()
+        if runApp:
+            self.runApp()
 
     def connectToDevice(self):
         try:
@@ -88,3 +91,12 @@ class airtestAutomation():
         
     def runShellCommand(self, cmd):
         shell(cmd)
+
+    def type(self, txt):
+        text(txt)
+
+    def setIndex(self, index):
+        self.index = index
+
+    def getIndex(self):
+        return self.index
