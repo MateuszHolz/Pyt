@@ -1,7 +1,4 @@
 import extended_airtest
-from airtest.core.api import *
-from airtest.core.device import *
-from datetime import datetime
 
 credentianals = ('testergamelion66@gmail.com', 'dupa1212')
 

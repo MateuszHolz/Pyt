@@ -48,9 +48,9 @@ class airtestAutomation():
     def constructTemplate(self, file):
         return Template(r"{}\testsc\{}\{}.png".format(os.getcwd(), self.testSection, file))
 
-    def swipe(self, startPoint, endPoint, option):
+    def swipe(self, startPoint, endPoint, option, duration = 5):
         if option == "files":
-            swipe(v1 = self.constructTemplate(startPoint), v2 = self.constructTemplate(endPoint), duration = 5)
+            swipe(v1 = self.constructTemplate(startPoint), v2 = self.constructTemplate(endPoint), duration = duration)
         elif option == "points":
             swipe(v1 = startPoint, v2 = endPoint)
 
@@ -100,3 +100,6 @@ class airtestAutomation():
 
     def getIndex(self):
         return self.index
+
+    def wait(self, time):
+        sleep(time)
