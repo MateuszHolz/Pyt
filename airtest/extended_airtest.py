@@ -20,10 +20,8 @@ class airtestAutomation():
         self.currentScreen = None
         self.currentAction = None
         self.templatesDict = {}
-        if clearData:
-            self.clearAppData()
-        if runApp:
-            self.runApp()
+        if clearData: self.clearAppData()
+        if runApp: self.runApp()
 
     def createTelnetClient(self):
         self.setCurrAction('createTelnetClient')
@@ -47,12 +45,7 @@ class airtestAutomation():
         return device
 
     def clearAppData(self, optionalPckName = None):
-        self.setCurrAction('clearAppData')
-        self.setCurrScreen(None)
-        if optionalPckName:
-            clear_app(optionalPckName)
-        else:
-            clear_app(self.packageName)
+        clear_app(optionalPckName) if optionalPckName else clear_app(self.packageName)
 
     def runApp(self):
         self.setCurrAction('runApp')
@@ -96,10 +89,8 @@ class airtestAutomation():
     def swipe(self, startPoint, endPoint, option, duration = 5):
         self.setCurrAction('swipe')
         self.setCurrScreen((startPoint, endPoint))
-        if option == "files":
-            swipe(v1 = self.constructTemplate(startPoint), v2 = self.constructTemplate(endPoint), duration = duration)
-        elif option == "points":
-            swipe(v1 = startPoint, v2 = endPoint)
+        if option == "files": swipe(v1 = self.constructTemplate(startPoint), v2 = self.constructTemplate(endPoint), duration = duration)
+        elif option == "points": swipe(v1 = startPoint, v2 = endPoint)
 
     def takeScreenShot(self, filename):
         self.setCurrAction('takeScreenShot')
@@ -131,15 +122,13 @@ class airtestAutomation():
         if bodyTxt:
             msgText = MIMEText(bodyTxt)
             msg.attach(msgText)
-        if takeImage:
-            msg.attach(self.getErrorImage())
+        if takeImage: msg.attach(self.getErrorImage())
         if getLogcat:
             with open(self.getLogcat('logcat.txt'), encoding='utf-8') as f:
                 logcat = MIMEApplication(f.read())
             logcat['Content-Disposition'] = 'attachment; filename="logcat.txt"'
             msg.attach(logcat)
-        if subject:
-            msg['Subject'] = subject
+        if subject: msg['Subject'] = subject
         server.sendmail(auth[0], "mateusz.holz@huuugegames.com", msg.as_string())
         
     def runShellCommand(self, cmd):
