@@ -1,4 +1,4 @@
-HUAWEI Mate 10 Pro - 192.168.67.54
-Samsung Galaxy Tab S2 - 192.168.67.194
-Samsung Galaxy J5 2016 - 192.168.67.195
+Samsung Galaxy S7 - 192.168.65.111
+Samsung Galaxy S8 - 192.168.65.139
 Samsung Galaxy A5 2016 - 192.168.65.153
+Samsung Galaxy Tab S2 - 192.168.67.194

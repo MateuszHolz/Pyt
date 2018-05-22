@@ -67,20 +67,19 @@ class airtestAutomation():
     def waitAndTouch(self, file, sleepTime = 4, timeout = 60):
         self.setCurrAction('waitAndTouch')
         self.setCurrScreen(file)
-        if file in self.templatesDict:
-            f = self.templatesDict[file]
-        else:
-            f = self.constructTemplate(file)
-        localPos = wait(f, interval = 1, timeout = 60)
+        localPos = wait(self.constructTemplate(file), interval = 1, timeout = 60)
         touch(localPos, duration = 0.2)
         sleep(sleepTime)
 
     def constructTemplate(self, file):
         self.setCurrAction('constructTemplate')
         self.setCurrScreen(file)
-        temp = Template(r"{}\testsc\{}\{}.png".format(os.getcwd(), self.testSection, file))
-        self.templatesDict[file] = temp
-        return temp
+        if file in self.templatesDict:
+            return self.templatesDict[file]
+        else:
+            temp = Template(r"{}\testsc\{}\{}.png".format(os.getcwd(), self.testSection, file))
+            self.templatesDict[file] = temp
+            return temp
 
     def setCurrScreen(self, currentScreen):
         self.currentScreen = currentScreen

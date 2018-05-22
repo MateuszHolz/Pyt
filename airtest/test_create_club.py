@@ -28,7 +28,7 @@ def runTests(automat, curIndx = 0):
 			automat.waitAndTouch('create_club')
 			automat.waitAndTouch('random_club_symbol')
 			automat.waitAndTouch('club_name_input')
-			automat.type('klub{}'.format(automat.getIndex()))
+			automat.type('klubz{}'.format(automat.getIndex()))
 			automat.waitAndTouch('club_desc_input')
 			automat.type('klub{}'.format(automat.getIndex()))
 			automat.waitAndTouch('create_club_button')
@@ -40,4 +40,4 @@ def runTests(automat, curIndx = 0):
 
 aut = extended_airtest.airtestAutomation('3300fe50be2ca3e1', 'com.huuuge.stars.slots')
 
-runTests(automat = aut, curIndx = 16)
+runTests(automat = aut, curIndx = 30)
