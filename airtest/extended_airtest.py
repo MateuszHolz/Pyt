@@ -7,6 +7,7 @@ from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 import smtplib
 import subprocess
+import telnetlib
 
 class airtestAutomation():
     def __init__(self, devId, packageName, runApp = None, clearData = None):
@@ -15,12 +16,29 @@ class airtestAutomation():
         self.testSection = None
         self.device = self.connectToDevice()
         self.index = 0
+        self.telnetClient = None
+        self.currentScreen = None
+        self.currentAction = None
+        self.templatesDict = {}
         if clearData:
             self.clearAppData()
         if runApp:
             self.runApp()
 
+    def createTelnetClient(self):
+        self.setCurrAction('createTelnetClient')
+        self.setCurrScreen(None)
+        self.telnetClient = telnetlib.Telnet(self.getDeviceIpAddr(), '1337')
+
+    def closeTelnetClient(self):
+        self.setCurrAction('closeTelnetClient')
+        self.setCurrScreen(None)
+        self.telnetClient.close()
+        self.telnetClient = None
+
     def connectToDevice(self):
+        self.setCurrAction('connectToDevice')
+        self.setCurrScreen(None)
         try:
             device = connect_device('android:///{}'.format(self.devId))
         except Exception:
@@ -29,43 +47,79 @@ class airtestAutomation():
         return device
 
     def clearAppData(self, optionalPckName = None):
+        self.setCurrAction('clearAppData')
+        self.setCurrScreen(None)
         if optionalPckName:
             clear_app(optionalPckName)
         else:
             clear_app(self.packageName)
 
     def runApp(self):
+        self.setCurrAction('runApp')
+        self.setCurrScreen(None)
         start_app(self.packageName)
 
     def setTestSection(self, testSection):
+        self.setCurrAction('setTestSection')
+        self.setCurrScreen(None)
         self.testSection = testSection
 
     def waitAndTouch(self, file, sleepTime = 4, timeout = 60):
-        localPos = wait(self.constructTemplate(file), interval = 1, timeout = 60)
+        self.setCurrAction('waitAndTouch')
+        self.setCurrScreen(file)
+        if file in self.templatesDict:
+            f = self.templatesDict[file]
+        else:
+            f = self.constructTemplate(file)
+        localPos = wait(f, interval = 1, timeout = 60)
         touch(localPos, duration = 0.2)
         sleep(sleepTime)
 
     def constructTemplate(self, file):
-        return Template(r"{}\testsc\{}\{}.png".format(os.getcwd(), self.testSection, file))
+        self.setCurrAction('constructTemplate')
+        self.setCurrScreen(file)
+        temp = Template(r"{}\testsc\{}\{}.png".format(os.getcwd(), self.testSection, file))
+        self.templatesDict[file] = temp
+        return temp
+
+    def setCurrScreen(self, currentScreen):
+        self.currentScreen = currentScreen
+
+    def getCurrScreen(self):
+        return self.currentScreen
+
+    def setCurrAction(self, currentAction):
+        self.currentAction = currentAction
+
+    def getCurrAction(self):
+        return self.currentAction
 
     def swipe(self, startPoint, endPoint, option, duration = 5):
+        self.setCurrAction('swipe')
+        self.setCurrScreen((startPoint, endPoint))
         if option == "files":
             swipe(v1 = self.constructTemplate(startPoint), v2 = self.constructTemplate(endPoint), duration = duration)
         elif option == "points":
             swipe(v1 = startPoint, v2 = endPoint)
 
     def takeScreenShot(self, filename):
+        self.setCurrAction('takeScreenShot')
+        self.setCurrScreen(None)
         fileDir = r"{}\output\{}.png".format(os.getcwd(), filename)
         snapshot(fileDir)
         return fileDir
 
     def getErrorImage(self):
+        self.setCurrAction('getErrorImage')
+        self.setCurrScreen(None)
         errorImg = self.takeScreenShot("error")
         with open(errorImg, 'rb') as f:
             _attachment = MIMEImage(f.read())
         return _attachment
 
     def getLogcat(self, dir):
+        self.setCurrAction('getLogcat')
+        self.setCurrScreen(None)
         with open(dir, 'w', encoding='utf-8') as f:
             f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(self.devId)).decode('utf-8', errors='backslashreplace'))
         return dir
@@ -90,16 +144,41 @@ class airtestAutomation():
         server.sendmail(auth[0], "mateusz.holz@huuugegames.com", msg.as_string())
         
     def runShellCommand(self, cmd):
-        shell(cmd)
+        self.setCurrAction('runShellCommand')
+        self.setCurrScreen(None)
+        return shell(cmd)
 
     def type(self, txt):
+        self.setCurrAction('type')
+        self.setCurrScreen(None)
         text(txt)
 
     def setIndex(self, index):
+        self.setCurrAction('setIndex')
+        self.setCurrScreen(None)
         self.index = index
 
-    def getIndex(self):
+    def getIndex(self, mail = False):
+        if mail == False:
+            self.setCurrAction('getIndex')
+            self.setCurrScreen(None)
         return self.index
 
     def wait(self, time):
+        self.setCurrAction('wait')
+        self.setCurrScreen(None)
         sleep(time)
+
+    def getDeviceIpAddr(self):
+        self.setCurrAction('getDeviceIpAddr')
+        self.setCurrScreen(None)
+        output = self.runShellCommand('ip -f inet addr show wlan0')
+        ipAddr = output[output.index('inet')+5:output.index('/')]
+        return ipAddr
+
+    def runTelnetCommand(self, cmd):
+        self.setCurrAction('runTelnetCommand')
+        self.setCurrScreen(None)
+        self.createTelnetClient()
+        self.telnetClient.write(cmd.encode('ascii')+b'\r\n')
+        self.closeTelnetClient()
