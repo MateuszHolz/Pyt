@@ -9,6 +9,7 @@ def runTests(automat, curIndx = 0):
 		for i in range(100000):
 			automat.clearAppData()
 			automat.runApp()
+			automat.wait(2)
 			automat.runShellCommand('logcat -c')
 			automat.setTestSection('full_tutorial')
 			automat.waitAndTouch('allow-button-7')
@@ -28,13 +29,13 @@ def runTests(automat, curIndx = 0):
 			automat.waitAndTouch('create_club')
 			automat.waitAndTouch('random_club_symbol')
 			automat.waitAndTouch('club_name_input')
-			automat.type('aut{}'.format(automat.getIndex()))
+			automat.type('auti{}'.format(automat.getIndex()))
 			automat.waitAndTouch('club_desc_input')
 			automat.type('klub{}'.format(automat.getIndex()))
 			automat.waitAndTouch('create_club_button')
 			automat.setIndex(automat.getIndex()+1)
 	except Exception:
-		automat.sendMail(auth = credentianals, subject = 'Error po probie {}'.format(automat.getIndex(mail = True)), bodyTxt = '{} {}'.format(automat.getCurrScreen(), automat.getCurrAction()))
+		automat.sendMail(auth = credentianals, subject = 'Error po probie {}'.format(automat.getIndex(mail = True)), bodyTxt = '{} {}'.format(automat.getCurrScreen(), automat.getCurrAction()), takeImage = True, getLogcat = True)
 		runTests(aut, automat.getIndex())
 
 

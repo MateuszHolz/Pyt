@@ -57,11 +57,12 @@ class airtestAutomation():
         self.setCurrScreen(None)
         self.testSection = testSection
 
-    def waitAndTouch(self, file, sleepTime = 4, timeout = 60):
+    def waitAndTouch(self, file, sleepTime = 4, timeout = 60, interval = 1, duration = 0.2):
+        temp = self.constructTemplate(file)
         self.setCurrAction('waitAndTouch')
         self.setCurrScreen(file)
-        localPos = wait(self.constructTemplate(file), interval = 1, timeout = 60)
-        touch(localPos, duration = 0.2)
+        localPos = wait(temp, interval = interval, timeout = timeout)
+        touch(localPos, duration = duration)
         sleep(sleepTime)
 
     def constructTemplate(self, file):
