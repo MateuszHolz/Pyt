@@ -29,7 +29,7 @@ def runTests(automat, curIndx = 0):
 			automat.waitAndTouch('create_club')
 			automat.waitAndTouch('random_club_symbol')
 			automat.waitAndTouch('club_name_input')
-			automat.type('testStab{}'.format(automat.getIndex()))
+			automat.type('tzst{}'.format(automat.getIndex()))
 			automat.waitAndTouch('club_desc_input')
 			automat.type('klub{}'.format(automat.getIndex()))
 			automat.waitAndTouch('create_club_button')

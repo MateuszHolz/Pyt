@@ -173,3 +173,8 @@ class airtestAutomation():
         self.createTelnetClient()
         self.telnetClient.write(cmd.encode('ascii')+b'\r\n')
         self.closeTelnetClient()
+
+    def returnCoordinatesIfExist(self, file):
+        self.setCurrAction('returnCoordinatesIfExist')
+        self.setCurrScreen(file)
+        return exists(file)
