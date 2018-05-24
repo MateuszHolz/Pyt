@@ -144,6 +144,12 @@ class airtestAutomation():
         self.setCurrScreen(None)
         text(txt)
 
+    def deleteChar(self, times = 1):
+        self.setCurrAction('deleteText')
+        self.setCurrAction(None)
+        for i in range(times):
+            shell('input keyevent 67')
+
     def setIndex(self, index):
         self.setCurrAction('setIndex')
         self.setCurrScreen(None)
