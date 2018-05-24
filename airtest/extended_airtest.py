@@ -91,7 +91,7 @@ class airtestAutomation():
         self.setCurrAction('swipe')
         self.setCurrScreen((startPoint, endPoint))
         if option == "files": swipe(v1 = self.constructTemplate(startPoint), v2 = self.constructTemplate(endPoint), duration = duration)
-        elif option == "points": swipe(v1 = startPoint, v2 = endPoint)
+        elif option == "points": swipe(v1 = startPoint, v2 = endPoint, duration = duration)
 
     def takeScreenShot(self, filename):
         self.setCurrAction('takeScreenShot')
