@@ -108,12 +108,14 @@ class airtestAutomation():
             _attachment = MIMEImage(f.read())
         return _attachment
 
-    def getLogcat(self, dir):
-        self.setCurrAction('getLogcat')
-        self.setCurrScreen(None)
-        with open(dir, 'w', encoding='utf-8') as f:
-            f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(self.devId)).decode('utf-8', errors='backslashreplace'))
-        return dir
+    #def getLogcat(self, dir):
+    #    self.setCurrAction('getLogcat')
+    #    self.setCurrScreen(None)
+    #    with open(dir, 'w', encoding='utf-8') as f:
+    #        f.write(subprocess.check_output(r'adb -s {} logcat -d'.format(self.devId)).decode('utf-8', errors='backslashreplace'))
+    #    return dir
+    #### to do: change way of getting logcat from subprocess to shell() method from airtest (to avoid problems with adb)
+
 
     def sendMail(self, auth, takeImage = None, getLogcat = None, bodyTxt = None, subject = None):
         server = smtplib.SMTP('smtp.gmail.com', 587)

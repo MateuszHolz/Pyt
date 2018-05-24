@@ -1,4 +1,4 @@
-Samsung Galaxy S7 - 192.168.65.111
-Samsung Galaxy S8 - 192.168.65.139
+Samsung Galaxy S5 - 192.168.199.190
 Samsung Galaxy A5 2016 - 192.168.65.153
-Samsung Galaxy Tab S2 - 192.168.67.194
+Samsung Galaxy Tab S2 - 192.168.67.136
+Samsung Galaxy S8 - 192.168.65.181

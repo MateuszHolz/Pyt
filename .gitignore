@@ -30,3 +30,6 @@ adb-automation/ip-scrapper/ip_adresses.txt
 adb-automation/screenshot/output/Samsung_Galaxy_S6_2560x1440.png
 adb-automation/ip-scrapper/ip_adresses.txt
 adb-automation/ip-scrapper/ip_adresses.txt
+airtest/logcat.txt
+adb-automation/ip-scrapper/ip_adresses.txt
+airtest/output/error.png
