@@ -181,6 +181,7 @@ class airtestAutomation():
         self.closeTelnetClient()
 
     def returnCoordinatesIfExist(self, file):
+        localFile = self.constructTemplate(file)
         self.setCurrAction('returnCoordinatesIfExist')
         self.setCurrScreen(file)
-        return exists(file)
+        return exists(localFile)
