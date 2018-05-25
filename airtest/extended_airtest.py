@@ -90,7 +90,10 @@ class airtestAutomation():
     def swipe(self, startPoint, endPoint, option, duration = 5):
         self.setCurrAction('swipe')
         self.setCurrScreen((startPoint, endPoint))
-        if option == "files": swipe(v1 = self.constructTemplate(startPoint), v2 = self.constructTemplate(endPoint), duration = duration)
+        if option == "files":
+            temp1 = self.constructTemplate(startPoint)
+            temp2 = self.constructTemplate(endPoint)
+            swipe(v1 = temp1, v2 = temp2, duration = duration)
         elif option == "points": swipe(v1 = startPoint, v2 = endPoint, duration = duration)
 
     def takeScreenShot(self, filename):
@@ -181,7 +184,7 @@ class airtestAutomation():
         self.closeTelnetClient()
 
     def returnCoordinatesIfExist(self, file):
-        localFile = self.constructTemplate(file)
+        temp = self.constructTemplate(file)
         self.setCurrAction('returnCoordinatesIfExist')
         self.setCurrScreen(file)
-        return exists(localFile)
+        return exists(temp)
