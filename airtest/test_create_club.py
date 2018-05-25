@@ -11,6 +11,7 @@ def runTests(automat, curIndx = 0):
 			automat.runApp()
 			automat.wait(2)
 			automat.runShellCommand('logcat -c')
+			automat.sendMail(auth = credentianals, subject = 'Test nr {} powiodl sie'.format(automat.getIndex()), getLogcat = True)
 			automat.setTestSection('full_tutorial')
 			automat.waitAndTouch('allow-button-7')
 			automat.waitAndTouch('lang_ok', sleepTime = 40)
