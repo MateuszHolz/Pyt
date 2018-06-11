@@ -146,10 +146,11 @@ class airtestAutomation():
         self.setCurrAction('type')
         self.setCurrScreen(None)
         text(txt)
+        sleep(1)
 
     def deleteChar(self, times = 1):
         self.setCurrAction('deleteText')
-        self.setCurrAction(None)
+        self.setCurrScreen(None)
         for i in range(times):
             shell('input keyevent 67')
 

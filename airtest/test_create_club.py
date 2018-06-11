@@ -11,7 +11,6 @@ def runTests(automat, curIndx = 0):
 			automat.runApp()
 			automat.wait(2)
 			automat.runShellCommand('logcat -c')
-			automat.sendMail(auth = credentianals, subject = 'Test nr {} powiodl sie'.format(automat.getIndex()), getLogcat = True)
 			automat.setTestSection('full_tutorial')
 			automat.waitAndTouch('allow-button-7')
 			automat.waitAndTouch('lang_ok', sleepTime = 40)
@@ -30,7 +29,7 @@ def runTests(automat, curIndx = 0):
 			automat.waitAndTouch('create_club')
 			automat.waitAndTouch('random_club_symbol')
 			automat.waitAndTouch('club_name_input')
-			automat.type('tzst{}'.format(automat.getIndex()))
+			automat.type('kielbasa{}'.format(automat.getIndex()))
 			automat.waitAndTouch('club_desc_input')
 			automat.type('klub{}'.format(automat.getIndex()))
 			automat.waitAndTouch('create_club_button')
@@ -38,7 +37,7 @@ def runTests(automat, curIndx = 0):
 				automat.sendMail(auth = credentianals, subject = 'Test nr {} powiodl sie'.format(automat.getIndex()))
 			automat.setIndex(automat.getIndex()+1)
 	except Exception:
-		automat.sendMail(auth = credentianals, subject = 'Error po probie {}'.format(automat.getIndex(mail = True)), bodyTxt = '{} {}'.format(automat.getCurrScreen(), automat.getCurrAction()))
+		automat.sendMail(auth = credentianals, getLogcat = True, subject = 'Error po probie {}'.format(automat.getIndex(mail = True)), bodyTxt = '{} {}'.format(automat.getCurrScreen(), automat.getCurrAction()))
 		runTests(aut, automat.getIndex())
 
 

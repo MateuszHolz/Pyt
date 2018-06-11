@@ -1,7 +1,11 @@
 --------- beginning of main
-05-25 12:36:37.124  4133  4242 I BranchSDK: posting to https://api.branch.io/v1/install
-05-25 12:36:37.124  4133  4242 I BranchSDK: Post value = {"app_version":"0.1.479","uri_scheme":"hg-casino","facebook_app_link_checked":false,"is_referrable":1,"update":0,"debug":true,"metadata":{},"hardware_id":"f5e75e9f-6447-4753-b7b0-08a44e3e1aaa","is_hardware_id_real":false,"brand":"samsung","model":"SM-A510F","screen_dpi":480,"screen_height":1080,"screen_width":1920,"wifi":true,"os":"Android","os_version":23,"country":"US","language":"en","local_ip":"192.168.65.153","environment":"FULL_APP","cd":{"mv":"-1","pn":"com.huuuge.stars.slots"},"instrumentation":{"v1\/install-qwt":"0"},"sdk":"android2.12.1","branch_key":"key_test_keBK3QXqzqQbJpOpldhkIlihztjhbXnD"}
-05-25 12:36:37.124  4133  4242 I System.out: (HTTPLog)-Static: isSBSettingEnabled false
-05-25 12:36:37.124  4133  4242 I System.out: (HTTPLog)-Static: isSBSettingEnabled false
-05-25 12:36:37.124  2202  2767 D EnterpriseController: netId is 0
-05-25 12:36:37.124  2202  2767 D Netd    : getNetworkForDns: using netid 502 for uid 10790
+05-25 21:36:31.744  2192  2192 D mali_winsys: new_window_surface returns 0x3000,  [1920x1080]-format:1
+05-25 21:36:31.744  2192  2192 D SurfaceFlinger: debugMultiDownscale = 1
+05-25 21:36:31.804  3696  4061 I qtaguid : Untagging socket 70
+05-25 21:36:31.824 18856 18881 W System.err: remove failed: ENOENT (No such file or directory) : /data/user/0/com.huuuge.stars.slots/shared_prefs/com.huuuge.stars.slots_preferences.xml.bak
+05-25 21:36:31.894 18856 18990 I System.out: (HTTPLog)-Static: isSBSettingEnabled false
+05-25 21:36:31.894 18856 18990 I System.out: (HTTPLog)-Static: isSBSettingEnabled false
+05-25 21:36:31.894  2202  2767 D EnterpriseController: netId is 0
+05-25 21:36:31.894  2202  2767 D Netd    : getNetworkForDns: using netid 502 for uid 10791
+05-25 21:36:32.164  3241  3270 D ContactsProvider_EventLog: contents_sample_state: [ contacts(0) data(0) accounts({}) accounts deleted({}) calls([])  ]
+05-25 21:36:32.164  3241  3270 D ContactsProvider_EventLog: contents_sample_state: [ agr({})  ]
