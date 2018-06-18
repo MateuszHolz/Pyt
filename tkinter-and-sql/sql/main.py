@@ -38,7 +38,7 @@ def update(quantity, price, item):
 
 if __name__ == "__main__":
     createTable()
-    #insert('Wine Glass', 50, 10.2)
+    insert('Wine Glass', 50, 10.2)
     #delete('Water Glass')
     print(view())
     update(44, 15.8, 'Wine Glass')
