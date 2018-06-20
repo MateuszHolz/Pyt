@@ -5,39 +5,34 @@ class mainWindow():
 
 	def __init__(self):
 
-		'''
-		Initializing resources.
-		'''
-
+		self.devicesData = []
 		self.window = Tk()
+		self.listBoxFrame = Frame(self.window)
+		self.searchBoxFrame = Frame(self.window)
 		self.searchFieldVar = StringVar()
 		self.database = databaseHandler()
-		
-		'''
-		Initializing objects.
-		'''
 
 		self.btn1 = Button(self.window, text = 'createDb', command = self.database.createTable)
 		self.btn2 = Button(self.window, text = 'viewDb', command = lambda: self.getListBoxData(self.database.viewDatabase()))
-		self.btn3 = Button(self.window, text = 'Close', command = self.quit)
-		self.btn4 = Button(self.window, text = 'Add Record', command = self.database.addRecord)
-		self.inptField = Entry(self.window, textvariable = self.searchFieldVar)
-		self.listBox = Listbox(self.window, height = 6, width = 35)
-		self.scrollBar = Scrollbar(self.window)
+		self.btn3 = Button(self.window, text = 'Close', command = self.quit, height = 3)
+		self.btn4 = Button(self.window, text = 'Add Record', command = lambda: addNewRecordWindow(self.window, self.database))
+		self.btn5 = Button(self.searchBoxFrame, text = 'Search')
+		self.inptField = Entry(self.searchBoxFrame, textvariable = self.searchFieldVar)
+		self.listBox = Listbox(self.listBoxFrame, height = 20, width = 35)
+		self.scrollBar = Scrollbar(self.listBoxFrame)
 
-		'''
-		Configuring objects.
-		'''
-
-		self.btn1.grid(row = 0, column = 0)
-		self.btn2.grid(row = 0, column = 3)
-		self.btn3.grid(row = 8, column = 3)
-		self.btn4.grid(row = 1, column = 4)
-		self.inptField.grid(row = 0, column = 1)
-		self.listBox.grid(row = 3, column = 0, rowspan = 6, columnspan = 2)
-		self.listBox.configure(yscrollcommand = self.scrollBar.set)
-		self.scrollBar.grid(row = 3, column = 2, rowspan = 6)
+		self.searchBoxFrame.pack(side = TOP)
+		self.listBoxFrame.pack(side = LEFT)
+		self.btn1.pack(side = TOP, fill = X)
+		self.btn2.pack(side = TOP, fill = X)
+		self.btn3.pack(side = BOTTOM, fill = X)
+		self.btn4.pack(side = TOP, fill = X)
+		self.btn5.pack(side = LEFT, fill = X, padx = 5)
+		self.inptField.pack(side = LEFT)
+		self.scrollBar.pack(side = RIGHT, fill = Y)
 		self.scrollBar.configure(command = self.listBox.yview)
+		self.listBox.pack(side = TOP)
+		self.listBox.configure(yscrollcommand = self.scrollBar.set)
 
 		self.window.mainloop()
 
@@ -45,17 +40,65 @@ class mainWindow():
 		self.window.destroy()
 
 	def getListBoxData(self, data):
+		self.devicesData = data
 		self.listBox.delete(0, END)
-		for i in data:
+		for i in self.devicesData:
 			self.listBox.insert(END, i[:3])
 
 
-class subWindow(mainWindow):
+class addNewRecordWindow(mainWindow):
 
-	def __init__(self, parentWindow):
+	def __init__(self, parentWindow, database):
 		self.parentWindow = parentWindow
 		self.window = Toplevel(parentWindow)
+		self.leftFrame = Frame(self.window)
+		self.rightFrame = Frame(self.window)
+		self.bottomFrame = Frame(self.window)
+		self.inputFieldVars = []
+		self.database = database
 
+		self.bottomFrame.pack(side = BOTTOM)
+		self.leftFrame.pack(side = LEFT)
+		self.rightFrame.pack(side = RIGHT)
+		
+		labels = [
+		'tester',
+		'inventoryID',
+		'deviceName',
+		'osVer',
+		'resolution',
+		'resolutionWithoutNB',
+		'aspectRatio',
+		'hardwareKeyTest',
+		'deviceInfoAndroid',
+		'wiredTvOut',
+		'miracast',
+		'chromecast',
+		'comment',
+		'macAddress',
+		'knownIssue'
+		]
+
+		for i in labels:
+			label = Label(self.window, text = i)
+			label.pack()
+
+		for j in range(len(labels)):
+			strVar = StringVar()
+			inputField = Entry(self.rightFrame, textvariable = strVar)
+			inputField.pack(pady = 1)
+			self.inputFieldVars.append(strVar)
+
+		addNewRecordButton = Button(self.bottomFrame, text = 'Add new record', command = self.createNewRecord)
+		addNewRecordButton.pack(fill = X)
+
+	def createNewRecord(self):
+		deviceSpecs = []
+
+		for i in self.inputFieldVars:
+			deviceSpecs.append(i.get())
+
+		self.database.addRecord(deviceSpecs)
 
 
 class databaseHandler():
@@ -94,25 +137,25 @@ class databaseHandler():
 		data = self.cur.fetchall()
 		return data
 
-	def addRecord(self):
+	def addRecord(self, data):
 		self.cur.execute("""
 			INSERT INTO devices VALUES (
-			'MHO',
-			'3333',
-			'SGS8',
-			'3.4.5',
-			'2960x1440',
-			'2880x1440',
-			'18.5:9',
-			'3129321093012390',
-			'deviceinfo123123',
-			'yes',
-			'no',
-			'no',
-			'komentarz o s8',
-			'mac addres to jakis tam',
-			'brak known issues'
-			)""")
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}',
+			'{}')
+			""".format(*data))
 		self.database.commit()
 
 
