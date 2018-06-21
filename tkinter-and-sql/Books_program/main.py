@@ -1,5 +1,6 @@
 from tkinter import *
 import sqlite3 as sql
+import re
 
 class mainWindow():
 
@@ -60,8 +61,9 @@ class addNewRecordWindow(mainWindow):
 		self.bottomFrame.pack(side = BOTTOM)
 		self.leftFrame.pack(side = LEFT)
 		self.rightFrame.pack(side = RIGHT)
-		
-		labels = [
+
+
+		self.labels = [
 		'tester',
 		'inventoryID',
 		'deviceName',
@@ -79,18 +81,18 @@ class addNewRecordWindow(mainWindow):
 		'knownIssue'
 		]
 
-		for i in labels:
-			label = Label(self.window, text = i)
-			label.pack()
+		for i in self.labels:
+			self.label = Label(self.window, text = i)
+			self.label.pack()
 
-		for j in range(len(labels)):
+		for j in range(len(self.labels)):
 			strVar = StringVar()
 			inputField = Entry(self.rightFrame, textvariable = strVar)
 			inputField.pack(pady = 1)
 			self.inputFieldVars.append(strVar)
 
-		addNewRecordButton = Button(self.bottomFrame, text = 'Add new record', command = self.createNewRecord)
-		addNewRecordButton.pack(fill = X)
+		self.addNewRecordButton = Button(self.bottomFrame, text = 'Add new record', command = self.createNewRecord)
+		self.addNewRecordButton.pack(fill = X)
 
 	def createNewRecord(self):
 		deviceSpecs = []
@@ -99,6 +101,8 @@ class addNewRecordWindow(mainWindow):
 			deviceSpecs.append(i.get())
 
 		self.database.addRecord(deviceSpecs)
+
+		self.window.destroy()
 
 
 class databaseHandler():
