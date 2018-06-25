@@ -62,6 +62,18 @@ class addNewRecordWindow(mainWindow):
 		self.leftFrame.pack(side = LEFT)
 		self.rightFrame.pack(side = RIGHT)
 
+		self.patterns = [
+		r'$', #tester - must be empty
+		r'^[0-9]{4}$', #inv - must be 4 digits
+		r'^(?!\s*$).+', #device name - can't be empty
+		r'^\d+(\.\d+)*$', #os ver - only digits and dots
+		r'\d+x\d+', #resolution - 2 numbers separated with x
+		r'\d+x\d+', #resolution without NB - same as above
+		r'\d+(\.\d)?:\d+', #aspect ratio
+		r'', #hardware key test
+
+		]
+
 
 		self.labels = [
 		'tester',
