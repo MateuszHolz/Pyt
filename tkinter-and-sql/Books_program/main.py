@@ -63,20 +63,24 @@ class addNewRecordWindow(mainWindow):
 		self.rightFrame.pack(side = RIGHT)
 
 		self.patterns = [
-		r'$', #tester - must be empty
-		r'^[0-9]{4}$', #inv - must be 4 digits
-		r'^(?!\s*$).+', #device name - can't be empty
-		r'^\d+(\.\d+)*$', #os ver - only digits and dots
-		r'\d+x\d+', #resolution - 2 numbers separated with x
-		r'\d+x\d+', #resolution without NB - same as above
-		r'\d+(\.\d)?:\d+', #aspect ratio
-		r'', #hardware key test
-
+		r'^$', 																						#tester - must be empty
+		r'^[0-9]{4}$', 																				#inv - must be 4 digits
+		r'^(?!\s*$).+', 																			#device name - can't be empty
+		r'^\d+(\.\d+)*$', 																			#os ver - only digits and dots
+		r'\d+x\d+', 																				#resolution - 2 numbers separated with x
+		r'\d+x\d+', 																				#resolution without NB - same as above
+		r'\d+(\.\d)?:\d+', 																			#aspect ratio
+		r'^[A-Za-z0-9]{8}-([A-Za-z0-9]{4}-){3}[A-Za-z0-9]{20}-([A-Za-z0-9]{4}-){3}[A-Za-z0-9]{4}$', #hardware key test
+		r'^[A-Za-z0-9]{14,16}$', 																	#device info android
+		'None', 																						#wired tv out - will be dropbox menu
+		'None', 																						#miracast - will be dropbox menu
+		'None', 																						#chromecast - will be dropbox menu
+		'None', 																						#comments - will be additional window
+		r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$', 												#mac address
+		'None'  																						#known issues - will be additional window
 		]
 
-
 		self.labels = [
-		'tester',
 		'inventoryID',
 		'deviceName',
 		'osVer',
@@ -122,6 +126,7 @@ class databaseHandler():
 	def __init__(self):
 		self.database = self.connectToDb()
 		self.cur = self.database.cursor()
+		self.patterns = self.getPatterns()
 
 	def connectToDb(self):
 		db = sql.connect(r'\\192.168.64.200\byd-fileserver\MHO\devices.db')
@@ -174,5 +179,9 @@ class databaseHandler():
 			""".format(*data))
 		self.database.commit()
 
+	def getPatterns(self):
+		self.cur.execute("SELECT * FROM patterns")
+		data = self.cur.fetchall()
+		return data
 
 mainWindow()
