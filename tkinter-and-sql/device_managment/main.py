@@ -62,24 +62,6 @@ class addNewRecordWindow(mainWindow):
 		self.leftFrame.pack(side = LEFT)
 		self.rightFrame.pack(side = RIGHT)
 
-		self.patterns = [
-		r'^$', 																						#tester - must be empty
-		r'^[0-9]{4}$', 																				#inv - must be 4 digits
-		r'^(?!\s*$).+', 																			#device name - can't be empty
-		r'^\d+(\.\d+)*$', 																			#os ver - only digits and dots
-		r'\d+x\d+', 																				#resolution - 2 numbers separated with x
-		r'\d+x\d+', 																				#resolution without NB - same as above
-		r'\d+(\.\d)?:\d+', 																			#aspect ratio
-		r'^[A-Za-z0-9]{8}-([A-Za-z0-9]{4}-){3}[A-Za-z0-9]{20}-([A-Za-z0-9]{4}-){3}[A-Za-z0-9]{4}$', #hardware key test
-		r'^[A-Za-z0-9]{14,16}$', 																	#device info android
-		'None', 																						#wired tv out - will be dropbox menu
-		'None', 																						#miracast - will be dropbox menu
-		'None', 																						#chromecast - will be dropbox menu
-		'None', 																						#comments - will be additional window
-		r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$', 												#mac address
-		'None'  																						#known issues - will be additional window
-		]
-
 		self.labels = [
 		'inventoryID',
 		'deviceName',
@@ -158,25 +140,19 @@ class databaseHandler():
 		data = self.cur.fetchall()
 		return data
 
-	def addRecord(self, data):
-		self.cur.execute("""
-			INSERT INTO devices VALUES (
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}',
-			'{}')
-			""".format(*data))
+	def addRecord(self, table, data):
+		if table == 'devices':
+			self.cur.execute("INSERT INTO devices VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
+		elif table == 'newPattern':
+			self.cur.execute("INSERT INTO patterns VALUES (?, ?)", data)
+		self.database.commit()
+
+	def updateRecord(self, table, newPattern, cond):
+		if table == 'patterns':
+			print(table, newPattern, cond)
+			self.cur.execute("UPDATE patterns SET pattern = ? WHERE record = ?", (newPattern, cond))
+		elif table == 'devices':
+			pass ## TO DO
 		self.database.commit()
 
 	def getPatterns(self):
@@ -184,4 +160,5 @@ class databaseHandler():
 		data = self.cur.fetchall()
 		return data
 
-mainWindow()
+if __name__ == '__main__':	
+	mainWindow()
