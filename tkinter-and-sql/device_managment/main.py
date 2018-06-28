@@ -56,7 +56,9 @@ class addNewRecordWindow(mainWindow):
 		self.rightFrame = Frame(self.window)
 		self.bottomFrame = Frame(self.window)
 		self.inputFieldVars = []
-		self.database = database
+		self.db = database
+		self.deviceSpecsDic = {}
+		self.patternsDic = {}
 
 		self.bottomFrame.pack(side = BOTTOM)
 		self.leftFrame.pack(side = LEFT)
@@ -93,15 +95,32 @@ class addNewRecordWindow(mainWindow):
 		self.addNewRecordButton.pack(fill = X)
 
 	def createNewRecord(self):
-		deviceSpecs = []
 
-		for i in self.inputFieldVars:
-			deviceSpecs.append(i.get())
+		for i in self.db.getPatterns():
+			self.patternsDic[i[0]] = i[1]
 
-		self.database.addRecord(deviceSpecs)
+		for i, j in zip(self.labels, self.inputFieldVars):
+			if i in self.patternsDic:
+				self.deviceSpecsDic[i] = j.get()
+			else:
+				continue
 
-		self.window.destroy()
+		if self.validate():
+			print("udało się")
+			self.db.addRecord(deviceSpecs)
+			self.window.destroy()
 
+
+	def validate(self):
+		for (i, j), (k, l) in zip(self.deviceSpecsDic.items(), self.patternsDic.items()):
+			if re.match(l, j):
+				pass
+			else:
+				print("nie udało się! zły format: ", i)
+				return False
+				break
+			return True
+		print("nie udało się po forze")
 
 class databaseHandler():
 

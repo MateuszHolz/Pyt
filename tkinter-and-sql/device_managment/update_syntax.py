@@ -26,14 +26,14 @@ class mainProgram():
 		for i in self.db.getPatterns():
 			l = Label(self.leftFrame, text = i[0])
 			l.pack()
-			lVar = StringVar()
-			k = Label(self.centerFrame, textvariable = lVar)
-			lVar.set(i[1])
+			kVar = StringVar()
+			k = Entry(self.centerFrame, textvariable = kVar, state = 'readonly')
+			kVar.set(i[1])
 			k.pack()
 			strVar = StringVar()
 			e = Entry(self.rightFrame, textvariable = strVar)
 			e.pack(pady = 1)
-			self.patDict[i[0]] = [l, k, strVar, lVar]
+			self.patDict[i[0]] = [l, k, strVar, kVar]
 
 	def updateLabels(self):
 		for i in self.db.getPatterns():
