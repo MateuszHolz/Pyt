@@ -2,7 +2,7 @@ from tkinter import *
 import sqlite3 as sql
 import re
 
-class mainWindow():
+class MainWindow():
 
 	def __init__(self):
 
@@ -11,12 +11,12 @@ class mainWindow():
 		self.listBoxFrame = Frame(self.window)
 		self.searchBoxFrame = Frame(self.window)
 		self.searchFieldVar = StringVar()
-		self.database = databaseHandler()
+		self.database = DatabaseHandler()
 
 		self.btn1 = Button(self.window, text = 'createDb', command = self.database.createTables)
 		self.btn2 = Button(self.window, text = 'viewDb', command = lambda: self.getListBoxData(self.database.viewDatabase()))
-		self.btn3 = Button(self.window, text = 'Close', command = self.quit, height = 3)
-		self.btn4 = Button(self.window, text = 'Add Record', command = lambda: addNewRecordWindow(self.window, self.database))
+		self.btn3 = Button(self.window, text = 'Close', command = self.window.destroy, height = 3)
+		self.btn4 = Button(self.window, text = 'Add Record', command = lambda: AddNewRecordWindow(self.window, self.database))
 		self.btn5 = Button(self.searchBoxFrame, text = 'Search')
 		self.inptField = Entry(self.searchBoxFrame, textvariable = self.searchFieldVar)
 		self.listBox = Listbox(self.listBoxFrame, height = 20, width = 35)
@@ -47,7 +47,7 @@ class mainWindow():
 			self.listBox.insert(END, i[:3])
 
 
-class addNewRecordWindow(mainWindow):
+class AddNewRecordWindow(MainWindow):
 
 	def __init__(self, parentWindow, database):
 		self.parentWindow = parentWindow
@@ -112,16 +112,24 @@ class addNewRecordWindow(mainWindow):
 	def validate(self, patternsDic, deviceSpecsDic):
 		for (i, j), (k, l) in zip(deviceSpecsDic.items(), patternsDic.items()):
 			if re.match(l, j):
-				print("does")
 				continue
 			else:
-				print(deviceSpecsDic)
-				print(patternsDic)
+				ErrorWindow(self.window, "Incorrect syntax of input\nin field {}.".format(k))
 				return False
-				break
 			return True
 
-class databaseHandler():
+
+class ErrorWindow():
+
+	def __init__(self, parentWindow, error):
+		self.window = Toplevel(parentWindow)
+		self.l1 = Label(self.window, text = error)
+		self.l1.pack()
+		self.btn1 = Button(self.window, text = 'Close', command = self.window.destroy)
+		self.btn1.pack()
+
+
+class DatabaseHandler():
 
 	def __init__(self):
 		self.database = self.connectToDb()
@@ -130,7 +138,8 @@ class databaseHandler():
 		self.patterns = self.getPatterns()
 
 	def connectToDb(self):
-		db = sql.connect(r'\\192.168.64.200\byd-fileserver\MHO\devices_dbbb.db')
+		db = sql.connect(r'c:\users\armin\desktop\databasedev.db')
+		#db = sql.connect(r'\\192.168.64.200\byd-fileserver\MHO\devices_dbbb.db')
 		return db
 
 	def createTables(self):
@@ -180,4 +189,4 @@ class databaseHandler():
 		return data
 
 if __name__ == '__main__':	
-	mainWindow()
+	MainWindow()

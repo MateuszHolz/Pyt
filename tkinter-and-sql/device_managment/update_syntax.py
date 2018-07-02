@@ -6,7 +6,7 @@ class mainProgram():
 
 	def __init__(self):
 		self.window = Tk()
-		self.db = main.databaseHandler()
+		self.db = main.DatabaseHandler()
 		self.bottomFrame = Frame(self.window)
 		self.bottomFrame.pack(side = BOTTOM)
 		self.leftFrame = Frame(self.window)
