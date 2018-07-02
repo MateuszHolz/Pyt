@@ -13,7 +13,7 @@ class mainWindow():
 		self.searchFieldVar = StringVar()
 		self.database = databaseHandler()
 
-		self.btn1 = Button(self.window, text = 'createDb', command = self.database.createTable)
+		self.btn1 = Button(self.window, text = 'createDb', command = self.database.createTables)
 		self.btn2 = Button(self.window, text = 'viewDb', command = lambda: self.getListBoxData(self.database.viewDatabase()))
 		self.btn3 = Button(self.window, text = 'Close', command = self.quit, height = 3)
 		self.btn4 = Button(self.window, text = 'Add Record', command = lambda: addNewRecordWindow(self.window, self.database))
@@ -112,8 +112,11 @@ class addNewRecordWindow(mainWindow):
 	def validate(self, patternsDic, deviceSpecsDic):
 		for (i, j), (k, l) in zip(deviceSpecsDic.items(), patternsDic.items()):
 			if re.match(l, j):
-				pass
+				print("does")
+				continue
 			else:
+				print(deviceSpecsDic)
+				print(patternsDic)
 				return False
 				break
 			return True
@@ -123,13 +126,14 @@ class databaseHandler():
 	def __init__(self):
 		self.database = self.connectToDb()
 		self.cur = self.database.cursor()
+		self.createTables()
 		self.patterns = self.getPatterns()
 
 	def connectToDb(self):
-		db = sql.connect(r'\\192.168.64.200\byd-fileserver\MHO\devices.db')
+		db = sql.connect(r'\\192.168.64.200\byd-fileserver\MHO\devices_dbbb.db')
 		return db
 
-	def createTable(self):
+	def createTables(self):
 		self.cur.execute("""
 			CREATE TABLE IF NOT EXISTS devices (
 			tester TEXT, 
@@ -148,6 +152,7 @@ class databaseHandler():
 			macAddress TEXT,
 			knownIssue TEXT)
 			""")
+		self.cur.execute("CREATE TABLE IF NOT EXISTS patterns (field TEXT, pattern TEXT)")
 		self.database.commit()
 
 	def viewDatabase(self):
@@ -157,14 +162,14 @@ class databaseHandler():
 
 	def addRecord(self, table, data):
 		if table == 'devices':
-			self.cur.execute("INSERT INTO devices VALUES (None, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
-		elif table == 'newPattern':
+			self.cur.execute("INSERT INTO devices VALUES ('None', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
+		elif table == 'patterns':
 			self.cur.execute("INSERT INTO patterns VALUES (?, ?)", data)
 		self.database.commit()
 
 	def updateRecord(self, table, newPattern, cond):
 		if table == 'patterns':
-			self.cur.execute("UPDATE patterns SET pattern = ? WHERE record = ?", (newPattern, cond))
+			self.cur.execute("UPDATE patterns SET pattern = ? WHERE field = ?", (newPattern, cond))
 		elif table == 'devices':
 			pass ## TO DO
 		self.database.commit()

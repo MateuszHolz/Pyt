@@ -23,13 +23,17 @@ class mainProgram():
 		self.window.mainloop()
 
 	def setAllLabels(self):
+		patterns = self.db.getPatterns()
+		if len(patterns) < 5:
+			self.setDefaultSyntax()
+			patterns = self.db.getPatterns()
 		for i in self.db.getPatterns():
 			l = Label(self.leftFrame, text = i[0])
 			l.pack()
 			kVar = StringVar()
 			k = Entry(self.centerFrame, textvariable = kVar, state = 'readonly')
 			kVar.set(i[1])
-			k.pack()
+			k.pack(pady = 1)
 			strVar = StringVar()
 			e = Entry(self.rightFrame, textvariable = strVar)
 			e.pack(pady = 1)
@@ -45,6 +49,21 @@ class mainProgram():
 			if j[2].get() is not '':
 				self.db.updateRecord(table = 'patterns', newPattern = j[2].get(), cond = i)
 		self.updateLabels()
+
+	def setDefaultSyntax(self):
+		syntaxTable = [
+		('inventoryID', '^[0-9]{4}$'), 
+		('deviceName', '^(?!\\s*$).+'), 
+		('osVer', '^\\d+(\\.\\d+)*$'), 
+		('resolution', '^\\d{3,4}x\\d{3,4}'), 
+		('resolutionWithoutNB', '^\\d{3,4}x\\d{3,4}'), 
+		('aspectRatio', '^\\d+(\\.\\d)?:\\d+$'), 
+		('hardwareKeyTest', '^[A-Za-z0-9]{8}-([A-Za-z0-9]{4}-){3}[A-Za-z0-9]{20}-([A-Za-z0-9]{4}-){3}[A-Za-z0-9]{4}$'), 
+		('deviceInfoAndroid', '^[A-Za-z0-9]{14,16}$'), 
+		('macAddress', '^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
+		]
+		for i in syntaxTable:
+			self.db.addRecord('patterns', i)
 
 if __name__ == '__main__':
 	mainProgram()

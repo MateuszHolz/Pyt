@@ -1,27 +1,9 @@
-	# import re
-
-
-	# ^[0-9]{4}$
-	# pattern = r'^\d+(\.\d+)*$'
-
-	# while True:
-	# l = input("word: ")
-	# if len(l) > 0:
-	# 	if re.match(pattern, l):
-	# 		print("matches")
-	# 	else:
-	# 		print("doesn't match")
-
-# while True:
-# 	print(len(input("test: ")))
-from tkinter import *
-
-master = Tk()
-
-group = LabelFrame(master, text="Group", padx=5, pady=5)
-group.pack(padx=10, pady=10)
-
-w = Entry(group)
-w.pack()
-
-mainloop()
+[('inventoryID', '^[0-9]{4}$'), 
+('deviceName', '^(?!\\s*$).+'), 
+('osVer', '^\\d+(\\.\\d+)*$'), 
+('resolution', '^\\d{3,4}x\\d{3,4}'), 
+('resolutionWithoutNB', '^\\d{3,4}x\\d{3,4}'), 
+('aspectRatio', '^\\d+(\\.\\d)?:\\d+$'), 
+('hardwareKeyTest', '^[A-Za-z0-9]{8}-([A-Za-z0-9]{4}-){3}[A-Za-z0-9]{20}-([A-Za-z0-9]{4}-){3}[A-Za-z0-9]{4}$'), 
+('deviceInfoAndroid', '^[A-Za-z0-9]{14,16}$'), 
+('macAddress', '^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')]
