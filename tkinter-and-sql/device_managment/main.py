@@ -57,8 +57,6 @@ class addNewRecordWindow(mainWindow):
 		self.bottomFrame = Frame(self.window)
 		self.inputFieldVars = []
 		self.db = database
-		self.deviceSpecsDic = {}
-		self.patternsDic = {}
 
 		self.bottomFrame.pack(side = BOTTOM)
 		self.leftFrame.pack(side = LEFT)
@@ -95,32 +93,30 @@ class addNewRecordWindow(mainWindow):
 		self.addNewRecordButton.pack(fill = X)
 
 	def createNewRecord(self):
-
+		patternsDic = {}
+		deviceSpecsDic = {}
 		for i in self.db.getPatterns():
-			self.patternsDic[i[0]] = i[1]
+			patternsDic[i[0]] = i[1]
 
 		for i, j in zip(self.labels, self.inputFieldVars):
-			if i in self.patternsDic:
-				self.deviceSpecsDic[i] = j.get()
+			if i in patternsDic:
+				deviceSpecsDic[i] = j.get()
 			else:
 				continue
 
-		if self.validate():
-			print("udało się")
-			self.db.addRecord(deviceSpecs)
+		if self.validate(patternsDic, deviceSpecsDic):
+			self.db.addRecord('devices', [i.get() for i in self.inputFieldVars])
 			self.window.destroy()
 
 
-	def validate(self):
-		for (i, j), (k, l) in zip(self.deviceSpecsDic.items(), self.patternsDic.items()):
+	def validate(self, patternsDic, deviceSpecsDic):
+		for (i, j), (k, l) in zip(deviceSpecsDic.items(), patternsDic.items()):
 			if re.match(l, j):
 				pass
 			else:
-				print("nie udało się! zły format: ", i)
 				return False
 				break
 			return True
-		print("nie udało się po forze")
 
 class databaseHandler():
 
@@ -161,14 +157,13 @@ class databaseHandler():
 
 	def addRecord(self, table, data):
 		if table == 'devices':
-			self.cur.execute("INSERT INTO devices VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
+			self.cur.execute("INSERT INTO devices VALUES (None, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
 		elif table == 'newPattern':
 			self.cur.execute("INSERT INTO patterns VALUES (?, ?)", data)
 		self.database.commit()
 
 	def updateRecord(self, table, newPattern, cond):
 		if table == 'patterns':
-			print(table, newPattern, cond)
 			self.cur.execute("UPDATE patterns SET pattern = ? WHERE record = ?", (newPattern, cond))
 		elif table == 'devices':
 			pass ## TO DO
