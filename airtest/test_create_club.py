@@ -4,7 +4,7 @@ import threading
 credentianals = ('testergamelion66@gmail.com', 'dupa1212')
 
 def runTests(automat, curIndx = 0):
-	try:
+	#try:
 		automat.setIndex(curIndx)
 		for i in range(100000):
 			automat.clearAppData()
@@ -12,7 +12,9 @@ def runTests(automat, curIndx = 0):
 			automat.wait(2)
 			automat.runShellCommand('logcat -c')
 			automat.setTestSection('full_tutorial')
-			automat.waitAndTouch('allow-button-7')
+			automat.waitAndTouch('allow-button')
+			automat.waitAndTouch('allow-button')
+			automat.waitAndTouch('lang_eng')
 			automat.waitAndTouch('lang_ok', sleepTime = 40)
 			automat.waitAndTouch('profile_play', sleepTime = 15)
 			automat.waitAndTouch('tut_1', sleepTime = 5)
@@ -20,27 +22,27 @@ def runTests(automat, curIndx = 0):
 			automat.waitAndTouch('tut_3', sleepTime = 5)
 			automat.waitAndTouch('tut_4', sleepTime = 5)
 			automat.waitAndTouch('tut_5', sleepTime = 25)
-			automat.waitAndTouch('tut_6', sleepTime = 7)
-			automat.setTestSection('clubs')
-			automat.waitAndTouch('lobby_button')
-			automat.waitAndTouch('get_started')
-			automat.waitAndTouch('skip')
-			automat.waitAndTouch('dismiss_tooltips')
-			automat.waitAndTouch('create_club')
-			automat.waitAndTouch('random_club_symbol')
-			automat.waitAndTouch('club_name_input')
-			automat.type('kielbasa{}'.format(automat.getIndex()))
-			automat.waitAndTouch('club_desc_input')
-			automat.type('klub{}'.format(automat.getIndex()))
-			automat.waitAndTouch('create_club_button')
-			if automat.getIndex() % 50 == 0:
-				automat.sendMail(auth = credentianals, subject = 'Test nr {} powiodl sie'.format(automat.getIndex()))
-			automat.setIndex(automat.getIndex()+1)
-	except Exception:
-		automat.sendMail(auth = credentianals, getLogcat = True, subject = 'Error po probie {}'.format(automat.getIndex(mail = True)), bodyTxt = '{} {}'.format(automat.getCurrScreen(), automat.getCurrAction()))
-		runTests(aut, automat.getIndex())
+			# automat.waitAndTouch('tut_6', sleepTime = 7)
+			# automat.setTestSection('clubs')
+			# automat.waitAndTouch('lobby_button')
+			# automat.waitAndTouch('get_started')
+			# automat.waitAndTouch('skip')
+			# automat.waitAndTouch('dismiss_tooltips')
+			# automat.waitAndTouch('create_club')
+			# automat.waitAndTouch('random_club_symbol')
+			# automat.waitAndTouch('club_name_input')
+			# automat.type('kielbasa{}'.format(automat.getIndex()))
+			# automat.waitAndTouch('club_desc_input')
+			# automat.type('klub{}'.format(automat.getIndex()))
+			# automat.waitAndTouch('create_club_button')
+			# if automat.getIndex() % 50 == 0:
+			# 	automat.sendMail(auth = credentianals, subject = 'Test nr {} powiodl sie'.format(automat.getIndex()))
+			# automat.setIndex(automat.getIndex()+1)
+	# except Exception:
+	# 	automat.sendMail(auth = credentianals, getLogcat = True, subject = 'Error po probie {}'.format(automat.getIndex(mail = True)), bodyTxt = '{} {}'.format(automat.getCurrScreen(), automat.getCurrAction()))
+	# 	runTests(aut, automat.getIndex())
 
 
-aut = extended_airtest.airtestAutomation('3300fe50be2ca3e1', 'com.huuuge.stars.slots')
+aut = extended_airtest.airtestAutomation('AQH0217A27000562', 'com.huuuge.stars.slots')
 
 runTests(automat = aut)
