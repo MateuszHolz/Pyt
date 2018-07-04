@@ -24,7 +24,7 @@ class mainProgram():
 
 	def setAllLabels(self):
 		patterns = self.db.getPatterns()
-		if len(patterns) < 5:
+		if len(patterns) == 0:
 			self.setDefaultSyntax()
 			patterns = self.db.getPatterns()
 		for i in self.db.getPatterns():
@@ -44,10 +44,12 @@ class mainProgram():
 			self.patDict[i[0]][3].set(i[1])
 
 	def updatePattern(self):
-		patterns = []
+		data = []
 		for i, j in self.patDict.items():
 			if j[2].get() is not '':
-				self.db.updateRecord(table = 'patterns', newPattern = j[2].get(), cond = i)
+				data.append((i, j[2].get(), j[3].get()))
+		for i in data:
+			self.db.updateRecord(self.db.buildUpdateExpression('patterns', ('field', 'pattern'), ('field', 'pattern')), (i[0], i[1], i[0], i[2]))
 		self.updateLabels()
 
 	def setDefaultSyntax(self):
