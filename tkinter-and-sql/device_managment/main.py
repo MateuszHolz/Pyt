@@ -2,7 +2,7 @@ from tkinter import *
 import sqlite3 as sql
 import re
 
-class MainWindow():
+class MainWindow:
 
 	def __init__(self):
 
@@ -130,7 +130,7 @@ class AddNewRecordWindow(MainWindow):
 			if re.match(l, j):
 				continue
 			else:
-				ErrorWindow(self.window, "Incorrect syntax of input\nin field {}.".format(k))
+				ErrorWindow(self.window, "Incorrect syntax of input\nin field {}.\ni={}\nj={}\nl={}".format(k, i, j, l))
 				return False
 		return True
 
@@ -189,6 +189,9 @@ class DatabaseHandler():
 		self.cur = self.database.cursor()
 		self.createTables()
 		self.patterns = self.getPatterns()
+
+	def __del__(self):
+		self.database.close()
 
 	def connectToDb(self):
 		#db = sql.connect(r'c:\users\armin\desktop\databasedev.db')

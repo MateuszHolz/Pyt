@@ -1,27 +1,12 @@
-import sqlite3
- 
-def create_table():
-    conn = sqlite3.connect("lite.db")
-    cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS tab (item TEXT, quantity INTEGER, price FLOAT)")
-    conn.commit()
-    cur.close()
- 
-def insert(item,quantity,price):
-    conn = sqlite3.connect("lite.db")
-    cur = conn.cursor()
-    cur.execute("INSERT INTO tab VALUES(?,?,?)",(item,quantity,price))
-    conn.commit()
-    cur.close()
- 
-def view():
-    conn = sqlite3.connect("lite.db")
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM tab")
-    rows = cur.fetchall()
-    cur.close()
-    return rows
- 
-create_table()
-insert('Coffee Cup', 25, 9.5)
-print(view())
+from tkinter import *
+
+window=Tk()
+
+b1 = Button(window,text="Find")
+b1.grid(row=0,column=0)
+
+e1 = Entry(window,textvariable=e1_value)
+e1.grid(row=0,column=1)
+
+t1 = Text(window,height=1,width=20)
+t1.grid(row=0,column=2)
