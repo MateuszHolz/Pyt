@@ -106,25 +106,46 @@ class airtestAutomation():
             swipe(v1 = temp1, v2 = temp2, duration = duration)
         elif option == "points": swipe(v1 = startPoint, v2 = endPoint, duration = duration)
     
-    def swipeToDirection(self, direction, power):
+    def swipeToDirection(self, direction, power, duration = 1):
         '''
         power(s):
         - low
         - mid
         - high
-        Throws exception when power any other than that has been provided. 
+        Throws exception when power any other than that has been provided. Accepts only string.
+
+        direction(s):
+        - left
+        - right
+        - up
+        - down
+        Throws exception when direction any other than that has been provided. Accepts only string.
         '''
+        low = (0.55, 0.45)
+        mid = (0.65, 0.35)
+        high = (0.75, 0.25)
+        usedParams = None
+        if not isinstance(direction, str) or not isinstance(power, str):
+            raise TypeError('Parameters direction and power must be str!')
         deviceRes = self.getDeviceSize()
-        if direction == 'left':
-            self.swipe(startPoint = (0.75 * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (0.25 * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = 1)
-        elif direction == 'right':
-            self.swipe(startPoint = (0.25 * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (0.75 * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = 1)
-        elif direction == 'up':
-            self.swipe(startPoint = (0.5 * deviceRes[0], 0.75 * deviceRes[1]), endPoint = (0.5 * deviceRes[0], 0.25 * deviceRes[1]), option = 'points', duration = 1)
-        elif direction == 'down':
-            self.swipe(startPoint = (0.5 * deviceRes[0], 0.25 * deviceRes[1]), endPoint = (0.5 * deviceRes[0], 0.75 * deviceRes[1]), option = 'points', duration = 1)
+        if power == 'low':
+            usedParams = low
+        elif power == 'mid':
+            usedParams = mid
+        elif power == 'high':
+            usedParams = high
         else:
-            raise TypeError('ACTION "{}" NOT IMPLEMENTED'.format(direction))
+            raise TypeError('Incorect option chosen for parameter power: {}. Available options: "low", "mid", "high".')
+        if direction == 'left':
+            self.swipe(startPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration)
+        elif direction == 'right':
+            self.swipe(startPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration)
+        elif direction == 'up':
+            self.swipe(startPoint = (0.5 * deviceRes[0], usedParams[0] * deviceRes[1]), endPoint = (0.5 * deviceRes[0], usedParams[1] * deviceRes[1]), option = 'points', duration)
+        elif direction == 'down':
+            self.swipe(startPoint = (0.5 * deviceRes[0], usedParams[1] * deviceRes[1]), endPoint = (0.5 * deviceRes[0], usedParams[0] * deviceRes[1]), option = 'points', duration)
+        else:
+            raise TypeError('Incorect option chosen for parameter direction: {}. Available options: "left", "right", "up", "down".'.format(direction))
 
     def takeScreenShot(self, filename):
         self.setCurrAction('takeScreenShot')
