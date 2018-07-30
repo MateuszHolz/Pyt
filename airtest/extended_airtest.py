@@ -106,7 +106,14 @@ class airtestAutomation():
             swipe(v1 = temp1, v2 = temp2, duration = duration)
         elif option == "points": swipe(v1 = startPoint, v2 = endPoint, duration = duration)
     
-    def swipeToDirection(self, direction):
+    def swipeToDirection(self, direction, power):
+        '''
+        power(s):
+        - low
+        - mid
+        - high
+        Throws exception when power any other than that has been provided. 
+        '''
         deviceRes = self.getDeviceSize()
         if direction == 'left':
             self.swipe(startPoint = (0.75 * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (0.25 * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = 1)
