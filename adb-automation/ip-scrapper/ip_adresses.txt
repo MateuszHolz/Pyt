@@ -1,4 +1,2 @@
-Samsung Galaxy Tab S2 - 192.168.67.133
-Samsung Galaxy S7 edge - 192.168.65.189
-HUAWEI Mate 10 Pro - 192.168.65.188
-Samsung Galaxy A5 2016 - 192.168.65.153
+Samsung Galaxy Tab S2 - 192.168.67.188
+Samsung Galaxy S8+ - 192.168.65.148

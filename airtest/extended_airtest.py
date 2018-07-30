@@ -8,6 +8,7 @@ from email.mime.application import MIMEApplication
 import smtplib
 import subprocess
 import telnetlib
+from datetime import datetime
 
 class airtestAutomation():
     def __init__(self, devId, packageName, runApp = None, clearData = None):
@@ -20,8 +21,12 @@ class airtestAutomation():
         self.currentScreen = None
         self.currentAction = None
         self.templatesDict = {}
+        self.auth = ('testergamelion66@gmail.com', 'dupa1212')
         if clearData: self.clearAppData()
         if runApp: self.runApp()
+
+    def getCurrentTimestamp(self):
+        return datetime.timestamp(datetime.now())
 
     def createTelnetClient(self):
         self.setCurrAction('createTelnetClient')
@@ -56,6 +61,11 @@ class airtestAutomation():
         self.setCurrAction('setTestSection')
         self.setCurrScreen(None)
         self.testSection = testSection
+
+    def getTestSection(self):
+        self.setCurrAction('getTestSection')
+        self.setCurrScreen(None)
+        return self.testSection
 
     def waitAndTouch(self, file, sleepTime = 4, timeout = 60, interval = 1, duration = 0.2):
         temp = self.constructTemplate(file)
@@ -95,6 +105,19 @@ class airtestAutomation():
             temp2 = self.constructTemplate(endPoint)
             swipe(v1 = temp1, v2 = temp2, duration = duration)
         elif option == "points": swipe(v1 = startPoint, v2 = endPoint, duration = duration)
+    
+    def swipeToDirection(self, direction):
+        deviceRes = self.getDeviceSize()
+        if direction == 'left':
+            self.swipe(startPoint = (0.75 * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (0.25 * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = 1)
+        elif direction == 'right':
+            self.swipe(startPoint = (0.25 * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (0.75 * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = 1)
+        elif direction == 'up':
+            self.swipe(startPoint = (0.5 * deviceRes[0], 0.75 * deviceRes[1]), endPoint = (0.5 * deviceRes[0], 0.25 * deviceRes[1]), option = 'points', duration = 1)
+        elif direction == 'down':
+            self.swipe(startPoint = (0.5 * deviceRes[0], 0.25 * deviceRes[1]), endPoint = (0.5 * deviceRes[0], 0.75 * deviceRes[1]), option = 'points', duration = 1)
+        else:
+            raise TypeError('ACTION "{}" NOT IMPLEMENTED'.format(direction))
 
     def takeScreenShot(self, filename):
         self.setCurrAction('takeScreenShot')
@@ -102,6 +125,11 @@ class airtestAutomation():
         fileDir = r"{}\output\{}.png".format(os.getcwd(), filename)
         snapshot(fileDir)
         return fileDir
+
+    def getDeviceSize(self):
+        raw = self.runShellCommand('wm size').split()[2]
+        raw = raw.replace('x', ' ').split()
+        return float(raw[1]), float(raw[0])
 
     def getErrorImage(self):
         self.setCurrAction('getErrorImage')
@@ -120,10 +148,10 @@ class airtestAutomation():
         return dir
 
 
-    def sendMail(self, auth, takeImage = None, getLogcat = None, bodyTxt = None, subject = None):
+    def sendMail(self, takeImage = None, getLogcat = None, bodyTxt = None, subject = None):
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login(auth[0], auth[1])
+        server.login(self.auth[0], self.auth[1])
         msg = MIMEMultipart()
         if bodyTxt:
             msgText = MIMEText(bodyTxt)
@@ -135,7 +163,7 @@ class airtestAutomation():
             logcat['Content-Disposition'] = 'attachment; filename="logcat.txt"'
             msg.attach(logcat)
         if subject: msg['Subject'] = subject
-        server.sendmail(auth[0], "mateusz.holz@huuugegames.com", msg.as_string())
+        server.sendmail(self.auth[0], "mateusz.holz@huuugegames.com", msg.as_string())
         
     def runShellCommand(self, cmd):
         self.setCurrAction('runShellCommand')
@@ -146,7 +174,7 @@ class airtestAutomation():
         self.setCurrAction('type')
         self.setCurrScreen(None)
         text(txt)
-        sleep(1)
+        sleep(2)
 
     def deleteChar(self, times = 1):
         self.setCurrAction('deleteText')
@@ -189,3 +217,9 @@ class airtestAutomation():
         self.setCurrAction('returnCoordinatesIfExist')
         self.setCurrScreen(file)
         return exists(temp)
+
+    def useDeviceBackButton(self, sleepTime = 4):
+        self.setCurrAction('useDeviceBackButton')
+        self.setCurrScreen(None)
+        self.runShellCommand('input keyevent 4')
+        sleep(sleepTime)

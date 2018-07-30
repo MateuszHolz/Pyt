@@ -16,10 +16,22 @@ def takeScreenShot(device):
 
 def getDevices():
     devices = []
-    try:
-        _l = subprocess.check_output(r"adb devices")
-    except subprocess.CalledProcessError:
-        _l = subprocess.check_output(r"adb devices")
+    retries = 0
+    while True:
+        print("tries:", retries)
+        if retries > 4:
+            break
+        else:
+            try:
+                _l = subprocess.check_output(r"adb devices")
+                if "doesn't" in _l.decode():
+                    retries += 1
+                    continue
+                else:
+                    break
+            except subprocess.CalledProcessError:
+                retries += 1
+                continue
     rawList = _l.rsplit()
     tempList = rawList[4:]
     for i in range(len(tempList)):

@@ -41,6 +41,6 @@ def runTests(automat):
     except Exception:
         runTests(automat)
 
-aut = extended_airtest.airtestAutomation('3300fe50be2ca3e1', 'com.huuuge.stars.slots')
+aut = extended_airtest.airtestAutomation('AQH0217A27000562', 'com.huuuge.stars.slots')
 
 runTests(aut)
