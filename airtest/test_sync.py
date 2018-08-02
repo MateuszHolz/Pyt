@@ -1,19 +1,19 @@
 import extended_airtest
 
 def runTests(automat):
-    try:
+#    try:
         automat.clearAppData()
         automat.runApp()
         automat.wait(2)
         automat.runShellCommand('logcat -c')
         testTutorial(automat)
-        testSocial(automat)
-        testClubs(automat)
-        testLottery(automat)
-        testNewsfeed(automat)
+        #testSocial(automat)
+        #testClubs(automat)
+        #testLottery(automat)
+        #testNewsfeed(automat)
 
-    except Exception:
-        automat.sendMail(subject = 'Sync Test, Section: {}, Status: Failed'.format(automat.getTestSection()))
+    #except Exception:
+    #    automat.sendMail(subject = 'Sync Test, Section: {}, Status: Failed'.format(automat.getTestSection()))
 
 def testClubs(automat, sendMail = False):
     automat.setTestSection('clubs')
@@ -58,17 +58,19 @@ def testTutorial(automat, sendMail = False):
     automat.waitAndTouch('allow-button')
     automat.waitAndTouch('allow-button')
     automat.waitAndTouch('lang_eng')
-    automat.waitAndTouch('lang_ok', sleepTime = 40)
-    automat.waitAndTouch('accept_eula')
-    automat.waitAndTouch('tut_1', sleepTime = 6)
-    automat.waitAndTouch('tut_2', sleepTime = 5)
-    automat.waitAndTouch('tut_3', sleepTime = 5)
-    automat.waitAndTouch('tut_4', sleepTime = 5)
-    automat.waitAndTouch('tut_5', sleepTime = 25)
-    automat.waitAndTouch('tut_6', sleepTime = 7)
-    automat.waitAndTouch('profile_play')
-    if sendMail:
-        automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
+    automat.createTelnetClient()
+    automat.sendTelnetCommand(type = 'getChips')
+    # automat.waitAndTouch('lang_ok', sleepTime = 30)
+    # automat.waitAndTouch('accept_eula')
+    # automat.waitAndTouch('tut_1', sleepTime = 6)
+    # automat.waitAndTouch('tut_2', sleepTime = 5)
+    # automat.waitAndTouch('tut_3', sleepTime = 5)
+    # automat.waitAndTouch('tut_4', sleepTime = 5)
+    # automat.waitAndTouch('tut_5', sleepTime = 25)
+    # automat.waitAndTouch('tut_6', sleepTime = 7)
+    # automat.waitAndTouch('profile_play')
+    # if sendMail:
+    #     automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
 
 def testSocial(automat, sendMail = False):
     automat.setTestSection('social')

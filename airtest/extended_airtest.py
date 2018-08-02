@@ -22,16 +22,25 @@ class airtestAutomation():
         self.currentAction = None
         self.templatesDict = {}
         self.auth = ('testergamelion66@gmail.com', 'dupa1212')
+        self.predefinedTelnetCommands = {
+            #'getChips': self.getChips
+            # TO DO - create list of predefined telnet functions that return desired 
+            # values and implement their corresponding functions.
+        }
         if clearData: self.clearAppData()
         if runApp: self.runApp()
 
-    def getCurrentTimestamp(self):
+    def getCurrentTimestamp(self, data):
         return datetime.timestamp(datetime.now())
 
     def createTelnetClient(self):
         self.setCurrAction('createTelnetClient')
         self.setCurrScreen(None)
-        self.telnetClient = telnetlib.Telnet(self.getDeviceIpAddr(), '1337')
+        if not self.telnetClient:
+            self.telnetClient = telnetlib.Telnet(self.getDeviceIpAddr(), '1337')
+            return self.fetchDataUntilNewLine()
+        else:
+            raise Exception('Telnet client was already created before.')
 
     def closeTelnetClient(self):
         self.setCurrAction('closeTelnetClient')
@@ -137,13 +146,13 @@ class airtestAutomation():
         else:
             raise TypeError('Incorect option chosen for parameter power: {}. Available options: "low", "mid", "high".')
         if direction == 'left':
-            self.swipe(startPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration)
+            self.swipe(startPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = duration)
         elif direction == 'right':
-            self.swipe(startPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration)
+            self.swipe(startPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = duration)
         elif direction == 'up':
-            self.swipe(startPoint = (0.5 * deviceRes[0], usedParams[0] * deviceRes[1]), endPoint = (0.5 * deviceRes[0], usedParams[1] * deviceRes[1]), option = 'points', duration)
+            self.swipe(startPoint = (0.5 * deviceRes[0], usedParams[0] * deviceRes[1]), endPoint = (0.5 * deviceRes[0], usedParams[1] * deviceRes[1]), option = 'points', duration = duration)
         elif direction == 'down':
-            self.swipe(startPoint = (0.5 * deviceRes[0], usedParams[1] * deviceRes[1]), endPoint = (0.5 * deviceRes[0], usedParams[0] * deviceRes[1]), option = 'points', duration)
+            self.swipe(startPoint = (0.5 * deviceRes[0], usedParams[1] * deviceRes[1]), endPoint = (0.5 * deviceRes[0], usedParams[0] * deviceRes[1]), option = 'points', duration = duration)
         else:
             raise TypeError('Incorect option chosen for parameter direction: {}. Available options: "left", "right", "up", "down".'.format(direction))
 
@@ -231,14 +240,23 @@ class airtestAutomation():
         self.setCurrScreen(None)
         output = self.runShellCommand('ip -f inet addr show wlan0')
         ipAddr = output[output.index('inet')+5:output.index('/')]
+        print(ipAddr)
         return ipAddr
 
-    def runTelnetCommand(self, cmd):
+    def sendTelnetCommand(self, cmd = None, type = None):
         self.setCurrAction('runTelnetCommand')
         self.setCurrScreen(None)
-        self.createTelnetClient()
-        self.telnetClient.write(cmd.encode('ascii')+b'\r\n')
-        self.closeTelnetClient()
+        if self.telnetClient:
+            if not type:
+                self.telnetClient.write(cmd.encode('ascii')+b'\r\n')
+                return self.fetchDataUntilNewLine()
+            else:
+                if not cmd:
+                    self.predefinedTelnetCommands[type]()
+                else:
+                    raise Exception('You can use only 1 param at once.')
+        else:
+            raise Exception('Telnet connection is not established. Create telnet client to fix this problem.')
 
     def returnCoordinatesIfExist(self, file):
         temp = self.constructTemplate(file)
@@ -251,3 +269,15 @@ class airtestAutomation():
         self.setCurrScreen(None)
         self.runShellCommand('input keyevent 4')
         sleep(sleepTime)
+    
+    def fetchDataUntilNewLine(self):
+        receivedLine = "_"
+        data = []
+        endOfContentStr = b'\n'
+        isAvailableData = lambda data: data and data != b'' and data != endOfContentStr
+
+        while isAvailableData(receivedLine):
+            receivedLine = self.telnetClient.read_until(endOfContentStr, 1)
+            data.append(receivedLine.rstrip().decode("utf-8"))
+
+        return data
