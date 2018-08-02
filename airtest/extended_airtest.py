@@ -17,28 +17,47 @@ class airtestAutomation():
         self.testSection = None
         self.device = self.connectToDevice()
         self.index = 0
-        self.telnetClient = None
         self.currentScreen = None
         self.currentAction = None
         self.templatesDict = {}
         self.auth = ('testergamelion66@gmail.com', 'dupa1212')
-        self.predefinedTelnetCommands = {
-            #'getChips': self.getChips
-            # TO DO - create list of predefined telnet functions that return desired 
-            # values and implement their corresponding functions.
-        }
         if clearData: self.clearAppData()
         if runApp: self.runApp()
 
     def getCurrentTimestamp(self, data):
         return datetime.timestamp(datetime.now())
+    
+    class Telnet(airtestAutomation):
+        def __init__(self, ip):
+            self.connection = telnetlib.Telnet(ip, '1337')
+            
+        def fetchData(self):
+            receivedLine = "_"
+            data = []
+            endOfContentStr = b'\n'
+            isAvailableData = lambda data: data and data != b'' and data != endOfContentStr
 
+            while isAvailableData(receivedLine):
+                receivedLine = self.connection.read_until(endOfContentStr, 1)
+                data.append(receivedLine.rstrip().decode("utf-8"))
+
+            return data
+        
+        def close(self):
+            self.connection.close()
+    
+        def sendTelnetCommand(self, cmd = None):
+            self.setCurrAction('sendTelnetCommand')
+            self.setCurrScreen(None)
+            self.connection.write(cmd.encode('ascii')+b'\r\n')
+            return self.fetchData()
+            
     def createTelnetClient(self):
         self.setCurrAction('createTelnetClient')
         self.setCurrScreen(None)
         if not self.telnetClient:
-            self.telnetClient = telnetlib.Telnet(self.getDeviceIpAddr(), '1337')
-            return self.fetchDataUntilNewLine()
+            self.telnetClient = self.Telnet(self.getDeviceIpAddr())
+            return self.telnetClient.fetchData()
         else:
             raise Exception('Telnet client was already created before.')
 
@@ -243,21 +262,6 @@ class airtestAutomation():
         print(ipAddr)
         return ipAddr
 
-    def sendTelnetCommand(self, cmd = None, type = None):
-        self.setCurrAction('runTelnetCommand')
-        self.setCurrScreen(None)
-        if self.telnetClient:
-            if not type:
-                self.telnetClient.write(cmd.encode('ascii')+b'\r\n')
-                return self.fetchDataUntilNewLine()
-            else:
-                if not cmd:
-                    self.predefinedTelnetCommands[type]()
-                else:
-                    raise Exception('You can use only 1 param at once.')
-        else:
-            raise Exception('Telnet connection is not established. Create telnet client to fix this problem.')
-
     def returnCoordinatesIfExist(self, file):
         temp = self.constructTemplate(file)
         self.setCurrAction('returnCoordinatesIfExist')
@@ -270,14 +274,5 @@ class airtestAutomation():
         self.runShellCommand('input keyevent 4')
         sleep(sleepTime)
     
-    def fetchDataUntilNewLine(self):
-        receivedLine = "_"
-        data = []
-        endOfContentStr = b'\n'
-        isAvailableData = lambda data: data and data != b'' and data != endOfContentStr
-
-        while isAvailableData(receivedLine):
-            receivedLine = self.telnetClient.read_until(endOfContentStr, 1)
-            data.append(receivedLine.rstrip().decode("utf-8"))
-
-        return data
+    
+            
