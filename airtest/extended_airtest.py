@@ -33,6 +33,7 @@ class airtestAutomation():
         def __init__(self, ip):
             self.setLatestInfo('Initializing Telnet object.', None)
             self.connection = telnetlib.Telnet(ip, '1337')
+            self.fetchData()
             
         def fetchData(self):
             self.setLatestInfo('fetchData', None)
@@ -55,6 +56,17 @@ class airtestAutomation():
             self.setLatestInfo('sendTelnetCommand', None)
             self.connection.write(cmd.encode('ascii')+b'\r\n')
             return self.fetchData()
+
+        def getUserId(self):
+            self.sendTelnetCommand('getInfo')
+            self.setLatestInfo('getUserId', None)
+            #todo - get userid from output
+
+        def getCurrentChipsBalance(self):
+            self.sendTelnetCommand('server playerchange chips 0')
+            self.setLatestInfo('getCurrentChipsBalance', None)
+            #todo - get current chips balance from output
+
             
     def createTelnetClient(self):
         self.setLatestInfo('createTelnetClient', None)
