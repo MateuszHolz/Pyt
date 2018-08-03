@@ -8,11 +8,10 @@ def runTests(automat):
         automat.runShellCommand('logcat -c')
         testTutorial(automat)
         automat.createTelnet(automat)
-        print(automat.telnet.getCurrentChipsBalance())
-        #testSocial(automat)
-        #testClubs(automat)
-        #testLottery(automat)
-        #testNewsfeed(automat)
+        testSocial(automat)
+        testClubs(automat)
+        testLottery(automat)
+        testNewsfeed(automat)
 
     #except Exception:
     #    automat.sendMail(subject = 'Sync Test, Section: {}, Status: Failed'.format(automat.getTestSection()))
@@ -93,6 +92,7 @@ def testLottery(automat, sendMail = False):
     automat.setTestSection('lottery')
     automat.waitAndTouch('lobby_button')
     automat.waitAndTouch('try_lottery')
+    automat.telnet.sendTelnetCommand('server lottery bronze 0') #make sure we win CHIPS
     automat.waitAndTouch('free_bronze', sleepTime = 5)
     automat.waitAndTouch('bronze_get')
     automat.waitAndTouch('iap_bronze_01', sleepTime = 5)

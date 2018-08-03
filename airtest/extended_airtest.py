@@ -74,6 +74,13 @@ class airtestAutomation():
         touch(localPos, duration = duration)
         sleep(sleepTime)
 
+    def swipeRightUntil(self, file):
+        temp = self.constructTemplate(file)
+        self.setLatestInfo('swipeRightUntil', file)
+        #while True:
+        #    if 
+        #todo : swipe right until certain object is visible (will be used in lobby to reach a slot)
+
     def constructTemplate(self, file):
         self.setLatestInfo(curAc = 'constructTemplate', curSc = file)
         if file in self.templatesDict:
@@ -215,7 +222,6 @@ class airtestAutomation():
         self.setLatestInfo('getDeviceIpAddr', None)
         output = self.runShellCommand('ip -f inet addr show wlan0')
         ipAddr = output[output.index('inet')+5:output.index('/')]
-        print(ipAddr)
         return ipAddr
 
     def returnCoordinatesIfExist(self, file):
@@ -233,7 +239,7 @@ class Telnet():
         self.airtest = airtest
         self.airtest.setLatestInfo('Initializing Telnet object.', None)
         self.connection = telnetlib.Telnet(self.airtest.getDeviceIpAddr(), '1337')
-        print(self.fetchData())
+        self.fetchData()
         
     def fetchData(self):
         self.airtest.setLatestInfo('fetchData', None)
@@ -258,23 +264,39 @@ class Telnet():
         return self.fetchData()
 
     def getUserId(self):
+        keyword = 'User ID'
         raw = self.sendTelnetCommand('getInfo')
         self.airtest.setLatestInfo('getUserId', None)
         userid = None
         for i in raw:
-            if 'User ID' in i:
+            if keyword in i:
                 userid = i.split()[2]
         return userid
 
     def getCurrentChipsBalance(self):
         raw = self.sendTelnetCommand('server playerchange chips 0')
         self.airtest.setLatestInfo('getCurrentChipsBalance', None)
-        print(raw[0].split()[5])
-        #todo - get current chips balance from output
+        curChips = raw[0].split()[5][:-1]
+        return curChips
+
+    def setChipsBalance(self, balance):
+        while True:
+            curBalance = int(self.getCurrentChipsBalance())
+            if curBalance == balance: break
+            self.airtest.setLatestInfo('setChipsBalance', None)
+            chipsDelta = balance - curBalance
+            self.sendTelnetCommand('server playerchange chips {}'.format(chipsDelta))
+            self.sendTelnetCommand('disconnect')
+            self.airtest.wait(5)
 
     def getSessionId(self):
-        self.sendTelnetCommand('getInfo')
+        keyword = 'Session_id'
+        raw = self.sendTelnetCommand('getInfo')
         self.airtest.setLatestInfo('getSessionId', None)
+        for i in raw:
+            if keyword in i:
+                sessionid = i.split()[1]
+        return sessionid
 
     def debugPrint(self, txt):
         print(txt)
