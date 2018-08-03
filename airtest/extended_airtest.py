@@ -17,64 +17,30 @@ class airtestAutomation():
         self.testSection = None
         self.device = self.connectToDevice()
         self.index = 0
-        self.telnetClient = None
+        self.telnet = None
         self.currentScreen = None
         self.currentAction = None
         self.templatesDict = {}
         self.auth = ('testergamelion66@gmail.com', 'dupa1212')
         if clearData: self.clearAppData()
         if runApp: self.runApp()
+    
+    def createTelnet(self, automat):
+        if not self.telnet:
+            self.telnet = Telnet(automat)
+        else:
+            print('Telnet client is already initalized.')
+
+    def closeTelnet(self):
+        if self.telnet:
+            self.telnet.close()
+            self.telnet = None
+        else:
+            print('Telnet client was already closed / never existed.')
 
     def getCurrentTimestamp(self, data):
         self.setLatestInfo('getCurrentTimestamp', None)
         return datetime.timestamp(datetime.now())
-    
-    class Telnet(airtestAutomation):
-        def __init__(self, ip):
-            self.setLatestInfo('Initializing Telnet object.', None)
-            self.connection = telnetlib.Telnet(ip, '1337')
-            self.fetchData()
-            
-        def fetchData(self):
-            self.setLatestInfo('fetchData', None)
-            receivedLine = "_"
-            data = []
-            endOfContentStr = b'\n'
-            isAvailableData = lambda data: data and data != b'' and data != endOfContentStr
-
-            while isAvailableData(receivedLine):
-                receivedLine = self.connection.read_until(endOfContentStr, 1)
-                data.append(receivedLine.rstrip().decode("utf-8"))
-
-            return data
-        
-        def close(self):
-            self.setLatestInfo('Deleting Telnet object.', None)
-            self.connection.close()
-    
-        def sendTelnetCommand(self, cmd = None):
-            self.setLatestInfo('sendTelnetCommand', None)
-            self.connection.write(cmd.encode('ascii')+b'\r\n')
-            return self.fetchData()
-
-        def getUserId(self):
-            self.sendTelnetCommand('getInfo')
-            self.setLatestInfo('getUserId', None)
-            #todo - get userid from output
-
-        def getCurrentChipsBalance(self):
-            self.sendTelnetCommand('server playerchange chips 0')
-            self.setLatestInfo('getCurrentChipsBalance', None)
-            #todo - get current chips balance from output
-
-            
-    def createTelnetClient(self):
-        self.setLatestInfo('createTelnetClient', None)
-        if not self.telnetClient:
-            self.telnetClient = self.Telnet(self.getDeviceIpAddr())
-            return self.telnetClient.fetchData()
-        else:
-            raise Exception('Telnet client was already created before.')
 
     def connectToDevice(self):
         self.setLatestInfo('connectToDevice', None)
@@ -261,3 +227,54 @@ class airtestAutomation():
         self.setLatestInfo('useDeviceBackButton', None)
         self.runShellCommand('input keyevent 4')
         sleep(sleepTime)
+
+class Telnet():
+    def __init__(self, airtest):
+        self.airtest = airtest
+        self.airtest.setLatestInfo('Initializing Telnet object.', None)
+        self.connection = telnetlib.Telnet(self.airtest.getDeviceIpAddr(), '1337')
+        print(self.fetchData())
+        
+    def fetchData(self):
+        self.airtest.setLatestInfo('fetchData', None)
+        receivedLine = "_"
+        data = []
+        endOfContentStr = b'\n'
+        isAvailableData = lambda data: data and data != b'' and data != endOfContentStr
+
+        while isAvailableData(receivedLine):
+            receivedLine = self.connection.read_until(endOfContentStr, 1)
+            data.append(receivedLine.rstrip().decode("utf-8"))
+
+        return data
+    
+    def close(self):
+        self.airtest.setLatestInfo('Deleting Telnet object.', None)
+        self.connection.close()
+
+    def sendTelnetCommand(self, cmd = None):
+        self.airtest.setLatestInfo('sendTelnetCommand', None)
+        self.connection.write(cmd.encode('ascii')+b'\r\n')
+        return self.fetchData()
+
+    def getUserId(self):
+        raw = self.sendTelnetCommand('getInfo')
+        self.airtest.setLatestInfo('getUserId', None)
+        userid = None
+        for i in raw:
+            if 'User ID' in i:
+                userid = i.split()[2]
+        return userid
+
+    def getCurrentChipsBalance(self):
+        raw = self.sendTelnetCommand('server playerchange chips 0')
+        self.airtest.setLatestInfo('getCurrentChipsBalance', None)
+        print(raw[0].split()[5])
+        #todo - get current chips balance from output
+
+    def getSessionId(self):
+        self.sendTelnetCommand('getInfo')
+        self.airtest.setLatestInfo('getSessionId', None)
+
+    def debugPrint(self, txt):
+        print(txt)
