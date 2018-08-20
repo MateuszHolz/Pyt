@@ -77,9 +77,11 @@ class airtestAutomation():
     def swipeRightUntil(self, file):
         temp = self.constructTemplate(file)
         self.setLatestInfo('swipeRightUntil', file)
-        #while True:
-        #    if 
-        #todo : swipe right until certain object is visible (will be used in lobby to reach a slot)
+        while True:
+            if exists(temp):
+                break
+            else:
+                self.swipeToDirection(direction = 'right', power = 'mid')
 
     def constructTemplate(self, file):
         self.setLatestInfo(curAc = 'constructTemplate', curSc = file)
@@ -105,7 +107,7 @@ class airtestAutomation():
             swipe(v1 = temp1, v2 = temp2, duration = duration)
         elif option == "points": swipe(v1 = startPoint, v2 = endPoint, duration = duration)
     
-    def swipeToDirection(self, direction, power, duration = 1):
+    def swipeToDirection(self, direction, power, duration = 3):
         '''
         power(s):
         - low
@@ -136,9 +138,9 @@ class airtestAutomation():
             usedParams = high
         else:
             raise TypeError('Incorect option chosen for parameter power: {}. Available options: "low", "mid", "high".')
-        if direction == 'left':
+        if direction == 'right':
             self.swipe(startPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = duration)
-        elif direction == 'right':
+        elif direction == 'left':
             self.swipe(startPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = duration)
         elif direction == 'up':
             self.swipe(startPoint = (0.5 * deviceRes[0], usedParams[0] * deviceRes[1]), endPoint = (0.5 * deviceRes[0], usedParams[1] * deviceRes[1]), option = 'points', duration = duration)
@@ -240,6 +242,7 @@ class Telnet():
         self.airtest.setLatestInfo('Initializing Telnet object.', None)
         self.connection = telnetlib.Telnet(self.airtest.getDeviceIpAddr(), '1337')
         self.fetchData()
+        whi
         
     def fetchData(self):
         self.airtest.setLatestInfo('fetchData', None)

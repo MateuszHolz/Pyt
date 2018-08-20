@@ -7,11 +7,12 @@ def runTests(automat):
         automat.wait(2)
         automat.runShellCommand('logcat -c')
         testTutorial(automat)
-        automat.createTelnet(automat)
-        testSocial(automat)
-        testClubs(automat)
-        testLottery(automat)
-        testNewsfeed(automat)
+        automat.swipeRightUntil('wheel_of_wins')
+        # automat.createTelnet(automat)
+        # testSocial(automat)
+        # testClubs(automat)
+        # testLottery(automat)
+        # testNewsfeed(automat)
 
     #except Exception:
     #    automat.sendMail(subject = 'Sync Test, Section: {}, Status: Failed'.format(automat.getTestSection()))
