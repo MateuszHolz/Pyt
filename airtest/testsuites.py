@@ -53,11 +53,7 @@ def testTutorial(automat, sendMail = False):
     if sendMail:
         automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
 
-def testSocial(automat, userId = None, sendMail = False):
-    if userId:
-        id = userId
-    else:
-        id = '1'    
+def testSocial(automat, sendMail = False, userId = '1'):
     automat.setTestSection('social')
     automat.waitAndTouch('social_lobby_button')
     automat.waitAndTouch('from_my_club')
@@ -65,7 +61,7 @@ def testSocial(automat, userId = None, sendMail = False):
     automat.useDeviceBackButton()
     automat.waitAndTouch('social_connect')
     automat.waitAndTouch('input_field')
-    automat.type('2203')
+    automat.type(userId)
     automat.waitAndTouch('submit')
     automat.waitAndTouch('ok_button')
     automat.waitAndTouch('shop_plus_button')
@@ -74,7 +70,9 @@ def testSocial(automat, userId = None, sendMail = False):
     if sendMail:
         automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
 
-def testLottery(automat, sendMail = False):
+'''def testLottery(automat, sendMail = False): TO DO - add telnet method that gets current info of available tickets 
+                                                    (they change every session), use that information to set next
+                                                    reward for bronze ticket
     automat.setTestSection('lottery')
     automat.waitAndTouch('lobby_button')
     automat.waitAndTouch('try_lottery')
@@ -101,7 +99,7 @@ def testLottery(automat, sendMail = False):
     # automat.useDeviceBackButton()
     # automat.useDeviceBackButton()
     # if sendMail:
-    #     automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
+    #     automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))'''
 
 def testNewsfeed(automat, sendMail = False):
     automat.setTestSection('newsfeed')
@@ -121,6 +119,20 @@ def testLeaderboards(automat, sendMail = False):
     automat.waitAndTouch('leaderboards_famous_players_tab')
     automat.waitAndTouch('leaderboards_happy_players_tab')
     automat.waitAndTouch('leaderboards_slots_tab')
+    automat.swipeToDirection('up', 'mid', 1)
+    automat.waitAndTouch('leaderboards_show_more')
+    automat.waitAndTouch('leaderboards_most_winnings_yesterday')
+    automat.useDeviceBackButton()
+    automat.useDeviceBackButton()
+    if sendMail:
+        automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
 
-def reachLevel(automat, lvl, sendMail = False, skipLobbyPopups = False):
-    automat.telnet.sendTelnetCommand('server playerchange level 0')
+def seekForSlot(automat, slotScreen, sendMail = False):
+    automat.setTestSection('lobby')
+    automat.telnet.sendTelnetCommand('disconnect')
+    automat.swipeRightUntil(slotScreen)
+    automat.waitAndTouch(slotScreen)
+    print('\n\n\n'+slotScreen+'_rss_beginner'+'\n\n\n')
+    automat.waitAndTouch(slotScreen+'_rss_beginner')
+    if sendMail:
+        automat.sendMail(subject = 'Sync Test, Section: {}, SeekForSlot, Slot: {}, Status: Passed'.format(automat.getTestSection(), slotScreen))
