@@ -13,6 +13,7 @@ from datetime import datetime
 class airtestAutomation():
     def __init__(self, devId, packageName, setup = True, ip = None, runApp = None, clearData = None):
         self.ipAddress = ip
+        self.lobbyPopups = ('mystery_reward_continue', 'bucks_unlocked')
         self.devId = devId
         self.packageName = packageName
         self.testSection = None
@@ -104,7 +105,11 @@ class airtestAutomation():
     def swipeRightUntil(self, file):
         temp = self.constructTemplate(file)
         self.setLatestInfo('swipeRightUntil', file)
+        tries = 0
         while True:
+            if tries > 15:
+                raise Exception('Maximum amount of tries ({}) reached!'.format(tries))
+            tries += 1
             if exists(temp):
                 self.swipeToDirection(direction = 'right', power = 'low', duration = 0.5)
                 break
@@ -137,18 +142,18 @@ class airtestAutomation():
     
     def swipeToDirection(self, direction, power, duration = 3):
         '''
-        power(s):
-        - low
-        - mid
-        - high
-        Throws exception when power any other than that has been provided. Accepts only string.
-
         direction(s):
         - left
         - right
         - up
         - down
         Throws exception when direction any other than that has been provided. Accepts only string.
+        
+        power(s):
+        - low
+        - mid
+        - high
+        Throws exception when power any other than that has been provided. Accepts only string.
         '''
         self.setLatestInfo('swipeToDirection', self.getLatestActions()[1])
         low = (0.55, 0.45)
@@ -165,7 +170,7 @@ class airtestAutomation():
         elif power == 'high':
             usedParams = high
         else:
-            raise TypeError('Incorect option chosen for parameter power: {}. Available options: "low", "mid", "high".')
+            raise TypeError('Incorect option chosen for parameter power: {}. Available options: "low", "mid", "high".'.format(power))
         if direction == 'right':
             self.swipe(startPoint = (usedParams[0] * deviceRes[0], 0.5 * deviceRes[1]), endPoint = (usedParams[1] * deviceRes[0], 0.5 * deviceRes[1]), option = 'points', duration = duration)
         elif direction == 'left':
@@ -335,7 +340,7 @@ class Telnet():
 
     #def setNextLotteryTicketSafe(self, ticketType):
 
-    def reachLevel(self, lvl, sendMail = False, skipLobbyPopups = False):
+    def reachLevel(self, lvl, skipLobbyPopups = False):
         self.sendTelnetCommand('server playerchange level {}'.format(lvl - self.getLevel()))
         self.airtest.wait(2)
         self.sendTelnetCommand('disconnect')
@@ -357,6 +362,3 @@ class Telnet():
                     self.airtest.waitAndTouch('mystery_reward_continue', sleepTime = 2)
         return 0
 
-    
-    def debugPrint(self, txt):
-        print(txt)
