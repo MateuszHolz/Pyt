@@ -127,12 +127,12 @@ def testLeaderboards(automat, sendMail = False):
     if sendMail:
         automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
 
-def seekForSlot(automat, slotScreen, sendMail = False):
+def seekAndEnterSlot(automat, slotScreen, sendMail = False):
     automat.setTestSection('lobby')
     automat.telnet.sendTelnetCommand('disconnect')
     automat.swipeRightUntil(slotScreen)
     automat.waitAndTouch(slotScreen)
-    print('\n\n\n'+slotScreen+'_rss_beginner'+'\n\n\n')
     automat.waitAndTouch(slotScreen+'_rss_beginner')
+    automat.wait(10)
     if sendMail:
         automat.sendMail(subject = 'Sync Test, Section: {}, SeekForSlot, Slot: {}, Status: Passed'.format(automat.getTestSection(), slotScreen))
