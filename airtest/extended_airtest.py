@@ -11,7 +11,8 @@ import telnetlib
 from datetime import datetime
 
 class airtestAutomation():
-    def __init__(self, devId, packageName, runApp = None, clearData = None):
+    def __init__(self, devId, packageName, setup = True, ip = None, runApp = None, clearData = None):
+        self.ipAddress = ip
         self.devId = devId
         self.packageName = packageName
         self.testSection = None
@@ -24,6 +25,14 @@ class airtestAutomation():
         self.auth = ('testergamelion66@gmail.com', 'dupa1212')
         if clearData: self.clearAppData()
         if runApp: self.runApp()
+        if setup: self.standardSetup()
+    
+    def standardSetup(self):
+        self.clearAppData()
+        self.runApp()
+        self.type('ad')
+        self.wait(2)
+        self.runShellCommand('logcat -c')
     
     def createTelnet(self, automat):
         if not self.telnet:
@@ -38,16 +47,34 @@ class airtestAutomation():
         else:
             print('Telnet client was already closed / never existed.')
 
-    def getCurrentTimestamp(self, data):
+    def getCurrentTimestamp(self):
         self.setLatestInfo('getCurrentTimestamp', None)
         return datetime.timestamp(datetime.now())
 
     def connectToDevice(self):
         self.setLatestInfo('connectToDevice', None)
-        try:
-            device = connect_device('android:///{}'.format(self.devId))
-        except Exception:
-            device = connect_device('android:///{}'.format(self.devId))
+        if self.ipAddress is not None:
+            retries = 0
+            while True:
+                try:
+                    device = connect_device('android://{}:{}/{}'.format(self.ipAddress, '5555', self.devId))
+                    break
+                except Exception:
+                    if retries > 3:
+                        raise Exception('Max amount of retries for connecting to device with ip: {} reached!'.format(retries))
+                    retries += 1
+                    continue
+        else:
+            retries = 0
+            while True:
+                try:
+                    device = connect_device('android:///{}'.format(self.devId))
+                    break
+                except Exception:
+                    if retries > 3:
+                        raise Exception('Max amount of retries via cable: {} reached!'.format(retries))
+                    retries += 1
+                    continue
         wake()
         return device
 
@@ -79,9 +106,10 @@ class airtestAutomation():
         self.setLatestInfo('swipeRightUntil', file)
         while True:
             if exists(temp):
+                self.swipeToDirection(direction = 'right', power = 'low', duration = 0.5)
                 break
             else:
-                self.swipeToDirection(direction = 'right', power = 'mid')
+                self.swipeToDirection(direction = 'right', power = 'mid', duration = 0.5)
 
     def constructTemplate(self, file):
         self.setLatestInfo(curAc = 'constructTemplate', curSc = file)
@@ -242,7 +270,6 @@ class Telnet():
         self.airtest.setLatestInfo('Initializing Telnet object.', None)
         self.connection = telnetlib.Telnet(self.airtest.getDeviceIpAddr(), '1337')
         self.fetchData()
-        whi
         
     def fetchData(self):
         self.airtest.setLatestInfo('fetchData', None)
@@ -276,21 +303,26 @@ class Telnet():
                 userid = i.split()[2]
         return userid
 
-    def getCurrentChipsBalance(self):
+    def getChipsBalance(self):
         raw = self.sendTelnetCommand('server playerchange chips 0')
-        self.airtest.setLatestInfo('getCurrentChipsBalance', None)
+        self.airtest.setLatestInfo('getChipsBalance', None)
         curChips = raw[0].split()[5][:-1]
         return curChips
 
     def setChipsBalance(self, balance):
         while True:
-            curBalance = int(self.getCurrentChipsBalance())
+            curBalance = int(self.getChipsBalance())
             if curBalance == balance: break
             self.airtest.setLatestInfo('setChipsBalance', None)
             chipsDelta = balance - curBalance
             self.sendTelnetCommand('server playerchange chips {}'.format(chipsDelta))
             self.sendTelnetCommand('disconnect')
             self.airtest.wait(5)
+
+    def getLevel(self):
+        raw = self.sendTelnetCommand('server playerchange level 0')
+        self.airtest.setLatestInfo('getLevel', None)
+        return int(raw[0].split()[5][:-1])
 
     def getSessionId(self):
         keyword = 'Session_id'
@@ -301,5 +333,30 @@ class Telnet():
                 sessionid = i.split()[1]
         return sessionid
 
+    #def setNextLotteryTicketSafe(self, ticketType):
+
+    def reachLevel(self, lvl, sendMail = False, skipLobbyPopups = False):
+        self.sendTelnetCommand('server playerchange level {}'.format(lvl - self.getLevel()))
+        self.airtest.wait(2)
+        self.sendTelnetCommand('disconnect')
+        self.airtest.wait(5)
+        self.airtest.setTestSection('utils')
+        if not skipLobbyPopups:
+            return 0
+        else:
+            while True:
+                self.airtest.wait(3)
+                if not self.airtest.returnCoordinatesIfExist('mystery_reward_continue'):
+                    if self.airtest.returnCoordinatesIfExist('bucks_unlocked'):
+                        self.airtest.waitAndTouch('bucks_unlocked')
+                        self.airtest.wait(3)
+                        break
+                    else:
+                        break
+                else:
+                    self.airtest.waitAndTouch('mystery_reward_continue', sleepTime = 2)
+        return 0
+
+    
     def debugPrint(self, txt):
         print(txt)
