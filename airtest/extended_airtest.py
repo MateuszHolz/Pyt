@@ -1,14 +1,16 @@
 import os
-from airtest.core.api import *
-from airtest.core.device import *
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
-from email.mime.application import MIMEApplication
 import smtplib
 import subprocess
 import telnetlib
 from datetime import datetime
+from email.mime.application import MIMEApplication
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from airtest.core.api import *
+from airtest.core.device import *
+
 
 class airtestAutomation():
     def __init__(self, devId, packageName, setup = True, ip = None, runApp = None, clearData = None):
@@ -23,7 +25,6 @@ class airtestAutomation():
         self.currentScreen = None
         self.currentAction = None
         self.templatesDict = {}
-        self.auth = ('testergamelion66@gmail.com', 'dupa1212')
         if clearData: self.clearAppData()
         if runApp: self.runApp()
         if setup: self.standardSetup()
@@ -338,7 +339,12 @@ class Telnet():
                 sessionid = i.split()[1]
         return sessionid
 
-    #def setNextLotteryTicketSafe(self, ticketType):
+    def setNextLotteryTicketSafe(self, ticketType):
+        listOfTickets = self.sendTelnetCommand('server lottery {} list'.format(ticketType))
+        for i in listOfTickets:
+            if 'chips' in i:
+                safeIndex = i.split()[0]
+        self.sendTelnetCommand('server lottery {} {}'.format(ticketType, safeIndex))
 
     def reachLevel(self, lvl, skipLobbyPopups = False):
         self.sendTelnetCommand('server playerchange level {}'.format(lvl - self.getLevel()))
@@ -361,4 +367,3 @@ class Telnet():
                 else:
                     self.airtest.waitAndTouch('mystery_reward_continue', sleepTime = 2)
         return 0
-

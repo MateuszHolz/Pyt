@@ -1,1 +1,2 @@
-HUAWEI Mate 10 Pro - 192.168.67.180
+Samsung Galaxy Note8 - 192.168.65.80
+None - 192.168.67.59

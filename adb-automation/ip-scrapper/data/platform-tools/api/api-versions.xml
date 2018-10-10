@@ -7,6 +7,7 @@
 	<class name="android/Manifest$permission" since="1">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
+		<field name="ACCEPT_HANDOVER" since="28"/>
 		<field name="ACCESS_CHECKIN_PROPERTIES"/>
 		<field name="ACCESS_COARSE_LOCATION"/>
 		<field name="ACCESS_FINE_LOCATION"/>
@@ -109,6 +110,7 @@
 		<field name="MOUNT_FORMAT_FILESYSTEMS" since="3"/>
 		<field name="MOUNT_UNMOUNT_FILESYSTEMS"/>
 		<field name="NFC" since="9"/>
+		<field name="NFC_TRANSACTION_EVENT" since="28"/>
 		<field name="PACKAGE_USAGE_STATS" since="23"/>
 		<field name="PERSISTENT_ACTIVITY" deprecated="16"/>
 		<field name="PROCESS_OUTGOING_CALLS"/>
@@ -6506,6 +6508,7 @@
 		<field name="RESET_PASSWORD_DO_NOT_ASK_CREDENTIALS_ON_BOOT" since="23"/>
 		<field name="RESET_PASSWORD_REQUIRE_ENTRY"/>
 		<field name="SKIP_SETUP_WIZARD" since="24"/>
+		<field name="WIPE_EUICC" since="28"/>
 		<field name="WIPE_EXTERNAL_STORAGE" since="9"/>
 		<field name="WIPE_RESET_PROTECTION_DATA" since="22"/>
 	</class>
@@ -6909,6 +6912,7 @@
 	<class name="android/app/usage/NetworkStats$Bucket" since="23">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
+		<method name="getDefaultNetwork()I" since="28"/>
 		<method name="getEndTimeStamp()J"/>
 		<method name="getMetered()I" since="26"/>
 		<method name="getRoaming()I" since="24"/>
@@ -6920,6 +6924,9 @@
 		<method name="getTxBytes()J"/>
 		<method name="getTxPackets()J"/>
 		<method name="getUid()I"/>
+		<field name="DEFAULT_NETWORK_ALL" since="28"/>
+		<field name="DEFAULT_NETWORK_NO" since="28"/>
+		<field name="DEFAULT_NETWORK_YES" since="28"/>
 		<field name="METERED_ALL" since="26"/>
 		<field name="METERED_NO" since="26"/>
 		<field name="METERED_YES" since="26"/>
@@ -7855,6 +7862,79 @@
 		<method name="onHealthAppConfigurationStatusChange(Landroid/bluetooth/BluetoothHealthAppConfiguration;I)V"/>
 		<method name="onHealthChannelStateChange(Landroid/bluetooth/BluetoothHealthAppConfiguration;Landroid/bluetooth/BluetoothDevice;IILandroid/os/ParcelFileDescriptor;I)V"/>
 	</class>
+	<class name="android/bluetooth/BluetoothHidDevice" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/bluetooth/BluetoothProfile"/>
+		<method name="&lt;init>()V"/>
+		<method name="connect(Landroid/bluetooth/BluetoothDevice;)Z"/>
+		<method name="disconnect(Landroid/bluetooth/BluetoothDevice;)Z"/>
+		<method name="registerApp(Landroid/bluetooth/BluetoothHidDeviceAppSdpSettings;Landroid/bluetooth/BluetoothHidDeviceAppQosSettings;Landroid/bluetooth/BluetoothHidDeviceAppQosSettings;Ljava/util/concurrent/Executor;Landroid/bluetooth/BluetoothHidDevice$Callback;)Z"/>
+		<method name="replyReport(Landroid/bluetooth/BluetoothDevice;BB[B)Z"/>
+		<method name="reportError(Landroid/bluetooth/BluetoothDevice;B)Z"/>
+		<method name="sendReport(Landroid/bluetooth/BluetoothDevice;I[B)Z"/>
+		<method name="unregisterApp()Z"/>
+		<field name="ACTION_CONNECTION_STATE_CHANGED"/>
+		<field name="ERROR_RSP_INVALID_PARAM"/>
+		<field name="ERROR_RSP_INVALID_RPT_ID"/>
+		<field name="ERROR_RSP_NOT_READY"/>
+		<field name="ERROR_RSP_SUCCESS"/>
+		<field name="ERROR_RSP_UNKNOWN"/>
+		<field name="ERROR_RSP_UNSUPPORTED_REQ"/>
+		<field name="PROTOCOL_BOOT_MODE"/>
+		<field name="PROTOCOL_REPORT_MODE"/>
+		<field name="REPORT_TYPE_FEATURE"/>
+		<field name="REPORT_TYPE_INPUT"/>
+		<field name="REPORT_TYPE_OUTPUT"/>
+		<field name="SUBCLASS1_COMBO"/>
+		<field name="SUBCLASS1_KEYBOARD"/>
+		<field name="SUBCLASS1_MOUSE"/>
+		<field name="SUBCLASS1_NONE"/>
+		<field name="SUBCLASS2_CARD_READER"/>
+		<field name="SUBCLASS2_DIGITIZER_TABLET"/>
+		<field name="SUBCLASS2_GAMEPAD"/>
+		<field name="SUBCLASS2_JOYSTICK"/>
+		<field name="SUBCLASS2_REMOTE_CONTROL"/>
+		<field name="SUBCLASS2_SENSING_DEVICE"/>
+		<field name="SUBCLASS2_UNCATEGORIZED"/>
+	</class>
+	<class name="android/bluetooth/BluetoothHidDevice$Callback" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="onAppStatusChanged(Landroid/bluetooth/BluetoothDevice;Z)V"/>
+		<method name="onConnectionStateChanged(Landroid/bluetooth/BluetoothDevice;I)V"/>
+		<method name="onGetReport(Landroid/bluetooth/BluetoothDevice;BBI)V"/>
+		<method name="onInterruptData(Landroid/bluetooth/BluetoothDevice;B[B)V"/>
+		<method name="onSetProtocol(Landroid/bluetooth/BluetoothDevice;B)V"/>
+		<method name="onSetReport(Landroid/bluetooth/BluetoothDevice;BB[B)V"/>
+		<method name="onVirtualCableUnplug(Landroid/bluetooth/BluetoothDevice;)V"/>
+	</class>
+	<class name="android/bluetooth/BluetoothHidDeviceAppQosSettings" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>(IIIIII)V"/>
+		<method name="getDelayVariation()I"/>
+		<method name="getLatency()I"/>
+		<method name="getPeakBandwidth()I"/>
+		<method name="getServiceType()I"/>
+		<method name="getTokenBucketSize()I"/>
+		<method name="getTokenRate()I"/>
+		<field name="CREATOR"/>
+		<field name="MAX"/>
+		<field name="SERVICE_BEST_EFFORT"/>
+		<field name="SERVICE_GUARANTEED"/>
+		<field name="SERVICE_NO_TRAFFIC"/>
+	</class>
+	<class name="android/bluetooth/BluetoothHidDeviceAppSdpSettings" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;B[B)V"/>
+		<method name="getDescription()Ljava/lang/String;"/>
+		<method name="getDescriptors()[B"/>
+		<method name="getName()Ljava/lang/String;"/>
+		<method name="getProvider()Ljava/lang/String;"/>
+		<method name="getSubclass()B"/>
+		<field name="CREATOR"/>
+	</class>
 	<class name="android/bluetooth/BluetoothManager" since="18">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
@@ -7876,6 +7956,7 @@
 		<field name="GATT_SERVER" since="18"/>
 		<field name="HEADSET"/>
 		<field name="HEALTH" since="14"/>
+		<field name="HID_DEVICE" since="28"/>
 		<field name="SAP" since="23"/>
 		<field name="STATE_CONNECTED"/>
 		<field name="STATE_CONNECTING"/>
@@ -8895,6 +8976,7 @@
 		<field name="DISPLAY_SERVICE" since="17"/>
 		<field name="DOWNLOAD_SERVICE" since="9"/>
 		<field name="DROPBOX_SERVICE" since="8"/>
+		<field name="EUICC_SERVICE" since="28"/>
 		<field name="FINGERPRINT_SERVICE" since="23"/>
 		<field name="HARDWARE_PROPERTIES_SERVICE" since="24"/>
 		<field name="INPUT_METHOD_SERVICE" since="3"/>
@@ -10599,7 +10681,9 @@
 		<field name="FEATURE_SIP_VOIP" since="9"/>
 		<field name="FEATURE_TELEPHONY" since="7"/>
 		<field name="FEATURE_TELEPHONY_CDMA" since="7"/>
+		<field name="FEATURE_TELEPHONY_EUICC" since="28"/>
 		<field name="FEATURE_TELEPHONY_GSM" since="7"/>
+		<field name="FEATURE_TELEPHONY_MBMS" since="28"/>
 		<field name="FEATURE_TELEVISION" since="16" deprecated="21"/>
 		<field name="FEATURE_TOUCHSCREEN" since="8"/>
 		<field name="FEATURE_TOUCHSCREEN_MULTITOUCH" since="7"/>
@@ -16051,6 +16135,17 @@
 		<field name="KNOTTED_HEH"/>
 		<field name="LAM"/>
 		<field name="LAMADH"/>
+		<field name="MALAYALAM_BHA" since="28"/>
+		<field name="MALAYALAM_JA" since="28"/>
+		<field name="MALAYALAM_LLA" since="28"/>
+		<field name="MALAYALAM_LLLA" since="28"/>
+		<field name="MALAYALAM_NGA" since="28"/>
+		<field name="MALAYALAM_NNA" since="28"/>
+		<field name="MALAYALAM_NNNA" since="28"/>
+		<field name="MALAYALAM_NYA" since="28"/>
+		<field name="MALAYALAM_RA" since="28"/>
+		<field name="MALAYALAM_SSA" since="28"/>
+		<field name="MALAYALAM_TTA" since="28"/>
 		<field name="MANICHAEAN_ALEPH"/>
 		<field name="MANICHAEAN_AYIN"/>
 		<field name="MANICHAEAN_BETH"/>
@@ -16307,6 +16402,8 @@
 		<field name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D_ID"/>
 		<field name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E"/>
 		<field name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E_ID"/>
+		<field name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F" since="28"/>
+		<field name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F_ID" since="28"/>
 		<field name="CJK_UNIFIED_IDEOGRAPHS_ID"/>
 		<field name="COMBINING_DIACRITICAL_MARKS"/>
 		<field name="COMBINING_DIACRITICAL_MARKS_EXTENDED"/>
@@ -16452,6 +16549,8 @@
 		<field name="JAVANESE_ID"/>
 		<field name="KAITHI"/>
 		<field name="KAITHI_ID"/>
+		<field name="KANA_EXTENDED_A" since="28"/>
+		<field name="KANA_EXTENDED_A_ID" since="28"/>
 		<field name="KANA_SUPPLEMENT"/>
 		<field name="KANA_SUPPLEMENT_ID"/>
 		<field name="KANBUN"/>
@@ -16524,6 +16623,8 @@
 		<field name="MANICHAEAN_ID"/>
 		<field name="MARCHEN" since="26"/>
 		<field name="MARCHEN_ID" since="26"/>
+		<field name="MASARAM_GONDI" since="28"/>
+		<field name="MASARAM_GONDI_ID" since="28"/>
 		<field name="MATHEMATICAL_ALPHANUMERIC_SYMBOLS"/>
 		<field name="MATHEMATICAL_ALPHANUMERIC_SYMBOLS_ID"/>
 		<field name="MATHEMATICAL_OPERATORS"/>
@@ -16583,6 +16684,8 @@
 		<field name="NO_BLOCK"/>
 		<field name="NUMBER_FORMS"/>
 		<field name="NUMBER_FORMS_ID"/>
+		<field name="NUSHU" since="28"/>
+		<field name="NUSHU_ID" since="28"/>
 		<field name="OGHAM"/>
 		<field name="OGHAM_ID"/>
 		<field name="OLD_HUNGARIAN"/>
@@ -16661,6 +16764,8 @@
 		<field name="SMALL_FORM_VARIANTS_ID"/>
 		<field name="SORA_SOMPENG"/>
 		<field name="SORA_SOMPENG_ID"/>
+		<field name="SOYOMBO" since="28"/>
+		<field name="SOYOMBO_ID" since="28"/>
 		<field name="SPACING_MODIFIER_LETTERS"/>
 		<field name="SPACING_MODIFIER_LETTERS_ID"/>
 		<field name="SPECIALS"/>
@@ -16693,6 +16798,8 @@
 		<field name="SYLOTI_NAGRI_ID"/>
 		<field name="SYRIAC"/>
 		<field name="SYRIAC_ID"/>
+		<field name="SYRIAC_SUPPLEMENT" since="28"/>
+		<field name="SYRIAC_SUPPLEMENT_ID" since="28"/>
 		<field name="TAGALOG"/>
 		<field name="TAGALOG_ID"/>
 		<field name="TAGBANWA"/>
@@ -16753,6 +16860,8 @@
 		<field name="YI_RADICALS_ID"/>
 		<field name="YI_SYLLABLES"/>
 		<field name="YI_SYLLABLES_ID"/>
+		<field name="ZANABAZAR_SQUARE" since="28"/>
+		<field name="ZANABAZAR_SQUARE_ID" since="28"/>
 	</class>
 	<class name="android/icu/lang/UCharacter$WordBreak" since="24">
 		<extends name="java/lang/Object"/>
@@ -16908,6 +17017,11 @@
 		<field name="DIACRITIC"/>
 		<field name="DOUBLE_START"/>
 		<field name="EAST_ASIAN_WIDTH"/>
+		<field name="EMOJI" since="28"/>
+		<field name="EMOJI_COMPONENT" since="28"/>
+		<field name="EMOJI_MODIFIER" since="28"/>
+		<field name="EMOJI_MODIFIER_BASE" since="28"/>
+		<field name="EMOJI_PRESENTATION" since="28"/>
 		<field name="EXTENDER"/>
 		<field name="FULL_COMPOSITION_EXCLUSION"/>
 		<field name="GENERAL_CATEGORY"/>
@@ -16955,8 +17069,10 @@
 		<field name="POSIX_GRAPH"/>
 		<field name="POSIX_PRINT"/>
 		<field name="POSIX_XDIGIT"/>
+		<field name="PREPENDED_CONCATENATION_MARK" since="28"/>
 		<field name="QUOTATION_MARK"/>
 		<field name="RADICAL"/>
+		<field name="REGIONAL_INDICATOR" since="28"/>
 		<field name="SCRIPT"/>
 		<field name="SCRIPT_EXTENSIONS"/>
 		<field name="SEGMENT_STARTER"/>
@@ -17099,6 +17215,7 @@
 		<field name="MANDAIC"/>
 		<field name="MANICHAEAN"/>
 		<field name="MARCHEN" since="26"/>
+		<field name="MASARAM_GONDI" since="28"/>
 		<field name="MATHEMATICAL_NOTATION"/>
 		<field name="MAYAN_HIEROGLYPHS"/>
 		<field name="MEITEI_MAYEK"/>
@@ -17153,6 +17270,7 @@
 		<field name="SINDHI"/>
 		<field name="SINHALA"/>
 		<field name="SORA_SOMPENG"/>
+		<field name="SOYOMBO" since="28"/>
 		<field name="SUNDANESE"/>
 		<field name="SYLOTI_NAGRI"/>
 		<field name="SYMBOLS"/>
@@ -17183,6 +17301,7 @@
 		<field name="WESTERN_SYRIAC"/>
 		<field name="WOLEAI"/>
 		<field name="YI"/>
+		<field name="ZANABAZAR_SQUARE" since="28"/>
 	</class>
 	<class name="android/icu/lang/UScript$ScriptUsage" since="24">
 		<extends name="java/lang/Enum"/>
@@ -17947,11 +18066,14 @@
 		<method name="getCurrency()Landroid/icu/util/Currency;"/>
 		<method name="getCurrencySymbol()Ljava/lang/String;"/>
 		<method name="getDecimalSeparator()C"/>
+		<method name="getDecimalSeparatorString()Ljava/lang/String;" since="28"/>
 		<method name="getDigit()C"/>
+		<method name="getDigitStrings()[Ljava/lang/String;" since="28"/>
 		<method name="getDigits()[C"/>
 		<method name="getExponentMultiplicationSign()Ljava/lang/String;"/>
 		<method name="getExponentSeparator()Ljava/lang/String;"/>
 		<method name="getGroupingSeparator()C"/>
+		<method name="getGroupingSeparatorString()Ljava/lang/String;" since="28"/>
 		<method name="getInfinity()Ljava/lang/String;"/>
 		<method name="getInstance()Landroid/icu/text/DecimalFormatSymbols;"/>
 		<method name="getInstance(Landroid/icu/util/ULocale;)Landroid/icu/text/DecimalFormatSymbols;"/>
@@ -17959,37 +18081,52 @@
 		<method name="getInternationalCurrencySymbol()Ljava/lang/String;"/>
 		<method name="getLocale()Ljava/util/Locale;"/>
 		<method name="getMinusSign()C"/>
+		<method name="getMinusSignString()Ljava/lang/String;" since="28"/>
 		<method name="getMonetaryDecimalSeparator()C"/>
+		<method name="getMonetaryDecimalSeparatorString()Ljava/lang/String;" since="28"/>
 		<method name="getMonetaryGroupingSeparator()C"/>
+		<method name="getMonetaryGroupingSeparatorString()Ljava/lang/String;" since="28"/>
 		<method name="getNaN()Ljava/lang/String;"/>
 		<method name="getPadEscape()C"/>
 		<method name="getPatternForCurrencySpacing(IZ)Ljava/lang/String;"/>
 		<method name="getPatternSeparator()C"/>
 		<method name="getPerMill()C"/>
+		<method name="getPerMillString()Ljava/lang/String;" since="28"/>
 		<method name="getPercent()C"/>
+		<method name="getPercentString()Ljava/lang/String;" since="28"/>
 		<method name="getPlusSign()C"/>
+		<method name="getPlusSignString()Ljava/lang/String;" since="28"/>
 		<method name="getSignificantDigit()C"/>
 		<method name="getULocale()Landroid/icu/util/ULocale;"/>
 		<method name="getZeroDigit()C"/>
 		<method name="setCurrency(Landroid/icu/util/Currency;)V"/>
 		<method name="setCurrencySymbol(Ljava/lang/String;)V"/>
 		<method name="setDecimalSeparator(C)V"/>
+		<method name="setDecimalSeparatorString(Ljava/lang/String;)V" since="28"/>
 		<method name="setDigit(C)V"/>
+		<method name="setDigitStrings([Ljava/lang/String;)V" since="28"/>
 		<method name="setExponentMultiplicationSign(Ljava/lang/String;)V"/>
 		<method name="setExponentSeparator(Ljava/lang/String;)V"/>
 		<method name="setGroupingSeparator(C)V"/>
+		<method name="setGroupingSeparatorString(Ljava/lang/String;)V" since="28"/>
 		<method name="setInfinity(Ljava/lang/String;)V"/>
 		<method name="setInternationalCurrencySymbol(Ljava/lang/String;)V"/>
 		<method name="setMinusSign(C)V"/>
+		<method name="setMinusSignString(Ljava/lang/String;)V" since="28"/>
 		<method name="setMonetaryDecimalSeparator(C)V"/>
+		<method name="setMonetaryDecimalSeparatorString(Ljava/lang/String;)V" since="28"/>
 		<method name="setMonetaryGroupingSeparator(C)V"/>
+		<method name="setMonetaryGroupingSeparatorString(Ljava/lang/String;)V" since="28"/>
 		<method name="setNaN(Ljava/lang/String;)V"/>
 		<method name="setPadEscape(C)V"/>
 		<method name="setPatternForCurrencySpacing(IZLjava/lang/String;)V"/>
 		<method name="setPatternSeparator(C)V"/>
 		<method name="setPerMill(C)V"/>
+		<method name="setPerMillString(Ljava/lang/String;)V" since="28"/>
 		<method name="setPercent(C)V"/>
+		<method name="setPercentString(Ljava/lang/String;)V" since="28"/>
 		<method name="setPlusSign(C)V"/>
+		<method name="setPlusSignString(Ljava/lang/String;)V" since="28"/>
 		<method name="setSignificantDigit(C)V"/>
 		<method name="setZeroDigit(C)V"/>
 		<field name="CURRENCY_SPC_CURRENCY_MATCH"/>
@@ -18010,7 +18147,9 @@
 		<field name="DIALECT_NAMES"/>
 		<field name="LENGTH_FULL"/>
 		<field name="LENGTH_SHORT"/>
+		<field name="NO_SUBSTITUTE" since="28"/>
 		<field name="STANDARD_NAMES"/>
+		<field name="SUBSTITUTE" since="28"/>
 	</class>
 	<class name="android/icu/text/DisplayContext$Type" since="24">
 		<extends name="java/lang/Enum"/>
@@ -18019,6 +18158,7 @@
 		<field name="CAPITALIZATION"/>
 		<field name="DIALECT_HANDLING"/>
 		<field name="DISPLAY_LENGTH"/>
+		<field name="SUBSTITUTE_HANDLING" since="28"/>
 	</class>
 	<class name="android/icu/text/IDNA" since="24">
 		<extends name="java/lang/Object"/>
@@ -18128,6 +18268,7 @@
 		<method name="getInstance(Ljava/util/Locale;Landroid/icu/text/MeasureFormat$FormatWidth;Landroid/icu/text/NumberFormat;)Landroid/icu/text/MeasureFormat;"/>
 		<method name="getLocale()Landroid/icu/util/ULocale;"/>
 		<method name="getNumberFormat()Landroid/icu/text/NumberFormat;"/>
+		<method name="getUnitDisplayName(Landroid/icu/util/MeasureUnit;)Ljava/lang/String;" since="28"/>
 		<method name="getWidth()Landroid/icu/text/MeasureFormat$FormatWidth;"/>
 		<method name="parseObject(Ljava/lang/String;Ljava/text/ParsePosition;)Landroid/icu/util/Measure;"/>
 	</class>
@@ -19457,6 +19598,13 @@
 		<method name="&lt;init>(Ljava/lang/String;Ljava/lang/Throwable;)V"/>
 		<method name="&lt;init>(Ljava/lang/Throwable;)V"/>
 	</class>
+	<class name="android/icu/util/IllformedLocaleException" since="28">
+		<extends name="java/lang/RuntimeException"/>
+		<method name="&lt;init>()V"/>
+		<method name="&lt;init>(Ljava/lang/String;)V"/>
+		<method name="&lt;init>(Ljava/lang/String;I)V"/>
+		<method name="getErrorIndex()I"/>
+	</class>
 	<class name="android/icu/util/IndianCalendar" since="24">
 		<extends name="android/icu/util/Calendar"/>
 		<method name="&lt;init>()V"/>
@@ -19534,6 +19682,35 @@
 		<field name="MEIJI"/>
 		<field name="SHOWA"/>
 		<field name="TAISHO"/>
+	</class>
+	<class name="android/icu/util/LocaleData" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="getCLDRVersion()Landroid/icu/util/VersionInfo;"/>
+		<method name="getDelimiter(I)Ljava/lang/String;"/>
+		<method name="getInstance()Landroid/icu/util/LocaleData;"/>
+		<method name="getInstance(Landroid/icu/util/ULocale;)Landroid/icu/util/LocaleData;"/>
+		<method name="getMeasurementSystem(Landroid/icu/util/ULocale;)Landroid/icu/util/LocaleData$MeasurementSystem;"/>
+		<method name="getNoSubstitute()Z"/>
+		<method name="getPaperSize(Landroid/icu/util/ULocale;)Landroid/icu/util/LocaleData$PaperSize;"/>
+		<method name="setNoSubstitute(Z)V"/>
+		<field name="ALT_QUOTATION_END"/>
+		<field name="ALT_QUOTATION_START"/>
+		<field name="QUOTATION_END"/>
+		<field name="QUOTATION_START"/>
+	</class>
+	<class name="android/icu/util/LocaleData$MeasurementSystem" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<field name="SI"/>
+		<field name="UK"/>
+		<field name="US"/>
+	</class>
+	<class name="android/icu/util/LocaleData$PaperSize" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="getHeight()I"/>
+		<method name="getWidth()I"/>
 	</class>
 	<class name="android/icu/util/Measure" since="24">
 		<extends name="java/lang/Object"/>
@@ -19644,6 +19821,7 @@
 		<field name="MILLILITER"/>
 		<field name="MILLIMETER"/>
 		<field name="MILLIMETER_OF_MERCURY"/>
+		<field name="MILLIMOLE_PER_LITER" since="28"/>
 		<field name="MILLISECOND"/>
 		<field name="MILLIWATT"/>
 		<field name="MINUTE"/>
@@ -19655,6 +19833,7 @@
 		<field name="OUNCE"/>
 		<field name="OUNCE_TROY"/>
 		<field name="PARSEC"/>
+		<field name="PART_PER_MILLION" since="28"/>
 		<field name="PICOMETER"/>
 		<field name="PINT"/>
 		<field name="PINT_METRIC" since="26"/>
@@ -19780,6 +19959,9 @@
 		<extends name="java/lang/Enum"/>
 		<method name="valueOf(Ljava/lang/String;)Landroid/icu/util/TimeZone$SystemTimeZoneType;"/>
 		<method name="values()[Landroid/icu/util/TimeZone$SystemTimeZoneType;"/>
+		<field name="ANY" since="28"/>
+		<field name="CANONICAL" since="28"/>
+		<field name="CANONICAL_LOCATION" since="28"/>
 	</class>
 	<class name="android/icu/util/ULocale" since="24">
 		<extends name="java/lang/Object"/>
@@ -19985,6 +20167,7 @@
 		<field name="ICU_VERSION"/>
 		<field name="UCOL_BUILDER_VERSION"/>
 		<field name="UCOL_RUNTIME_VERSION"/>
+		<field name="UNICODE_10_0" since="28"/>
 		<field name="UNICODE_1_0"/>
 		<field name="UNICODE_1_0_1"/>
 		<field name="UNICODE_1_1_0"/>
@@ -20945,6 +21128,7 @@
 		<field name="ACTION_AUDIO_BECOMING_NOISY" since="3"/>
 		<field name="ACTION_HDMI_AUDIO_PLUG" since="21"/>
 		<field name="ACTION_HEADSET_PLUG" since="21"/>
+		<field name="ACTION_MICROPHONE_MUTE_CHANGED" since="28"/>
 		<field name="ACTION_SCO_AUDIO_STATE_CHANGED" since="8" deprecated="16"/>
 		<field name="ACTION_SCO_AUDIO_STATE_UPDATED" since="14"/>
 		<field name="ADJUST_LOWER"/>
@@ -25249,7 +25433,7 @@
 		<field name="ACTION_BACKGROUND_DATA_SETTING_CHANGED" since="3" deprecated="16"/>
 		<field name="ACTION_CAPTIVE_PORTAL_SIGN_IN" since="23"/>
 		<field name="ACTION_RESTRICT_BACKGROUND_CHANGED" since="24"/>
-		<field name="CONNECTIVITY_ACTION"/>
+		<field name="CONNECTIVITY_ACTION" deprecated="28"/>
 		<field name="DEFAULT_NETWORK_PREFERENCE" deprecated="18"/>
 		<field name="EXTRA_CAPTIVE_PORTAL" since="23"/>
 		<field name="EXTRA_CAPTIVE_PORTAL_URL" since="24"/>
@@ -25268,17 +25452,17 @@
 		<field name="RESTRICT_BACKGROUND_STATUS_DISABLED" since="24"/>
 		<field name="RESTRICT_BACKGROUND_STATUS_ENABLED" since="24"/>
 		<field name="RESTRICT_BACKGROUND_STATUS_WHITELISTED" since="24"/>
-		<field name="TYPE_BLUETOOTH" since="13"/>
-		<field name="TYPE_DUMMY" since="14"/>
-		<field name="TYPE_ETHERNET" since="13"/>
-		<field name="TYPE_MOBILE"/>
-		<field name="TYPE_MOBILE_DUN" since="8"/>
+		<field name="TYPE_BLUETOOTH" since="13" deprecated="28"/>
+		<field name="TYPE_DUMMY" since="14" deprecated="28"/>
+		<field name="TYPE_ETHERNET" since="13" deprecated="28"/>
+		<field name="TYPE_MOBILE" deprecated="28"/>
+		<field name="TYPE_MOBILE_DUN" since="8" deprecated="28"/>
 		<field name="TYPE_MOBILE_HIPRI" since="8" deprecated="23"/>
 		<field name="TYPE_MOBILE_MMS" since="8" deprecated="23"/>
 		<field name="TYPE_MOBILE_SUPL" since="8" deprecated="23"/>
-		<field name="TYPE_VPN" since="21"/>
-		<field name="TYPE_WIFI"/>
-		<field name="TYPE_WIMAX" since="8"/>
+		<field name="TYPE_VPN" since="21" deprecated="28"/>
+		<field name="TYPE_WIFI" deprecated="28"/>
+		<field name="TYPE_WIMAX" since="8" deprecated="28"/>
 	</class>
 	<class name="android/net/ConnectivityManager$NetworkCallback" since="21">
 		<extends name="java/lang/Object"/>
@@ -25343,12 +25527,18 @@
 	<class name="android/net/IpSecManager" since="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
-		<method name="applyTransportModeTransform(Ljava/io/FileDescriptor;Landroid/net/IpSecTransform;)V"/>
+		<method name="allocateSecurityParameterIndex(Ljava/net/InetAddress;)Landroid/net/IpSecManager$SecurityParameterIndex;"/>
+		<method name="allocateSecurityParameterIndex(Ljava/net/InetAddress;I)Landroid/net/IpSecManager$SecurityParameterIndex;"/>
+		<method name="applyTransportModeTransform(Ljava/io/FileDescriptor;ILandroid/net/IpSecTransform;)V"/>
+		<method name="applyTransportModeTransform(Ljava/net/DatagramSocket;ILandroid/net/IpSecTransform;)V"/>
+		<method name="applyTransportModeTransform(Ljava/net/Socket;ILandroid/net/IpSecTransform;)V"/>
 		<method name="openUdpEncapsulationSocket()Landroid/net/IpSecManager$UdpEncapsulationSocket;"/>
 		<method name="openUdpEncapsulationSocket(I)Landroid/net/IpSecManager$UdpEncapsulationSocket;"/>
-		<method name="removeTransportModeTransform(Ljava/io/FileDescriptor;Landroid/net/IpSecTransform;)V"/>
-		<method name="reserveSecurityParameterIndex(ILjava/net/InetAddress;)Landroid/net/IpSecManager$SecurityParameterIndex;"/>
-		<method name="reserveSecurityParameterIndex(ILjava/net/InetAddress;I)Landroid/net/IpSecManager$SecurityParameterIndex;"/>
+		<method name="removeTransportModeTransforms(Ljava/io/FileDescriptor;)V"/>
+		<method name="removeTransportModeTransforms(Ljava/net/DatagramSocket;)V"/>
+		<method name="removeTransportModeTransforms(Ljava/net/Socket;)V"/>
+		<field name="DIRECTION_IN"/>
+		<field name="DIRECTION_OUT"/>
 	</class>
 	<class name="android/net/IpSecManager$ResourceUnavailableException" since="28">
 		<extends name="android/util/AndroidException"/>
@@ -25369,25 +25559,22 @@
 		<extends name="java/lang/Object"/>
 		<implements name="java/lang/AutoCloseable"/>
 		<method name="&lt;init>()V"/>
+		<method name="getFileDescriptor()Ljava/io/FileDescriptor;"/>
 		<method name="getPort()I"/>
-		<method name="getSocket()Ljava/io/FileDescriptor;"/>
 	</class>
 	<class name="android/net/IpSecTransform" since="28">
 		<extends name="java/lang/Object"/>
 		<implements name="java/lang/AutoCloseable"/>
 		<method name="&lt;init>()V"/>
-		<field name="DIRECTION_IN"/>
-		<field name="DIRECTION_OUT"/>
 	</class>
 	<class name="android/net/IpSecTransform$Builder" since="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(Landroid/content/Context;)V"/>
-		<method name="buildTransportModeTransform(Ljava/net/InetAddress;)Landroid/net/IpSecTransform;"/>
-		<method name="setAuthenticatedEncryption(ILandroid/net/IpSecAlgorithm;)Landroid/net/IpSecTransform$Builder;"/>
-		<method name="setAuthentication(ILandroid/net/IpSecAlgorithm;)Landroid/net/IpSecTransform$Builder;"/>
-		<method name="setEncryption(ILandroid/net/IpSecAlgorithm;)Landroid/net/IpSecTransform$Builder;"/>
+		<method name="buildTransportModeTransform(Ljava/net/InetAddress;Landroid/net/IpSecManager$SecurityParameterIndex;)Landroid/net/IpSecTransform;"/>
+		<method name="setAuthenticatedEncryption(Landroid/net/IpSecAlgorithm;)Landroid/net/IpSecTransform$Builder;"/>
+		<method name="setAuthentication(Landroid/net/IpSecAlgorithm;)Landroid/net/IpSecTransform$Builder;"/>
+		<method name="setEncryption(Landroid/net/IpSecAlgorithm;)Landroid/net/IpSecTransform$Builder;"/>
 		<method name="setIpv4Encapsulation(Landroid/net/IpSecManager$UdpEncapsulationSocket;I)Landroid/net/IpSecTransform$Builder;"/>
-		<method name="setSpi(ILandroid/net/IpSecManager$SecurityParameterIndex;)Landroid/net/IpSecTransform$Builder;"/>
 	</class>
 	<class name="android/net/LinkAddress" since="21">
 		<extends name="java/lang/Object"/>
@@ -25408,7 +25595,9 @@
 		<method name="getHttpProxy()Landroid/net/ProxyInfo;"/>
 		<method name="getInterfaceName()Ljava/lang/String;"/>
 		<method name="getLinkAddresses()Ljava/util/List;"/>
+		<method name="getPrivateDnsServerName()Ljava/lang/String;" since="28"/>
 		<method name="getRoutes()Ljava/util/List;"/>
+		<method name="isPrivateDnsActive()Z" since="28"/>
 		<field name="CREATOR"/>
 	</class>
 	<class name="android/net/LocalServerSocket" since="1">
@@ -25469,6 +25658,22 @@
 		<field name="FILESYSTEM"/>
 		<field name="RESERVED"/>
 	</class>
+	<class name="android/net/MacAddress" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>()V"/>
+		<method name="fromBytes([B)Landroid/net/MacAddress;"/>
+		<method name="fromString(Ljava/lang/String;)Landroid/net/MacAddress;"/>
+		<method name="getAddressType()I"/>
+		<method name="isLocallyAssigned()Z"/>
+		<method name="toByteArray()[B"/>
+		<method name="toOuiString()Ljava/lang/String;"/>
+		<field name="BROADCAST_ADDRESS"/>
+		<field name="CREATOR"/>
+		<field name="TYPE_BROADCAST"/>
+		<field name="TYPE_MULTICAST"/>
+		<field name="TYPE_UNICAST"/>
+	</class>
 	<class name="android/net/MailTo" since="1">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
@@ -25509,6 +25714,7 @@
 		<field name="NET_CAPABILITY_CBS"/>
 		<field name="NET_CAPABILITY_DUN"/>
 		<field name="NET_CAPABILITY_EIMS"/>
+		<field name="NET_CAPABILITY_FOREGROUND" since="28"/>
 		<field name="NET_CAPABILITY_FOTA"/>
 		<field name="NET_CAPABILITY_IA"/>
 		<field name="NET_CAPABILITY_IMS"/>
@@ -25517,6 +25723,7 @@
 		<field name="NET_CAPABILITY_NOT_METERED"/>
 		<field name="NET_CAPABILITY_NOT_RESTRICTED"/>
 		<field name="NET_CAPABILITY_NOT_ROAMING" since="28"/>
+		<field name="NET_CAPABILITY_NOT_SUSPENDED" since="28"/>
 		<field name="NET_CAPABILITY_NOT_VPN"/>
 		<field name="NET_CAPABILITY_RCS"/>
 		<field name="NET_CAPABILITY_SUPL"/>
@@ -25539,16 +25746,16 @@
 		<method name="&lt;init>(I)V" removed="3"/>
 		<method name="getDetailedState()Landroid/net/NetworkInfo$DetailedState;"/>
 		<method name="getExtraInfo()Ljava/lang/String;"/>
-		<method name="getReason()Ljava/lang/String;"/>
-		<method name="getState()Landroid/net/NetworkInfo$State;"/>
+		<method name="getReason()Ljava/lang/String;" deprecated="28"/>
+		<method name="getState()Landroid/net/NetworkInfo$State;" deprecated="28"/>
 		<method name="getSubtype()I" since="3"/>
 		<method name="getSubtypeName()Ljava/lang/String;" since="3"/>
-		<method name="getType()I"/>
-		<method name="getTypeName()Ljava/lang/String;"/>
-		<method name="isAvailable()Z"/>
+		<method name="getType()I" deprecated="28"/>
+		<method name="getTypeName()Ljava/lang/String;" deprecated="28"/>
+		<method name="isAvailable()Z" deprecated="28"/>
 		<method name="isConnected()Z"/>
-		<method name="isConnectedOrConnecting()Z"/>
-		<method name="isFailover()Z"/>
+		<method name="isConnectedOrConnecting()Z" deprecated="28"/>
+		<method name="isFailover()Z" deprecated="28"/>
 		<method name="isRoaming()Z" since="3" deprecated="28"/>
 		<field name="CREATOR" since="24"/>
 	</class>
@@ -25677,6 +25884,7 @@
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
 		<method name="clearThreadStatsTag()V" since="14"/>
+		<method name="clearThreadStatsUid()V" since="28"/>
 		<method name="getAndSetThreadStatsTag(I)I" since="26"/>
 		<method name="getMobileRxBytes()J"/>
 		<method name="getMobileRxPackets()J"/>
@@ -25702,9 +25910,12 @@
 		<method name="incrementOperationCount(I)V" since="14"/>
 		<method name="incrementOperationCount(II)V" since="14"/>
 		<method name="setThreadStatsTag(I)V" since="14"/>
+		<method name="setThreadStatsUidSelf()V" since="28"/>
 		<method name="tagDatagramSocket(Ljava/net/DatagramSocket;)V" since="24"/>
+		<method name="tagFileDescriptor(Ljava/io/FileDescriptor;)V" since="28"/>
 		<method name="tagSocket(Ljava/net/Socket;)V" since="14"/>
 		<method name="untagDatagramSocket(Ljava/net/DatagramSocket;)V" since="24"/>
+		<method name="untagFileDescriptor(Ljava/io/FileDescriptor;)V" since="28"/>
 		<method name="untagSocket(Ljava/net/Socket;)V" since="14"/>
 		<field name="UNSUPPORTED"/>
 	</class>
@@ -27045,10 +27256,14 @@
 		<field name="ACTION_NDEF_DISCOVERED" since="10"/>
 		<field name="ACTION_TAG_DISCOVERED"/>
 		<field name="ACTION_TECH_DISCOVERED" since="10"/>
+		<field name="ACTION_TRANSACTION_DETECTED" since="28"/>
 		<field name="EXTRA_ADAPTER_STATE" since="18"/>
+		<field name="EXTRA_AID" since="28"/>
+		<field name="EXTRA_DATA" since="28"/>
 		<field name="EXTRA_ID"/>
 		<field name="EXTRA_NDEF_MESSAGES"/>
 		<field name="EXTRA_READER_PRESENCE_CHECK_DELAY" since="19"/>
+		<field name="EXTRA_SECURE_ELEMENT_NAME" since="28"/>
 		<field name="EXTRA_TAG" since="10"/>
 		<field name="FLAG_READER_NFC_A" since="19"/>
 		<field name="FLAG_READER_NFC_B" since="19"/>
@@ -30580,7 +30795,7 @@
 	<class name="android/os/Debug" since="1">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
-		<method name="attachJvmtiAgent(Ljava/lang/String;Ljava/lang/String;)V" since="28"/>
+		<method name="attachJvmtiAgent(Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V" since="28"/>
 		<method name="changeDebugPort(I)V" deprecated="16"/>
 		<method name="dumpHprofData(Ljava/lang/String;)V" since="3"/>
 		<method name="dumpService(Ljava/lang/String;Ljava/io/FileDescriptor;[Ljava/lang/String;)Z" since="8"/>
@@ -33081,6 +33296,7 @@
 		<field name="FEATURES" since="21"/>
 		<field name="FEATURES_HD_CALL" since="26"/>
 		<field name="FEATURES_PULLED_EXTERNALLY" since="25"/>
+		<field name="FEATURES_RTT" since="28"/>
 		<field name="FEATURES_VIDEO" since="21"/>
 		<field name="FEATURES_WIFI" since="26"/>
 		<field name="GEOCODED_LOCATION" since="21"/>
@@ -35242,6 +35458,7 @@
 		<field name="PARENTAL_CONTROL_ENABLED"/>
 		<field name="PARENTAL_CONTROL_LAST_UPDATE"/>
 		<field name="PARENTAL_CONTROL_REDIRECT_URL"/>
+		<field name="RTT_CALLING_MODE" since="28"/>
 		<field name="SELECTED_INPUT_METHOD_SUBTYPE" since="11"/>
 		<field name="SETTINGS_CLASSNAME"/>
 		<field name="SKIP_FIRST_USE_HINTS" since="21"/>
@@ -35493,13 +35710,22 @@
 		<implements name="android/provider/BaseColumns"/>
 		<field name="ADDRESS"/>
 	</class>
+	<class name="android/provider/Telephony$CarrierId" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/provider/BaseColumns"/>
+		<method name="&lt;init>()V"/>
+		<method name="getUriForSubscriptionId(I)Landroid/net/Uri;"/>
+		<field name="CARRIER_ID"/>
+		<field name="CARRIER_NAME"/>
+		<field name="CONTENT_URI"/>
+	</class>
 	<class name="android/provider/Telephony$Carriers" since="19">
 		<extends name="java/lang/Object"/>
 		<implements name="android/provider/BaseColumns"/>
 		<method name="&lt;init>()V"/>
 		<field name="APN"/>
 		<field name="AUTH_TYPE"/>
-		<field name="BEARER"/>
+		<field name="BEARER" deprecated="28"/>
 		<field name="CARRIER_ENABLED"/>
 		<field name="CONTENT_URI"/>
 		<field name="CURRENT"/>
@@ -35512,6 +35738,7 @@
 		<field name="MVNO_MATCH_DATA"/>
 		<field name="MVNO_TYPE"/>
 		<field name="NAME"/>
+		<field name="NETWORK_TYPE_BITMASK" since="28"/>
 		<field name="NUMERIC"/>
 		<field name="PASSWORD"/>
 		<field name="PORT"/>
@@ -35699,6 +35926,7 @@
 		<field name="RESULT_SMS_HANDLED"/>
 		<field name="RESULT_SMS_OUT_OF_MEMORY"/>
 		<field name="RESULT_SMS_UNSUPPORTED"/>
+		<field name="SECRET_CODE_ACTION" since="28"/>
 		<field name="SIM_FULL_ACTION"/>
 		<field name="SMS_CB_RECEIVED_ACTION"/>
 		<field name="SMS_DELIVER_ACTION"/>
@@ -37373,6 +37601,50 @@
 		<implements name="android/sax/EndTextElementListener"/>
 		<implements name="android/sax/StartElementListener"/>
 	</class>
+	<class name="android/se/omapi/Channel" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="java/nio/channels/Channel"/>
+		<method name="&lt;init>()V"/>
+		<method name="getSelectResponse()[B"/>
+		<method name="getSession()Landroid/se/omapi/Session;"/>
+		<method name="isBasicChannel()Z"/>
+		<method name="selectNext()Z"/>
+		<method name="transmit([B)[B"/>
+	</class>
+	<class name="android/se/omapi/Reader" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="closeSessions()V"/>
+		<method name="getName()Ljava/lang/String;"/>
+		<method name="getSEService()Landroid/se/omapi/SEService;"/>
+		<method name="isSecureElementPresent()Z"/>
+		<method name="openSession()Landroid/se/omapi/Session;"/>
+	</class>
+	<class name="android/se/omapi/SEService" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>(Landroid/content/Context;Ljava/util/concurrent/Executor;Landroid/se/omapi/SEService$OnConnectedListener;)V"/>
+		<method name="getReaders()[Landroid/se/omapi/Reader;"/>
+		<method name="getVersion()Ljava/lang/String;"/>
+		<method name="isConnected()Z"/>
+		<method name="shutdown()V"/>
+	</class>
+	<class name="android/se/omapi/SEService$OnConnectedListener" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="onConnected()V"/>
+	</class>
+	<class name="android/se/omapi/Session" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="close()V"/>
+		<method name="closeChannels()V"/>
+		<method name="getATR()[B"/>
+		<method name="getReader()Landroid/se/omapi/Reader;"/>
+		<method name="isClosed()Z"/>
+		<method name="openBasicChannel([B)Landroid/se/omapi/Channel;"/>
+		<method name="openBasicChannel([BB)Landroid/se/omapi/Channel;"/>
+		<method name="openLogicalChannel([B)Landroid/se/omapi/Channel;"/>
+		<method name="openLogicalChannel([BB)Landroid/se/omapi/Channel;"/>
+	</class>
 	<class name="android/security/KeyChain" since="14">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
@@ -37818,6 +38090,7 @@
 		<extends name="java/lang/Object"/>
 		<implements name="android/os/Parcelable"/>
 		<method name="&lt;init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"/>
+		<method name="&lt;init>([BLjava/lang/String;Ljava/lang/String;)V" since="28"/>
 		<method name="getGid1()Ljava/lang/String;"/>
 		<method name="getGid2()Ljava/lang/String;"/>
 		<method name="getImsi()Ljava/lang/String;"/>
@@ -38680,11 +38953,6 @@
 		<method name="&lt;init>(Ljava/lang/String;ILjava/lang/Throwable;)V"/>
 		<field name="errno"/>
 	</class>
-	<class name="android/system/Int32Ref" since="28">
-		<extends name="java/lang/Object"/>
-		<method name="&lt;init>(I)V"/>
-		<field name="value"/>
-	</class>
 	<class name="android/system/Int64Ref" since="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(J)V"/>
@@ -38762,7 +39030,7 @@
 		<method name="removexattr(Ljava/lang/String;Ljava/lang/String;)V" since="26"/>
 		<method name="rename(Ljava/lang/String;Ljava/lang/String;)V"/>
 		<method name="sendfile(Ljava/io/FileDescriptor;Ljava/io/FileDescriptor;Landroid/system/Int64Ref;J)J" since="28"/>
-		<method name="sendfile(Ljava/io/FileDescriptor;Ljava/io/FileDescriptor;Landroid/util/MutableLong;J)J" deprecated="28"/>
+		<method name="sendfile(Ljava/io/FileDescriptor;Ljava/io/FileDescriptor;Landroid/util/MutableLong;J)J" removed="28"/>
 		<method name="sendto(Ljava/io/FileDescriptor;Ljava/nio/ByteBuffer;ILjava/net/InetAddress;I)I"/>
 		<method name="sendto(Ljava/io/FileDescriptor;[BIIILjava/net/InetAddress;I)I"/>
 		<method name="setegid(I)V"/>
@@ -38787,8 +39055,7 @@
 		<method name="umask(I)I"/>
 		<method name="uname()Landroid/system/StructUtsname;"/>
 		<method name="unsetenv(Ljava/lang/String;)V"/>
-		<method name="waitpid(ILandroid/system/Int32Ref;I)I" since="28"/>
-		<method name="waitpid(ILandroid/util/MutableInt;I)I" deprecated="28"/>
+		<method name="waitpid(ILandroid/util/MutableInt;I)I" removed="28"/>
 		<method name="write(Ljava/io/FileDescriptor;Ljava/nio/ByteBuffer;)I"/>
 		<method name="write(Ljava/io/FileDescriptor;[BII)I"/>
 		<method name="writev(Ljava/io/FileDescriptor;[Ljava/lang/Object;[I[I)I"/>
@@ -39353,6 +39620,7 @@
 		<method name="&lt;init>()V"/>
 		<method name="answer(I)V"/>
 		<method name="conference(Landroid/telecom/Call;)V"/>
+		<method name="deflect(Landroid/net/Uri;)V" since="28"/>
 		<method name="disconnect()V"/>
 		<method name="getCannedTextResponses()Ljava/util/List;"/>
 		<method name="getChildren()Ljava/util/List;"/>
@@ -39419,9 +39687,10 @@
 		<method name="onStateChanged(Landroid/telecom/Call;I)V"/>
 		<method name="onVideoCallChanged(Landroid/telecom/Call;Landroid/telecom/InCallService$VideoCall;)V"/>
 		<field name="HANDOVER_FAILURE_DEST_APP_REJECTED" since="28"/>
-		<field name="HANDOVER_FAILURE_DEST_INVALID_PERM" since="28"/>
-		<field name="HANDOVER_FAILURE_DEST_NOT_SUPPORTED" since="28"/>
-		<field name="HANDOVER_FAILURE_DEST_USER_REJECTED" since="28"/>
+		<field name="HANDOVER_FAILURE_NOT_SUPPORTED" since="28"/>
+		<field name="HANDOVER_FAILURE_ONGOING_EMERGENCY_CALL" since="28"/>
+		<field name="HANDOVER_FAILURE_UNKNOWN" since="28"/>
+		<field name="HANDOVER_FAILURE_USER_REJECTED" since="28"/>
 	</class>
 	<class name="android/telecom/Call$Details" since="23">
 		<extends name="java/lang/Object"/>
@@ -39463,6 +39732,7 @@
 		<field name="CAPABILITY_SUPPORTS_VT_REMOTE_BIDIRECTIONAL"/>
 		<field name="CAPABILITY_SUPPORTS_VT_REMOTE_RX"/>
 		<field name="CAPABILITY_SUPPORTS_VT_REMOTE_TX"/>
+		<field name="CAPABILITY_SUPPORT_DEFLECT" since="28"/>
 		<field name="CAPABILITY_SUPPORT_HOLD"/>
 		<field name="CAPABILITY_SWAP_CONFERENCE"/>
 		<field name="PROPERTY_CONFERENCE"/>
@@ -39472,6 +39742,7 @@
 		<field name="PROPERTY_HAS_CDMA_VOICE_PRIVACY" since="25"/>
 		<field name="PROPERTY_HIGH_DEF_AUDIO"/>
 		<field name="PROPERTY_IS_EXTERNAL_CALL" since="25"/>
+		<field name="PROPERTY_RTT" since="28"/>
 		<field name="PROPERTY_SELF_MANAGED" since="26"/>
 		<field name="PROPERTY_WIFI"/>
 	</class>
@@ -39565,8 +39836,8 @@
 		<method name="setActive()V"/>
 		<method name="setConferenceableConnections(Ljava/util/List;)V"/>
 		<method name="setConnectionCapabilities(I)V"/>
-		<method name="setConnectionElapsedTime(J)V" since="28"/>
 		<method name="setConnectionProperties(I)V" since="25"/>
+		<method name="setConnectionStartElapsedRealTime(J)V" since="28"/>
 		<method name="setConnectionTime(J)V"/>
 		<method name="setDialing()V"/>
 		<method name="setDisconnected(Landroid/telecom/DisconnectCause;)V"/>
@@ -39603,14 +39874,17 @@
 		<method name="getState()I"/>
 		<method name="getStatusHints()Landroid/telecom/StatusHints;"/>
 		<method name="getVideoProvider()Landroid/telecom/Connection$VideoProvider;"/>
+		<method name="handleRttUpgradeResponse(Landroid/telecom/Connection$RttTextStream;)V" since="28"/>
 		<method name="isRingbackRequested()Z"/>
 		<method name="onAbort()V"/>
 		<method name="onAnswer()V"/>
 		<method name="onAnswer(I)V"/>
 		<method name="onCallAudioStateChanged(Landroid/telecom/CallAudioState;)V"/>
 		<method name="onCallEvent(Ljava/lang/String;Landroid/os/Bundle;)V" since="25"/>
+		<method name="onDeflect(Landroid/net/Uri;)V" since="28"/>
 		<method name="onDisconnect()V"/>
 		<method name="onExtrasChanged(Landroid/os/Bundle;)V" since="25"/>
+		<method name="onHandoverComplete()V" since="28"/>
 		<method name="onHold()V"/>
 		<method name="onPlayDtmfTone(C)V"/>
 		<method name="onPostDialContinue(Z)V"/>
@@ -39619,15 +39893,21 @@
 		<method name="onReject(Ljava/lang/String;)V" since="24"/>
 		<method name="onSeparate()V"/>
 		<method name="onShowIncomingCallUi()V" since="26"/>
+		<method name="onStartRtt(Landroid/telecom/Connection$RttTextStream;)V" since="28"/>
 		<method name="onStateChanged(I)V"/>
 		<method name="onStopDtmfTone()V"/>
+		<method name="onStopRtt()V" since="28"/>
 		<method name="onUnhold()V"/>
 		<method name="propertiesToString(I)Ljava/lang/String;" since="25"/>
 		<method name="putExtras(Landroid/os/Bundle;)V" since="25"/>
 		<method name="removeExtras(Ljava/util/List;)V" since="25"/>
 		<method name="removeExtras([Ljava/lang/String;)V" since="25"/>
-		<method name="requestBluetoothAudio(Ljava/lang/String;)V" since="28"/>
+		<method name="requestBluetoothAudio(Landroid/bluetooth/BluetoothDevice;)V" since="28"/>
 		<method name="sendConnectionEvent(Ljava/lang/String;Landroid/os/Bundle;)V" since="25"/>
+		<method name="sendRemoteRttRequest()V" since="28"/>
+		<method name="sendRttInitiationFailure(I)V" since="28"/>
+		<method name="sendRttInitiationSuccess()V" since="28"/>
+		<method name="sendRttSessionRemotelyTerminated()V" since="28"/>
 		<method name="setActive()V"/>
 		<method name="setAddress(Landroid/net/Uri;I)V"/>
 		<method name="setAudioModeIsVoip(Z)V"/>
@@ -39670,6 +39950,7 @@
 		<field name="CAPABILITY_SUPPORTS_VT_REMOTE_BIDIRECTIONAL"/>
 		<field name="CAPABILITY_SUPPORTS_VT_REMOTE_RX"/>
 		<field name="CAPABILITY_SUPPORTS_VT_REMOTE_TX"/>
+		<field name="CAPABILITY_SUPPORT_DEFLECT" since="28"/>
 		<field name="CAPABILITY_SUPPORT_HOLD"/>
 		<field name="CAPABILITY_SWAP_CONFERENCE"/>
 		<field name="EVENT_CALL_MERGE_FAILED" since="25"/>
@@ -39681,6 +39962,7 @@
 		<field name="EXTRA_LAST_FORWARDED_NUMBER"/>
 		<field name="PROPERTY_HAS_CDMA_VOICE_PRIVACY" since="25"/>
 		<field name="PROPERTY_IS_EXTERNAL_CALL" since="25"/>
+		<field name="PROPERTY_IS_RTT" since="28"/>
 		<field name="PROPERTY_SELF_MANAGED" since="26"/>
 		<field name="STATE_ACTIVE"/>
 		<field name="STATE_DIALING"/>
@@ -39699,6 +39981,13 @@
 		<field name="SESSION_MODIFY_REQUEST_REJECTED_BY_REMOTE"/>
 		<field name="SESSION_MODIFY_REQUEST_SUCCESS"/>
 		<field name="SESSION_MODIFY_REQUEST_TIMED_OUT"/>
+	</class>
+	<class name="android/telecom/Connection$RttTextStream" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="read()Ljava/lang/String;"/>
+		<method name="readImmediately()Ljava/lang/String;"/>
+		<method name="write(Ljava/lang/String;)V"/>
 	</class>
 	<class name="android/telecom/Connection$VideoProvider" since="23">
 		<extends name="java/lang/Object"/>
@@ -39741,7 +40030,9 @@
 		<method name="getAccountHandle()Landroid/telecom/PhoneAccountHandle;"/>
 		<method name="getAddress()Landroid/net/Uri;"/>
 		<method name="getExtras()Landroid/os/Bundle;"/>
+		<method name="getRttTextStream()Landroid/telecom/Connection$RttTextStream;" since="28"/>
 		<method name="getVideoState()I"/>
+		<method name="isRequestingRtt()Z" since="28"/>
 		<field name="CREATOR"/>
 	</class>
 	<class name="android/telecom/ConnectionService" since="23">
@@ -39750,11 +40041,14 @@
 		<method name="addConference(Landroid/telecom/Conference;)V"/>
 		<method name="addExistingConnection(Landroid/telecom/PhoneAccountHandle;Landroid/telecom/Connection;)V"/>
 		<method name="conferenceRemoteConnections(Landroid/telecom/RemoteConnection;Landroid/telecom/RemoteConnection;)V"/>
+		<method name="connectionServiceFocusReleased()V" since="28"/>
 		<method name="createRemoteIncomingConnection(Landroid/telecom/PhoneAccountHandle;Landroid/telecom/ConnectionRequest;)Landroid/telecom/RemoteConnection;"/>
 		<method name="createRemoteOutgoingConnection(Landroid/telecom/PhoneAccountHandle;Landroid/telecom/ConnectionRequest;)Landroid/telecom/RemoteConnection;"/>
 		<method name="getAllConferences()Ljava/util/Collection;" since="24"/>
 		<method name="getAllConnections()Ljava/util/Collection;"/>
 		<method name="onConference(Landroid/telecom/Connection;Landroid/telecom/Connection;)V"/>
+		<method name="onConnectionServiceFocusGained()V" since="28"/>
+		<method name="onConnectionServiceFocusLost()V" since="28"/>
 		<method name="onCreateIncomingConnection(Landroid/telecom/PhoneAccountHandle;Landroid/telecom/ConnectionRequest;)Landroid/telecom/Connection;"/>
 		<method name="onCreateIncomingConnectionFailed(Landroid/telecom/PhoneAccountHandle;Landroid/telecom/ConnectionRequest;)V" since="26"/>
 		<method name="onCreateIncomingHandoverConnection(Landroid/telecom/PhoneAccountHandle;Landroid/telecom/ConnectionRequest;)Landroid/telecom/Connection;" since="28"/>
@@ -39816,7 +40110,7 @@
 		<method name="onCanAddCallChanged(Z)V"/>
 		<method name="onConnectionEvent(Landroid/telecom/Call;Ljava/lang/String;Landroid/os/Bundle;)V" since="25"/>
 		<method name="onSilenceRinger()V" since="24"/>
-		<method name="requestBluetoothAudio(Ljava/lang/String;)V" since="28"/>
+		<method name="requestBluetoothAudio(Landroid/bluetooth/BluetoothDevice;)V" since="28"/>
 		<method name="setAudioRoute(I)V"/>
 		<method name="setMuted(Z)V"/>
 		<field name="SERVICE_INTERFACE"/>
@@ -40052,6 +40346,7 @@
 		<method name="addNewIncomingCall(Landroid/telecom/PhoneAccountHandle;Landroid/os/Bundle;)V" since="23"/>
 		<method name="cancelMissedCallsNotification()V"/>
 		<method name="createManageBlockedNumbersIntent()Landroid/content/Intent;" since="24"/>
+		<method name="endCall()Z" since="28"/>
 		<method name="getAdnUriForPhoneAccount(Landroid/telecom/PhoneAccountHandle;)Landroid/net/Uri;" since="23"/>
 		<method name="getCallCapablePhoneAccounts()Ljava/util/List;" since="23"/>
 		<method name="getDefaultDialerPackage()Ljava/lang/String;" since="23"/>
@@ -40146,14 +40441,125 @@
 		<method name="getWidth()I"/>
 		<field name="CREATOR"/>
 	</class>
+	<class name="android/telephony/AccessNetworkConstants" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+	</class>
+	<class name="android/telephony/AccessNetworkConstants$AccessNetworkType" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<field name="CDMA2000"/>
+		<field name="EUTRAN"/>
+		<field name="GERAN"/>
+		<field name="IWLAN"/>
+		<field name="UNKNOWN"/>
+		<field name="UTRAN"/>
+	</class>
+	<class name="android/telephony/AccessNetworkConstants$EutranBand" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<field name="BAND_1"/>
+		<field name="BAND_10"/>
+		<field name="BAND_11"/>
+		<field name="BAND_12"/>
+		<field name="BAND_13"/>
+		<field name="BAND_14"/>
+		<field name="BAND_17"/>
+		<field name="BAND_18"/>
+		<field name="BAND_19"/>
+		<field name="BAND_2"/>
+		<field name="BAND_20"/>
+		<field name="BAND_21"/>
+		<field name="BAND_22"/>
+		<field name="BAND_23"/>
+		<field name="BAND_24"/>
+		<field name="BAND_25"/>
+		<field name="BAND_26"/>
+		<field name="BAND_27"/>
+		<field name="BAND_28"/>
+		<field name="BAND_3"/>
+		<field name="BAND_30"/>
+		<field name="BAND_31"/>
+		<field name="BAND_33"/>
+		<field name="BAND_34"/>
+		<field name="BAND_35"/>
+		<field name="BAND_36"/>
+		<field name="BAND_37"/>
+		<field name="BAND_38"/>
+		<field name="BAND_39"/>
+		<field name="BAND_4"/>
+		<field name="BAND_40"/>
+		<field name="BAND_41"/>
+		<field name="BAND_42"/>
+		<field name="BAND_43"/>
+		<field name="BAND_44"/>
+		<field name="BAND_45"/>
+		<field name="BAND_46"/>
+		<field name="BAND_47"/>
+		<field name="BAND_48"/>
+		<field name="BAND_5"/>
+		<field name="BAND_6"/>
+		<field name="BAND_65"/>
+		<field name="BAND_66"/>
+		<field name="BAND_68"/>
+		<field name="BAND_7"/>
+		<field name="BAND_70"/>
+		<field name="BAND_8"/>
+		<field name="BAND_9"/>
+	</class>
+	<class name="android/telephony/AccessNetworkConstants$GeranBand" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<field name="BAND_450"/>
+		<field name="BAND_480"/>
+		<field name="BAND_710"/>
+		<field name="BAND_750"/>
+		<field name="BAND_850"/>
+		<field name="BAND_DCS1800"/>
+		<field name="BAND_E900"/>
+		<field name="BAND_ER900"/>
+		<field name="BAND_P900"/>
+		<field name="BAND_PCS1900"/>
+		<field name="BAND_R900"/>
+		<field name="BAND_T380"/>
+		<field name="BAND_T410"/>
+		<field name="BAND_T810"/>
+	</class>
+	<class name="android/telephony/AccessNetworkConstants$UtranBand" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<field name="BAND_1"/>
+		<field name="BAND_10"/>
+		<field name="BAND_11"/>
+		<field name="BAND_12"/>
+		<field name="BAND_13"/>
+		<field name="BAND_14"/>
+		<field name="BAND_19"/>
+		<field name="BAND_2"/>
+		<field name="BAND_20"/>
+		<field name="BAND_21"/>
+		<field name="BAND_22"/>
+		<field name="BAND_25"/>
+		<field name="BAND_26"/>
+		<field name="BAND_3"/>
+		<field name="BAND_4"/>
+		<field name="BAND_5"/>
+		<field name="BAND_6"/>
+		<field name="BAND_7"/>
+		<field name="BAND_8"/>
+		<field name="BAND_9"/>
+	</class>
 	<class name="android/telephony/CarrierConfigManager" since="23">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
 		<method name="getConfig()Landroid/os/PersistableBundle;"/>
 		<method name="getConfigForSubId(I)Landroid/os/PersistableBundle;"/>
+		<method name="isConfigForIdentifiedCarrier(Landroid/os/PersistableBundle;)Z" since="28"/>
 		<method name="notifyConfigChangedForSubId(I)V"/>
 		<field name="ACTION_CARRIER_CONFIG_CHANGED"/>
 		<field name="DATA_CYCLE_THRESHOLD_DISABLED" since="26"/>
+		<field name="EXTRA_SLOT_INDEX" since="28"/>
+		<field name="EXTRA_SUBSCRIPTION_INDEX" since="28"/>
 		<field name="KEY_ADDITIONAL_CALL_SETTING_BOOL"/>
 		<field name="KEY_ALLOW_ADDING_APNS_BOOL" since="24"/>
 		<field name="KEY_ALLOW_ADD_CALL_DURING_VIDEO_CALL_BOOL" since="25"/>
@@ -40175,6 +40581,8 @@
 		<field name="KEY_CARRIER_INSTANT_LETTERING_ESCAPED_CHARS_STRING" since="24"/>
 		<field name="KEY_CARRIER_INSTANT_LETTERING_INVALID_CHARS_STRING" since="24"/>
 		<field name="KEY_CARRIER_INSTANT_LETTERING_LENGTH_LIMIT_INT" since="24"/>
+		<field name="KEY_CARRIER_NAME_OVERRIDE_BOOL" since="28"/>
+		<field name="KEY_CARRIER_NAME_STRING" since="28"/>
 		<field name="KEY_CARRIER_SETTINGS_ENABLE_BOOL"/>
 		<field name="KEY_CARRIER_USE_IMS_FIRST_FOR_EMERGENCY_BOOL" since="24"/>
 		<field name="KEY_CARRIER_VOLTE_AVAILABLE_BOOL"/>
@@ -40195,6 +40603,7 @@
 		<field name="KEY_CI_ACTION_ON_SYS_UPDATE_EXTRA_VAL_STRING" since="24"/>
 		<field name="KEY_CI_ACTION_ON_SYS_UPDATE_INTENT_STRING" since="24"/>
 		<field name="KEY_CONFIG_IMS_PACKAGE_OVERRIDE_STRING" since="26"/>
+		<field name="KEY_CONFIG_TELEPHONY_USE_OWN_NUMBER_FOR_VOICEMAIL_BOOL" since="28"/>
 		<field name="KEY_CSP_ENABLED_BOOL"/>
 		<field name="KEY_DATA_LIMIT_THRESHOLD_BYTES_LONG" since="26"/>
 		<field name="KEY_DATA_WARNING_THRESHOLD_BYTES_LONG" since="26"/>
@@ -40293,67 +40702,82 @@
 		<field name="KEY_VVM_TYPE_STRING"/>
 		<field name="KEY_WORLD_PHONE_BOOL"/>
 	</class>
-	<class name="android/telephony/CellIdentityCdma" since="17">
+	<class name="android/telephony/CellIdentity" since="28">
 		<extends name="java/lang/Object"/>
 		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>()V"/>
+		<method name="getOperatorAlphaLong()Ljava/lang/CharSequence;"/>
+		<method name="getOperatorAlphaShort()Ljava/lang/CharSequence;"/>
+		<field name="CREATOR"/>
+	</class>
+	<class name="android/telephony/CellIdentityCdma" since="17">
+		<extends name="android/telephony/CellIdentity" since="28"/>
+		<extends name="java/lang/Object" removed="28"/>
+		<implements name="android/os/Parcelable" removed="28"/>
 		<method name="&lt;init>()V"/>
 		<method name="getBasestationId()I"/>
 		<method name="getLatitude()I"/>
 		<method name="getLongitude()I"/>
 		<method name="getNetworkId()I"/>
-		<method name="getOperatorAlphaLong()Ljava/lang/CharSequence;" since="28"/>
-		<method name="getOperatorAlphaShort()Ljava/lang/CharSequence;" since="28"/>
 		<method name="getSystemId()I"/>
 		<field name="CREATOR"/>
 	</class>
 	<class name="android/telephony/CellIdentityGsm" since="17">
-		<extends name="java/lang/Object"/>
-		<implements name="android/os/Parcelable"/>
+		<extends name="android/telephony/CellIdentity" since="28"/>
+		<extends name="java/lang/Object" removed="28"/>
+		<implements name="android/os/Parcelable" removed="28"/>
 		<method name="&lt;init>()V"/>
 		<method name="getArfcn()I" since="24"/>
 		<method name="getBsic()I" since="24"/>
 		<method name="getCid()I"/>
 		<method name="getLac()I"/>
 		<method name="getMcc()I" deprecated="28"/>
-		<method name="getMccStr()Ljava/lang/String;" since="28"/>
+		<method name="getMccString()Ljava/lang/String;" since="28"/>
 		<method name="getMnc()I" deprecated="28"/>
-		<method name="getMncStr()Ljava/lang/String;" since="28"/>
+		<method name="getMncString()Ljava/lang/String;" since="28"/>
 		<method name="getMobileNetworkOperator()Ljava/lang/String;" since="28"/>
-		<method name="getOperatorAlphaLong()Ljava/lang/CharSequence;" since="28"/>
-		<method name="getOperatorAlphaShort()Ljava/lang/CharSequence;" since="28"/>
 		<method name="getPsc()I" deprecated="18"/>
 		<field name="CREATOR"/>
 	</class>
 	<class name="android/telephony/CellIdentityLte" since="17">
-		<extends name="java/lang/Object"/>
-		<implements name="android/os/Parcelable"/>
+		<extends name="android/telephony/CellIdentity" since="28"/>
+		<extends name="java/lang/Object" removed="28"/>
+		<implements name="android/os/Parcelable" removed="28"/>
 		<method name="&lt;init>()V"/>
+		<method name="getBandwidth()I" since="28"/>
 		<method name="getCi()I"/>
 		<method name="getEarfcn()I" since="24"/>
 		<method name="getMcc()I" deprecated="28"/>
-		<method name="getMccStr()Ljava/lang/String;" since="28"/>
+		<method name="getMccString()Ljava/lang/String;" since="28"/>
 		<method name="getMnc()I" deprecated="28"/>
-		<method name="getMncStr()Ljava/lang/String;" since="28"/>
+		<method name="getMncString()Ljava/lang/String;" since="28"/>
 		<method name="getMobileNetworkOperator()Ljava/lang/String;" since="28"/>
-		<method name="getOperatorAlphaLong()Ljava/lang/CharSequence;" since="28"/>
-		<method name="getOperatorAlphaShort()Ljava/lang/CharSequence;" since="28"/>
 		<method name="getPci()I"/>
 		<method name="getTac()I"/>
 		<field name="CREATOR"/>
 	</class>
+	<class name="android/telephony/CellIdentityTdscdma" since="28">
+		<extends name="android/telephony/CellIdentity"/>
+		<method name="&lt;init>()V"/>
+		<method name="getCid()I"/>
+		<method name="getCpid()I"/>
+		<method name="getLac()I"/>
+		<method name="getMccString()Ljava/lang/String;"/>
+		<method name="getMncString()Ljava/lang/String;"/>
+		<field name="CREATOR"/>
+	</class>
 	<class name="android/telephony/CellIdentityWcdma" since="18">
-		<extends name="java/lang/Object"/>
-		<implements name="android/os/Parcelable"/>
+		<extends name="android/telephony/CellIdentity" since="28"/>
+		<extends name="java/lang/Object" removed="28"/>
+		<implements name="android/os/Parcelable" removed="28"/>
 		<method name="&lt;init>()V"/>
 		<method name="getCid()I"/>
 		<method name="getLac()I"/>
 		<method name="getMcc()I" deprecated="28"/>
-		<method name="getMccStr()Ljava/lang/String;" since="28"/>
+		<method name="getMccString()Ljava/lang/String;" since="28"/>
 		<method name="getMnc()I" deprecated="28"/>
-		<method name="getMncStr()Ljava/lang/String;" since="28"/>
+		<method name="getMncString()Ljava/lang/String;" since="28"/>
 		<method name="getMobileNetworkOperator()Ljava/lang/String;" since="28"/>
-		<method name="getOperatorAlphaLong()Ljava/lang/CharSequence;" since="28"/>
-		<method name="getOperatorAlphaShort()Ljava/lang/CharSequence;" since="28"/>
 		<method name="getPsc()I"/>
 		<method name="getUarfcn()I" since="24"/>
 		<field name="CREATOR"/>
@@ -40362,8 +40786,13 @@
 		<extends name="java/lang/Object"/>
 		<implements name="android/os/Parcelable"/>
 		<method name="&lt;init>()V"/>
+		<method name="getCellConnectionStatus()I" since="28"/>
 		<method name="getTimeStamp()J"/>
 		<method name="isRegistered()Z"/>
+		<field name="CONNECTION_NONE" since="28"/>
+		<field name="CONNECTION_PRIMARY_SERVING" since="28"/>
+		<field name="CONNECTION_SECONDARY_SERVING" since="28"/>
+		<field name="CONNECTION_UNKNOWN" since="28"/>
 		<field name="CREATOR"/>
 	</class>
 	<class name="android/telephony/CellInfoCdma" since="17">
@@ -40467,18 +40896,20 @@
 		<extends name="java/lang/Object"/>
 		<implements name="java/lang/AutoCloseable"/>
 		<method name="&lt;init>()V"/>
+		<method name="addProgressListener(Landroid/telephony/mbms/DownloadRequest;Ljava/util/concurrent/Executor;Landroid/telephony/mbms/DownloadProgressListener;)V"/>
+		<method name="addStatusListener(Landroid/telephony/mbms/DownloadRequest;Ljava/util/concurrent/Executor;Landroid/telephony/mbms/DownloadStatusListener;)V"/>
 		<method name="cancelDownload(Landroid/telephony/mbms/DownloadRequest;)V"/>
-		<method name="create(Landroid/content/Context;Landroid/telephony/mbms/MbmsDownloadSessionCallback;ILandroid/os/Handler;)Landroid/telephony/MbmsDownloadSession;"/>
-		<method name="create(Landroid/content/Context;Landroid/telephony/mbms/MbmsDownloadSessionCallback;Landroid/os/Handler;)Landroid/telephony/MbmsDownloadSession;"/>
+		<method name="create(Landroid/content/Context;Ljava/util/concurrent/Executor;ILandroid/telephony/mbms/MbmsDownloadSessionCallback;)Landroid/telephony/MbmsDownloadSession;"/>
+		<method name="create(Landroid/content/Context;Ljava/util/concurrent/Executor;Landroid/telephony/mbms/MbmsDownloadSessionCallback;)Landroid/telephony/MbmsDownloadSession;"/>
 		<method name="download(Landroid/telephony/mbms/DownloadRequest;)V"/>
-		<method name="getDownloadStatus(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/FileInfo;)I"/>
 		<method name="getTempFileRootDirectory()Ljava/io/File;"/>
 		<method name="listPendingDownloads()Ljava/util/List;"/>
-		<method name="registerStateCallback(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/DownloadStateCallback;Landroid/os/Handler;)V"/>
+		<method name="removeProgressListener(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/DownloadProgressListener;)V"/>
+		<method name="removeStatusListener(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/DownloadStatusListener;)V"/>
+		<method name="requestDownloadState(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/FileInfo;)V"/>
 		<method name="requestUpdateFileServices(Ljava/util/List;)V"/>
 		<method name="resetDownloadKnowledge(Landroid/telephony/mbms/DownloadRequest;)V"/>
 		<method name="setTempFileRootDirectory(Ljava/io/File;)V"/>
-		<method name="unregisterStateCallback(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/DownloadStateCallback;)V"/>
 		<field name="DEFAULT_TOP_LEVEL_TEMP_DIRECTORY"/>
 		<field name="EXTRA_MBMS_COMPLETED_FILE_URI"/>
 		<field name="EXTRA_MBMS_DOWNLOAD_REQUEST"/>
@@ -40502,10 +40933,10 @@
 		<extends name="java/lang/Object"/>
 		<implements name="java/lang/AutoCloseable"/>
 		<method name="&lt;init>()V"/>
-		<method name="create(Landroid/content/Context;Landroid/telephony/mbms/MbmsStreamingSessionCallback;ILandroid/os/Handler;)Landroid/telephony/MbmsStreamingSession;"/>
-		<method name="create(Landroid/content/Context;Landroid/telephony/mbms/MbmsStreamingSessionCallback;Landroid/os/Handler;)Landroid/telephony/MbmsStreamingSession;"/>
+		<method name="create(Landroid/content/Context;Ljava/util/concurrent/Executor;ILandroid/telephony/mbms/MbmsStreamingSessionCallback;)Landroid/telephony/MbmsStreamingSession;"/>
+		<method name="create(Landroid/content/Context;Ljava/util/concurrent/Executor;Landroid/telephony/mbms/MbmsStreamingSessionCallback;)Landroid/telephony/MbmsStreamingSession;"/>
 		<method name="requestUpdateStreamingServices(Ljava/util/List;)V"/>
-		<method name="startStreaming(Landroid/telephony/mbms/StreamingServiceInfo;Landroid/telephony/mbms/StreamingServiceCallback;Landroid/os/Handler;)Landroid/telephony/mbms/StreamingService;"/>
+		<method name="startStreaming(Landroid/telephony/mbms/StreamingServiceInfo;Ljava/util/concurrent/Executor;Landroid/telephony/mbms/StreamingServiceCallback;)Landroid/telephony/mbms/StreamingService;"/>
 	</class>
 	<class name="android/telephony/NeighboringCellInfo" since="3">
 		<extends name="java/lang/Object"/>
@@ -40524,6 +40955,35 @@
 		<field name="CREATOR"/>
 		<field name="UNKNOWN_CID"/>
 		<field name="UNKNOWN_RSSI"/>
+	</class>
+	<class name="android/telephony/NetworkScan" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="stop()V" deprecated="28"/>
+		<method name="stopScan()V"/>
+		<field name="ERROR_INTERRUPTED"/>
+		<field name="ERROR_INVALID_SCAN"/>
+		<field name="ERROR_INVALID_SCANID"/>
+		<field name="ERROR_MODEM_ERROR"/>
+		<field name="ERROR_MODEM_UNAVAILABLE"/>
+		<field name="ERROR_RADIO_INTERFACE_ERROR"/>
+		<field name="ERROR_UNSUPPORTED"/>
+		<field name="SUCCESS"/>
+	</class>
+	<class name="android/telephony/NetworkScanRequest" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>(I[Landroid/telephony/RadioAccessSpecifier;IIZILjava/util/ArrayList;)V"/>
+		<method name="getIncrementalResults()Z"/>
+		<method name="getIncrementalResultsPeriodicity()I"/>
+		<method name="getMaxSearchTime()I"/>
+		<method name="getPlmns()Ljava/util/ArrayList;"/>
+		<method name="getScanType()I"/>
+		<method name="getSearchPeriodicity()I"/>
+		<method name="getSpecifiers()[Landroid/telephony/RadioAccessSpecifier;"/>
+		<field name="CREATOR"/>
+		<field name="SCAN_TYPE_ONE_SHOT"/>
+		<field name="SCAN_TYPE_PERIODIC"/>
 	</class>
 	<class name="android/telephony/PhoneNumberFormattingTextWatcher" since="1">
 		<extends name="java/lang/Object"/>
@@ -40603,6 +41063,7 @@
 		<method name="onServiceStateChanged(Landroid/telephony/ServiceState;)V"/>
 		<method name="onSignalStrengthChanged(I)V" deprecated="16"/>
 		<method name="onSignalStrengthsChanged(Landroid/telephony/SignalStrength;)V" since="7"/>
+		<method name="onUserMobileDataStateChanged(Z)V" since="28"/>
 		<field name="LISTEN_CALL_FORWARDING_INDICATOR"/>
 		<field name="LISTEN_CALL_STATE"/>
 		<field name="LISTEN_CELL_INFO" since="17"/>
@@ -40614,6 +41075,16 @@
 		<field name="LISTEN_SERVICE_STATE"/>
 		<field name="LISTEN_SIGNAL_STRENGTH" deprecated="16"/>
 		<field name="LISTEN_SIGNAL_STRENGTHS" since="7"/>
+		<field name="LISTEN_USER_MOBILE_DATA_STATE" since="28"/>
+	</class>
+	<class name="android/telephony/RadioAccessSpecifier" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>(I[I[I)V"/>
+		<method name="getBands()[I"/>
+		<method name="getChannels()[I"/>
+		<method name="getRadioAccessNetwork()I"/>
+		<field name="CREATOR"/>
 	</class>
 	<class name="android/telephony/ServiceState" since="1">
 		<extends name="java/lang/Object"/>
@@ -40622,6 +41093,11 @@
 		<method name="&lt;init>(Landroid/os/Parcel;)V"/>
 		<method name="&lt;init>(Landroid/telephony/ServiceState;)V"/>
 		<method name="copyFrom(Landroid/telephony/ServiceState;)V"/>
+		<method name="getCdmaNetworkId()I" since="28"/>
+		<method name="getCdmaSystemId()I" since="28"/>
+		<method name="getCellBandwidths()[I" since="28"/>
+		<method name="getChannelNumber()I" since="28"/>
+		<method name="getDuplexMode()I" since="28"/>
 		<method name="getIsManualSelection()Z"/>
 		<method name="getOperatorAlphaLong()Ljava/lang/String;"/>
 		<method name="getOperatorAlphaShort()Ljava/lang/String;"/>
@@ -40635,10 +41111,14 @@
 		<method name="setStateOff()V"/>
 		<method name="setStateOutOfService()V"/>
 		<field name="CREATOR"/>
+		<field name="DUPLEX_MODE_FDD" since="28"/>
+		<field name="DUPLEX_MODE_TDD" since="28"/>
+		<field name="DUPLEX_MODE_UNKNOWN" since="28"/>
 		<field name="STATE_EMERGENCY_ONLY"/>
 		<field name="STATE_IN_SERVICE"/>
 		<field name="STATE_OUT_OF_SERVICE"/>
 		<field name="STATE_POWER_OFF"/>
+		<field name="UNKNOWN_ID" since="28"/>
 	</class>
 	<class name="android/telephony/SignalStrength" since="7">
 		<extends name="java/lang/Object"/>
@@ -40801,13 +41281,16 @@
 		<method name="getNumber()Ljava/lang/String;"/>
 		<method name="getSimSlotIndex()I"/>
 		<method name="getSubscriptionId()I"/>
+		<method name="isEmbedded()Z" since="28"/>
 		<field name="CREATOR"/>
 	</class>
 	<class name="android/telephony/SubscriptionManager" since="22">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
 		<method name="addOnSubscriptionsChangedListener(Landroid/telephony/SubscriptionManager$OnSubscriptionsChangedListener;)V"/>
+		<method name="canManageSubscription(Landroid/telephony/SubscriptionInfo;)Z" since="28"/>
 		<method name="from(Landroid/content/Context;)Landroid/telephony/SubscriptionManager;"/>
+		<method name="getAccessibleSubscriptionInfoList()Ljava/util/List;" since="28"/>
 		<method name="getActiveSubscriptionInfo(I)Landroid/telephony/SubscriptionInfo;"/>
 		<method name="getActiveSubscriptionInfoCount()I"/>
 		<method name="getActiveSubscriptionInfoCountMax()I"/>
@@ -40857,6 +41340,7 @@
 		<method name="getMeid(I)Ljava/lang/String;" since="26"/>
 		<method name="getMmsUAProfUrl()Ljava/lang/String;" since="19"/>
 		<method name="getMmsUserAgent()Ljava/lang/String;" since="19"/>
+		<method name="getNai()Ljava/lang/String;" since="28"/>
 		<method name="getNeighboringCellInfo()Ljava/util/List;" since="3" deprecated="23"/>
 		<method name="getNetworkCountryIso()Ljava/lang/String;"/>
 		<method name="getNetworkOperator()Ljava/lang/String;"/>
@@ -40867,6 +41351,8 @@
 		<method name="getPhoneType()I"/>
 		<method name="getServiceState()Landroid/telephony/ServiceState;" since="26"/>
 		<method name="getSignalStrength()Landroid/telephony/SignalStrength;" since="28"/>
+		<method name="getSimCarrierId()I" since="28"/>
+		<method name="getSimCarrierIdName()Ljava/lang/CharSequence;" since="28"/>
 		<method name="getSimCountryIso()Ljava/lang/String;"/>
 		<method name="getSimOperator()Ljava/lang/String;"/>
 		<method name="getSimOperatorName()Ljava/lang/String;"/>
@@ -40897,22 +41383,27 @@
 		<method name="isVoicemailVibrationEnabled(Landroid/telecom/PhoneAccountHandle;)Z" since="24"/>
 		<method name="isWorldPhone()Z" since="23"/>
 		<method name="listen(Landroid/telephony/PhoneStateListener;I)V"/>
+		<method name="requestNetworkScan(Landroid/telephony/NetworkScanRequest;Landroid/telephony/TelephonyScanManager$NetworkScanCallback;)Landroid/telephony/NetworkScan;" since="28" deprecated="28"/>
+		<method name="requestNetworkScan(Landroid/telephony/NetworkScanRequest;Ljava/util/concurrent/Executor;Landroid/telephony/TelephonyScanManager$NetworkScanCallback;)Landroid/telephony/NetworkScan;" since="28"/>
 		<method name="sendDialerSpecialCode(Ljava/lang/String;)V" since="26"/>
 		<method name="sendEnvelopeWithStatus(Ljava/lang/String;)Ljava/lang/String;" since="21"/>
 		<method name="sendUssdRequest(Ljava/lang/String;Landroid/telephony/TelephonyManager$UssdResponseCallback;Landroid/os/Handler;)V" since="26"/>
 		<method name="sendVisualVoicemailSms(Ljava/lang/String;ILjava/lang/String;Landroid/app/PendingIntent;)V" since="26"/>
 		<method name="setDataEnabled(Z)V" since="26"/>
 		<method name="setLine1NumberForDisplay(Ljava/lang/String;Ljava/lang/String;)Z" since="22"/>
+		<method name="setNetworkSelectionModeAutomatic()V" since="28"/>
+		<method name="setNetworkSelectionModeManual(Ljava/lang/String;Z)Z" since="28"/>
 		<method name="setOperatorBrandOverride(Ljava/lang/String;)Z" since="22"/>
 		<method name="setPreferredNetworkTypeToGlobal()Z" since="22"/>
 		<method name="setVisualVoicemailSmsFilterSettings(Landroid/telephony/VisualVoicemailSmsFilterSettings;)V" since="26"/>
 		<method name="setVoiceMailNumber(Ljava/lang/String;Ljava/lang/String;)Z" since="22"/>
-		<method name="setVoicemailRingtoneUri(Landroid/telecom/PhoneAccountHandle;Landroid/net/Uri;)V" since="26"/>
-		<method name="setVoicemailVibrationEnabled(Landroid/telecom/PhoneAccountHandle;Z)V" since="26"/>
+		<method name="setVoicemailRingtoneUri(Landroid/telecom/PhoneAccountHandle;Landroid/net/Uri;)V" since="26" deprecated="28"/>
+		<method name="setVoicemailVibrationEnabled(Landroid/telecom/PhoneAccountHandle;Z)V" since="26" deprecated="28"/>
 		<field name="ACTION_CONFIGURE_VOICEMAIL" since="23"/>
 		<field name="ACTION_PHONE_STATE_CHANGED" since="3"/>
 		<field name="ACTION_RESPOND_VIA_MESSAGE" since="18"/>
 		<field name="ACTION_SHOW_VOICEMAIL_NOTIFICATION" since="26"/>
+		<field name="ACTION_SUBSCRIPTION_CARRIER_IDENTITY_CHANGED" since="28"/>
 		<field name="APPTYPE_CSIM" since="24"/>
 		<field name="APPTYPE_ISIM" since="24"/>
 		<field name="APPTYPE_RUIM" since="24"/>
@@ -40933,6 +41424,8 @@
 		<field name="DATA_DISCONNECTED"/>
 		<field name="DATA_SUSPENDED"/>
 		<field name="EXTRA_CALL_VOICEMAIL_INTENT" since="26"/>
+		<field name="EXTRA_CARRIER_ID" since="28"/>
+		<field name="EXTRA_CARRIER_NAME" since="28"/>
 		<field name="EXTRA_HIDE_PUBLIC_SETTINGS" since="26"/>
 		<field name="EXTRA_INCOMING_NUMBER" since="3"/>
 		<field name="EXTRA_IS_REFRESH" since="27"/>
@@ -40943,6 +41436,7 @@
 		<field name="EXTRA_STATE_IDLE" since="3"/>
 		<field name="EXTRA_STATE_OFFHOOK" since="3"/>
 		<field name="EXTRA_STATE_RINGING" since="3"/>
+		<field name="EXTRA_SUBSCRIPTION_ID" since="28"/>
 		<field name="EXTRA_VOICEMAIL_NUMBER" since="26"/>
 		<field name="METADATA_HIDE_VOICEMAIL_SETTINGS_MENU" since="26"/>
 		<field name="NETWORK_TYPE_1xRTT" since="4"/>
@@ -40978,6 +41472,7 @@
 		<field name="SIM_STATE_PUK_REQUIRED"/>
 		<field name="SIM_STATE_READY"/>
 		<field name="SIM_STATE_UNKNOWN"/>
+		<field name="UNKNOWN_CARRIER_ID" since="28"/>
 		<field name="USSD_ERROR_SERVICE_UNAVAIL" since="26"/>
 		<field name="USSD_RETURN_FAILURE" since="26"/>
 		<field name="VVM_TYPE_CVVM" since="23"/>
@@ -40988,6 +41483,17 @@
 		<method name="&lt;init>()V"/>
 		<method name="onReceiveUssdResponse(Landroid/telephony/TelephonyManager;Ljava/lang/String;Ljava/lang/CharSequence;)V"/>
 		<method name="onReceiveUssdResponseFailed(Landroid/telephony/TelephonyManager;Ljava/lang/String;I)V"/>
+	</class>
+	<class name="android/telephony/TelephonyScanManager" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+	</class>
+	<class name="android/telephony/TelephonyScanManager$NetworkScanCallback" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="onComplete()V"/>
+		<method name="onError(I)V"/>
+		<method name="onResults(Ljava/util/List;)V"/>
 	</class>
 	<class name="android/telephony/VisualVoicemailService" since="26">
 		<extends name="android/app/Service"/>
@@ -41046,6 +41552,109 @@
 		<method name="setCellLocationData(III)V"/>
 		<method name="setCellLocationData(IIIII)V"/>
 		<method name="setStateInvalid()V"/>
+	</class>
+	<class name="android/telephony/data/ApnSetting" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>()V"/>
+		<method name="getApnName()Ljava/lang/String;"/>
+		<method name="getApnTypeBitmask()I"/>
+		<method name="getAuthType()I"/>
+		<method name="getEntryName()Ljava/lang/String;"/>
+		<method name="getId()I"/>
+		<method name="getMmsProxyAddress()Ljava/net/InetAddress;"/>
+		<method name="getMmsProxyPort()I"/>
+		<method name="getMmsc()Landroid/net/Uri;"/>
+		<method name="getMvnoType()I"/>
+		<method name="getNetworkTypeBitmask()I"/>
+		<method name="getOperatorNumeric()Ljava/lang/String;"/>
+		<method name="getPassword()Ljava/lang/String;"/>
+		<method name="getProtocol()I"/>
+		<method name="getProxyAddress()Ljava/net/InetAddress;"/>
+		<method name="getProxyPort()I"/>
+		<method name="getRoamingProtocol()I"/>
+		<method name="getUser()Ljava/lang/String;"/>
+		<method name="isEnabled()Z"/>
+		<field name="AUTH_TYPE_CHAP"/>
+		<field name="AUTH_TYPE_NONE"/>
+		<field name="AUTH_TYPE_PAP"/>
+		<field name="AUTH_TYPE_PAP_OR_CHAP"/>
+		<field name="CREATOR"/>
+		<field name="MVNO_TYPE_GID"/>
+		<field name="MVNO_TYPE_ICCID"/>
+		<field name="MVNO_TYPE_IMSI"/>
+		<field name="MVNO_TYPE_SPN"/>
+		<field name="PROTOCOL_IP"/>
+		<field name="PROTOCOL_IPV4V6"/>
+		<field name="PROTOCOL_IPV6"/>
+		<field name="PROTOCOL_PPP"/>
+		<field name="TYPE_CBS"/>
+		<field name="TYPE_DEFAULT"/>
+		<field name="TYPE_DUN"/>
+		<field name="TYPE_EMERGENCY"/>
+		<field name="TYPE_FOTA"/>
+		<field name="TYPE_HIPRI"/>
+		<field name="TYPE_IA"/>
+		<field name="TYPE_IMS"/>
+		<field name="TYPE_MMS"/>
+		<field name="TYPE_SUPL"/>
+	</class>
+	<class name="android/telephony/data/ApnSetting$Builder" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="build()Landroid/telephony/data/ApnSetting;"/>
+		<method name="setApnName(Ljava/lang/String;)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setApnTypeBitmask(I)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setAuthType(I)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setCarrierEnabled(Z)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setEntryName(Ljava/lang/String;)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setMmsProxyAddress(Ljava/net/InetAddress;)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setMmsProxyPort(I)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setMmsc(Landroid/net/Uri;)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setMvnoType(I)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setNetworkTypeBitmask(I)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setOperatorNumeric(Ljava/lang/String;)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setPassword(Ljava/lang/String;)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setProtocol(I)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setProxyAddress(Ljava/net/InetAddress;)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setProxyPort(I)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setRoamingProtocol(I)Landroid/telephony/data/ApnSetting$Builder;"/>
+		<method name="setUser(Ljava/lang/String;)Landroid/telephony/data/ApnSetting$Builder;"/>
+	</class>
+	<class name="android/telephony/euicc/DownloadableSubscription" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>()V"/>
+		<method name="forActivationCode(Ljava/lang/String;)Landroid/telephony/euicc/DownloadableSubscription;"/>
+		<method name="getConfirmationCode()Ljava/lang/String;"/>
+		<method name="getEncodedActivationCode()Ljava/lang/String;"/>
+		<field name="CREATOR"/>
+	</class>
+	<class name="android/telephony/euicc/EuiccInfo" since="28">
+		<extends name="java/lang/Object"/>
+		<implements name="android/os/Parcelable"/>
+		<method name="&lt;init>(Ljava/lang/String;)V"/>
+		<method name="getOsVersion()Ljava/lang/String;"/>
+		<field name="CREATOR"/>
+	</class>
+	<class name="android/telephony/euicc/EuiccManager" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="deleteSubscription(ILandroid/app/PendingIntent;)V"/>
+		<method name="downloadSubscription(Landroid/telephony/euicc/DownloadableSubscription;ZLandroid/app/PendingIntent;)V"/>
+		<method name="getEid()Ljava/lang/String;"/>
+		<method name="getEuiccInfo()Landroid/telephony/euicc/EuiccInfo;"/>
+		<method name="isEnabled()Z"/>
+		<method name="startResolutionActivity(Landroid/app/Activity;ILandroid/content/Intent;Landroid/app/PendingIntent;)V"/>
+		<method name="switchToSubscription(ILandroid/app/PendingIntent;)V"/>
+		<field name="ACTION_MANAGE_EMBEDDED_SUBSCRIPTIONS"/>
+		<field name="ACTION_NOTIFY_CARRIER_SETUP_INCOMPLETE"/>
+		<field name="EMBEDDED_SUBSCRIPTION_RESULT_ERROR"/>
+		<field name="EMBEDDED_SUBSCRIPTION_RESULT_OK"/>
+		<field name="EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR"/>
+		<field name="EXTRA_EMBEDDED_SUBSCRIPTION_DETAILED_CODE"/>
+		<field name="EXTRA_EMBEDDED_SUBSCRIPTION_DOWNLOADABLE_SUBSCRIPTION"/>
+		<field name="META_DATA_CARRIER_ICON"/>
 	</class>
 	<class name="android/telephony/gsm/GsmCellLocation" since="1">
 		<extends name="android/telephony/CellLocation"/>
@@ -41133,36 +41742,38 @@
 		<field name="encodedMessage" deprecated="16"/>
 		<field name="encodedScAddress" deprecated="16"/>
 	</class>
+	<class name="android/telephony/mbms/DownloadProgressListener" since="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="onProgressUpdated(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/FileInfo;IIII)V"/>
+	</class>
 	<class name="android/telephony/mbms/DownloadRequest" since="28">
 		<extends name="java/lang/Object"/>
 		<implements name="android/os/Parcelable"/>
 		<method name="&lt;init>()V"/>
-		<method name="copy(Landroid/telephony/mbms/DownloadRequest;)Landroid/telephony/mbms/DownloadRequest;"/>
+		<method name="getDestinationUri()Landroid/net/Uri;"/>
 		<method name="getFileServiceId()Ljava/lang/String;"/>
 		<method name="getMaxAppIntentSize()I"/>
 		<method name="getMaxDestinationUriSize()I"/>
 		<method name="getSourceUri()Landroid/net/Uri;"/>
 		<method name="getSubscriptionId()I"/>
+		<method name="toByteArray()[B"/>
 		<field name="CREATOR"/>
 	</class>
 	<class name="android/telephony/mbms/DownloadRequest$Builder" since="28">
 		<extends name="java/lang/Object"/>
-		<method name="&lt;init>(Landroid/net/Uri;)V"/>
+		<method name="&lt;init>(Landroid/net/Uri;Landroid/net/Uri;)V"/>
 		<method name="build()Landroid/telephony/mbms/DownloadRequest;"/>
+		<method name="fromDownloadRequest(Landroid/telephony/mbms/DownloadRequest;)Landroid/telephony/mbms/DownloadRequest$Builder;"/>
+		<method name="fromSerializedRequest([B)Landroid/telephony/mbms/DownloadRequest$Builder;"/>
 		<method name="setAppIntent(Landroid/content/Intent;)Landroid/telephony/mbms/DownloadRequest$Builder;"/>
 		<method name="setServiceInfo(Landroid/telephony/mbms/FileServiceInfo;)Landroid/telephony/mbms/DownloadRequest$Builder;"/>
 		<method name="setSubscriptionId(I)Landroid/telephony/mbms/DownloadRequest$Builder;"/>
 	</class>
-	<class name="android/telephony/mbms/DownloadStateCallback" since="28">
+	<class name="android/telephony/mbms/DownloadStatusListener" since="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
-		<method name="&lt;init>(I)V"/>
-		<method name="isFilterFlagSet(I)Z"/>
-		<method name="onProgressUpdated(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/FileInfo;IIII)V"/>
-		<method name="onStateUpdated(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/FileInfo;I)V"/>
-		<field name="ALL_UPDATES"/>
-		<field name="PROGRESS_UPDATES"/>
-		<field name="STATE_UPDATES"/>
+		<method name="onStatusUpdated(Landroid/telephony/mbms/DownloadRequest;Landroid/telephony/mbms/FileInfo;I)V"/>
 	</class>
 	<class name="android/telephony/mbms/FileInfo" since="28">
 		<extends name="java/lang/Object"/>
@@ -41197,12 +41808,14 @@
 		<field name="ERROR_MIDDLEWARE_NOT_BOUND"/>
 		<field name="ERROR_NO_UNIQUE_MIDDLEWARE"/>
 		<field name="SUCCESS"/>
+		<field name="UNKNOWN"/>
 	</class>
 	<class name="android/telephony/mbms/MbmsErrors$DownloadErrors" since="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>()V"/>
 		<field name="ERROR_CANNOT_CHANGE_TEMP_FILE_ROOT"/>
 		<field name="ERROR_UNKNOWN_DOWNLOAD_REQUEST"/>
+		<field name="ERROR_UNKNOWN_FILE_INFO"/>
 	</class>
 	<class name="android/telephony/mbms/MbmsErrors$GeneralErrors" since="28">
 		<extends name="java/lang/Object"/>
@@ -41249,10 +41862,10 @@
 	</class>
 	<class name="android/telephony/mbms/StreamingService" since="28">
 		<extends name="java/lang/Object"/>
+		<implements name="java/lang/AutoCloseable"/>
 		<method name="&lt;init>()V"/>
 		<method name="getInfo()Landroid/telephony/mbms/StreamingServiceInfo;"/>
 		<method name="getPlaybackUri()Landroid/net/Uri;"/>
-		<method name="stopStreaming()V"/>
 		<field name="BROADCAST_METHOD"/>
 		<field name="REASON_BY_USER_REQUEST"/>
 		<field name="REASON_END_OF_SESSION"/>
@@ -41582,6 +42195,11 @@
 		<method name="assertTopAligned(Landroid/view/View;Landroid/view/View;I)V"/>
 		<method name="assertVerticalCenterAligned(Landroid/view/View;Landroid/view/View;)V"/>
 	</class>
+	<class name="android/test/mock/MockAccountManager" since="28" deprecated="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="newMockAccountManager(Landroid/content/Context;)Landroid/accounts/AccountManager;"/>
+	</class>
 	<class name="android/test/mock/MockApplication" since="1" deprecated="24">
 		<extends name="android/app/Application"/>
 		<method name="&lt;init>()V"/>
@@ -41591,6 +42209,7 @@
 		<method name="&lt;init>()V"/>
 		<method name="&lt;init>(Landroid/content/Context;)V"/>
 		<method name="&lt;init>(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;[Landroid/content/pm/PathPermission;)V"/>
+		<method name="attachInfoForTesting(Landroid/content/ContentProvider;Landroid/content/Context;Landroid/content/pm/ProviderInfo;)V" since="28" deprecated="28"/>
 	</class>
 	<class name="android/test/mock/MockContentResolver" since="1">
 		<extends name="android/content/ContentResolver"/>
@@ -41639,6 +42258,11 @@
 	<class name="android/test/mock/MockResources" since="1" deprecated="24">
 		<extends name="android/content/res/Resources"/>
 		<method name="&lt;init>()V"/>
+	</class>
+	<class name="android/test/mock/MockService" since="28" deprecated="28">
+		<extends name="java/lang/Object"/>
+		<method name="&lt;init>()V"/>
+		<method name="attachForTesting(Landroid/app/Service;Landroid/content/Context;Ljava/lang/String;Landroid/app/Application;)V"/>
 	</class>
 	<class name="android/test/suitebuilder/TestMethod" since="1" deprecated="26">
 		<extends name="java/lang/Object"/>
@@ -43616,6 +44240,7 @@
 		<field name="DENSITY_360" since="23"/>
 		<field name="DENSITY_400" since="19"/>
 		<field name="DENSITY_420" since="23"/>
+		<field name="DENSITY_440" since="28"/>
 		<field name="DENSITY_560" since="21"/>
 		<field name="DENSITY_DEFAULT" since="4"/>
 		<field name="DENSITY_DEVICE_STABLE" since="24"/>
@@ -43909,42 +44534,42 @@
 		<method name="nextMonth()V"/>
 		<method name="previousMonth()V"/>
 	</class>
-	<class name="android/util/MutableBoolean" since="21">
+	<class name="android/util/MutableBoolean" since="21" deprecated="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(Z)V"/>
 		<field name="value"/>
 	</class>
-	<class name="android/util/MutableByte" since="21">
+	<class name="android/util/MutableByte" since="21" deprecated="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(B)V"/>
 		<field name="value"/>
 	</class>
-	<class name="android/util/MutableChar" since="21">
+	<class name="android/util/MutableChar" since="21" deprecated="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(C)V"/>
 		<field name="value"/>
 	</class>
-	<class name="android/util/MutableDouble" since="21">
+	<class name="android/util/MutableDouble" since="21" deprecated="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(D)V"/>
 		<field name="value"/>
 	</class>
-	<class name="android/util/MutableFloat" since="21">
+	<class name="android/util/MutableFloat" since="21" deprecated="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(F)V"/>
 		<field name="value"/>
 	</class>
-	<class name="android/util/MutableInt" since="21">
+	<class name="android/util/MutableInt" since="21" deprecated="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(I)V"/>
 		<field name="value"/>
 	</class>
-	<class name="android/util/MutableLong" since="21">
+	<class name="android/util/MutableLong" since="21" deprecated="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(J)V"/>
 		<field name="value"/>
 	</class>
-	<class name="android/util/MutableShort" since="21">
+	<class name="android/util/MutableShort" since="21" deprecated="28">
 		<extends name="java/lang/Object"/>
 		<method name="&lt;init>(S)V"/>
 		<field name="value"/>
@@ -54107,21 +54732,48 @@
 		<implements name="java/lang/CharSequence" since="24"/>
 		<method name="&lt;init>()V"/>
 		<method name="append(C)Ljava/lang/AbstractStringBuilder;" since="26"/>
+		<method name="append(D)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="append(F)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="append(I)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="append(J)Ljava/lang/AbstractStringBuilder;" since="28"/>
 		<method name="append(Ljava/lang/CharSequence;)Ljava/lang/AbstractStringBuilder;" since="26"/>
 		<method name="append(Ljava/lang/CharSequence;II)Ljava/lang/AbstractStringBuilder;" since="26"/>
+		<method name="append(Ljava/lang/Object;)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="append(Ljava/lang/String;)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="append(Ljava/lang/StringBuffer;)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="append(Z)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="append([C)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="append([CII)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="appendCodePoint(I)Ljava/lang/AbstractStringBuilder;" since="28"/>
 		<method name="capacity()I"/>
 		<method name="charAt(I)C"/>
 		<method name="codePointAt(I)I"/>
 		<method name="codePointBefore(I)I"/>
 		<method name="codePointCount(II)I"/>
+		<method name="delete(II)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="deleteCharAt(I)Ljava/lang/AbstractStringBuilder;" since="28"/>
 		<method name="ensureCapacity(I)V"/>
 		<method name="getChars(II[CI)V"/>
 		<method name="indexOf(Ljava/lang/String;)I"/>
 		<method name="indexOf(Ljava/lang/String;I)I"/>
+		<method name="insert(IC)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(ID)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(IF)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(II)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(IJ)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(ILjava/lang/CharSequence;)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(ILjava/lang/CharSequence;II)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(ILjava/lang/Object;)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(ILjava/lang/String;)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(IZ)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(I[C)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="insert(I[CII)Ljava/lang/AbstractStringBuilder;" since="28"/>
 		<method name="lastIndexOf(Ljava/lang/String;)I"/>
 		<method name="lastIndexOf(Ljava/lang/String;I)I"/>
 		<method name="length()I"/>
 		<method name="offsetByCodePoints(II)I"/>
+		<method name="replace(IILjava/lang/String;)Ljava/lang/AbstractStringBuilder;" since="28"/>
+		<method name="reverse()Ljava/lang/AbstractStringBuilder;" since="28"/>
 		<method name="setCharAt(IC)V"/>
 		<method name="setLength(I)V"/>
 		<method name="subSequence(II)Ljava/lang/CharSequence;"/>
@@ -56250,6 +56902,7 @@
 		<method name="enqueue()Z"/>
 		<method name="get()Ljava/lang/Object;"/>
 		<method name="isEnqueued()Z"/>
+		<method name="reachabilityFence(Ljava/lang/Object;)V" since="28"/>
 	</class>
 	<class name="java/lang/ref/ReferenceQueue" since="1">
 		<extends name="java/lang/Object"/>
@@ -56399,6 +57052,11 @@
 		<extends name="java/lang/RuntimeException"/>
 		<method name="&lt;init>()V"/>
 	</class>
+	<class name="java/lang/reflect/MalformedParametersException" since="28">
+		<extends name="java/lang/RuntimeException"/>
+		<method name="&lt;init>()V"/>
+		<method name="&lt;init>(Ljava/lang/String;)V"/>
+	</class>
 	<class name="java/lang/reflect/Member" since="1">
 		<extends name="java/lang/Object"/>
 		<method name="getDeclaringClass()Ljava/lang/Class;"/>
@@ -56501,6 +57159,7 @@
 	</class>
 	<class name="java/lang/reflect/Type" since="1">
 		<extends name="java/lang/Object"/>
+		<method name="getTypeName()Ljava/lang/String;" since="28"/>
 	</class>
 	<class name="java/lang/reflect/TypeVariable" since="1">
 		<extends name="java/lang/Object"/>

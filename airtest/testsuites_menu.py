@@ -70,36 +70,34 @@ def testSocial(automat, sendMail = False, userId = '1'):
     if sendMail:
         automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
 
-'''def testLottery(automat, sendMail = False): TO DO - add telnet method that gets current info of available tickets 
-                                                    (they change every session), use that information to set next
-                                                    reward for bronze ticket
+def testLottery(automat, sendMail = False):
     automat.setTestSection('lottery')
     automat.waitAndTouch('lobby_button')
     automat.waitAndTouch('try_lottery')
-    print(automat.telnet.sendTelnetCommand('server lottery bronze list')) #make sure we win CHIPS
-    # automat.waitAndTouch('free_bronze', sleepTime = 5)
-    # automat.waitAndTouch('bronze_get')
-    # automat.waitAndTouch('iap_bronze_01', sleepTime = 5)
-    # automat.waitAndTouch('buy_gp', sleepTime = 15)
-    # automat.waitAndTouch('purchase_collect')
-    # automat.waitAndTouch('silver_get')
-    # automat.waitAndTouch('iap_silver_02', sleepTime = 5)
-    # automat.waitAndTouch('buy_gp', sleepTime = 15)
-    # automat.waitAndTouch('purchase_collect')
-    # automat.waitAndTouch('gold_get')
-    # automat.waitAndTouch('iap_gold_04', sleepTime = 5)
-    # automat.waitAndTouch('buy_gp', sleepTime = 15)
-    # automat.waitAndTouch('purchase_collect')
-    # automat.waitAndTouch('bronze_after_purchase', sleepTime = 5)
-    # automat.waitAndTouch('silver_after_purchase', sleepTime = 5)
-    # automat.waitAndTouch('gold_after_purchase', sleepTime = 5)
-    # automat.waitAndTouch('paytable')
-    # automat.useDeviceBackButton()
-    # automat.waitAndTouch('shop')
-    # automat.useDeviceBackButton()
-    # automat.useDeviceBackButton()
-    # if sendMail:
-    #     automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))'''
+    automat.telnet.setNextLotteryTicketSafe('bronze')
+    automat.waitAndTouch('free_bronze', sleepTime = 5)
+    automat.waitAndTouch('bronze_get')
+    automat.waitAndTouch('iap_bronze_01', sleepTime = 5)
+    automat.waitAndTouch('buy_gp', sleepTime = 15)
+    automat.waitAndTouch('purchase_collect')
+    automat.waitAndTouch('silver_get')
+    automat.waitAndTouch('iap_silver_02', sleepTime = 5)
+    automat.waitAndTouch('buy_gp', sleepTime = 15)
+    automat.waitAndTouch('purchase_collect')
+    automat.waitAndTouch('gold_get')
+    automat.waitAndTouch('iap_gold_04', sleepTime = 5)
+    automat.waitAndTouch('buy_gp', sleepTime = 15)
+    automat.waitAndTouch('purchase_collect')
+    automat.waitAndTouch('bronze_after_purchase', sleepTime = 5)
+    automat.waitAndTouch('silver_after_purchase', sleepTime = 5)
+    automat.waitAndTouch('gold_after_purchase', sleepTime = 5)
+    automat.waitAndTouch('paytable')
+    automat.useDeviceBackButton()
+    automat.waitAndTouch('shop')
+    automat.useDeviceBackButton()
+    automat.useDeviceBackButton()
+    if sendMail:
+        automat.sendMail(subject = 'Sync Test, Section: {}, Status: Passed'.format(automat.getTestSection()))
 
 def testNewsfeed(automat, sendMail = False):
     automat.setTestSection('newsfeed')

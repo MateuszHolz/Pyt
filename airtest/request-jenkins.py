@@ -1,6 +1,5 @@
 import requests
 import os
-import testcase as testcase
 import time
 from datetime import datetime
 
@@ -55,7 +54,6 @@ if __name__ == '__main__':
     while True:
         if isNewBuild(nameContainer):
             printW('New build has been found - {}. Starting tests.'.format(nameContainer.getName()))
-            testcase.deployTest(nameContainer.getName())
         else:
             printW('Didnt find any new build. Waiting 20 minutes...')
             time.sleep(1200)
