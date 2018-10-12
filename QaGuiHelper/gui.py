@@ -1,7 +1,9 @@
-import wx
 import os
-import time
 import threading
+import time
+
+import wx
+
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
@@ -23,9 +25,12 @@ class MainFrame(wx.Frame):
         menuBar.Append(fileMenu, 'File')
         self.SetMenuBar(menuBar)
 
-        #creating test sizeers and their content
+        #creating button
         self.btnSizer = wx.BoxSizer(wx.VERTICAL)
         self.buttons = []
+
+        self.buttons.append(wx.Button(self, -1, 'Refresh Devices'))
+
         for i in range(0, 3):
             self.buttons.append(wx.Button(self, -1, 'Button #{}'.format(i)))
             self.btnSizer.Add(self.buttons[i], 1, wx.EXPAND)
@@ -80,29 +85,10 @@ class MainFrame(wx.Frame):
     def OnButton(self, event):
         print('d')
 
-    def OnButton2(self, event):
-        msgBox = wx.MessageDialog(self, 'dialog content', 'dialog header')
-        msgBox.ShowModal()
-        msgBox.Destroy()
-
-    def ShowBusyWindow(self, event):
-        d2 = wx.WindowDisabler()
-        d1 = wx.BusyInfo('please wait')
-        localThread = threading.Thread(target = self.testThread, args = (500, self.console, d2, d1))
-        localThread.start()
-
     def ShowBusyWindow2(self, event):
         disabler = wx.WindowDisabler()
         c = InProgressFrame(self, disabler, self.console)
         c.show()
-
-    def testThread(self, t, consoleObj, disabler, busyinfo):
-        for i in range(0, t):
-            time.sleep(0.01)
-            if i % 20 == 0:
-                print('test threading working', i)
-            consoleObj.addText(str(i))
-        del disabler, busyinfo
 
 class Console(wx.TextCtrl):
     def __init__(self, parent):
@@ -128,9 +114,10 @@ class InProgressFrame(wx.Frame):
         for i in range(0, 5):
             self.labels.append(wx.TextCtrl(self, style = wx.ALIGN_CENTRE_HORIZONTAL))
             self.labelSizer.Add(self.labels[i], 1, wx.EXPAND)
-        newBtn1 = wx.Button(self, -1, 'ddddd')
-        self.labelSizer.Add(newBtn1, 1, wx.EXPAND)
-        self.Bind(wx.EVT_BUTTON, self.OnButton, newBtn1)
+        self.newBtn1 = wx.Button(self, -1, 'ddddd')
+        self.labelSizer.Add(self.newBtn1, 1, wx.EXPAND)
+        self.Bind(wx.EVT_BUTTON, self.OnButton, self.newBtn1)
+        self.stopWorking = False
     
     def show(self):
         self.SetSizer(self.labelSizer)
@@ -139,14 +126,21 @@ class InProgressFrame(wx.Frame):
         self.Show(True)
 
     def OnButton(self, event):
+        self.t = threading.Thread(target = self.worker, args = (self, ))
+        self.t.start()
+    
+    def worker(self, frame):
         for i in range(0, 1000):
-            if i % 500 == 0:
-                self.labels[i].AppendText('done')
+            if frame.stopWorking:
+                print('stop working')
+                return
+            self.labels[1].SetValue(str(i))
+            time.sleep(0.01)
 
     def OnClose(self, event):
+        self.stopWorking = True
         self.Destroy()
         self.parent.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
-
 
 if __name__ == '__main__':
     app = wx.App(False)
