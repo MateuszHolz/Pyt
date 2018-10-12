@@ -1,5 +1,7 @@
 import wx
 import os
+import time
+import threading
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
@@ -28,7 +30,7 @@ class MainFrame(wx.Frame):
             self.buttons.append(wx.Button(self, -1, 'Button #{}'.format(i)))
             self.btnSizer.Add(self.buttons[i], 1, wx.EXPAND)
 
-        newBtn = wx.Button(self, -1, 'addtoconsole')
+        newBtn = wx.Button(self, -1, 'ShowBusyWindow')
         self.btnSizer.Add(newBtn, 1, wx.EXPAND)
 
         self.txtField = wx.TextCtrl(self)
@@ -44,10 +46,9 @@ class MainFrame(wx.Frame):
         #binding events
         self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
         self.Bind(wx.EVT_MENU, self.OnExit, m_exit)
-        self.Bind(wx.EVT_MENU, self.OnOpen, m_open)
         self.Bind(wx.EVT_BUTTON, self.OnButton, self.buttons[0])
         self.Bind(wx.EVT_BUTTON, self.OnClear, self.buttons[1])
-        self.Bind(wx.EVT_BUTTON, self.AddToConsole, newBtn)
+        self.Bind(wx.EVT_BUTTON, self.ShowBusyWindow2, newBtn)
         self.Bind(wx.EVT_TEXT, self.OnChangeTxtFieldText, self.txtField)
         self.Bind(wx.EVT_CHAR, self.OnChangeTxtFieldChar, self.txtField)
 
@@ -66,7 +67,7 @@ class MainFrame(wx.Frame):
         print('OnChangeTxtFieldText')
 
     def AddToConsole(self, event):
-        self.console.addText('dupa123\n')
+        self.console.addText('dupa123')
 
     def OnAbout(self, event):
         aboutDialog = wx.MessageDialog(self, 'small text editor', 'about sample editor')
@@ -84,16 +85,24 @@ class MainFrame(wx.Frame):
         msgBox.ShowModal()
         msgBox.Destroy()
 
-    def OnOpen(self, event):
-        self.dirname = ''
-        fileDialog = wx.FileDialog(self, "Pick a file", self.dirname, '', '*.*', wx.FD_OPEN)
-        if fileDialog.ShowModal() == wx.ID_OK:
-            self.filename = fileDialog.GetFilename()
-            self.dirname = fileDialog.GetDirectory()
-            file = open(os.path.join(self.dirname, self.filename), 'r')
-            self.control.SetValue(file.read())
-            file.close()
-        fileDialog.Destroy()
+    def ShowBusyWindow(self, event):
+        d2 = wx.WindowDisabler()
+        d1 = wx.BusyInfo('please wait')
+        localThread = threading.Thread(target = self.testThread, args = (500, self.console, d2, d1))
+        localThread.start()
+
+    def ShowBusyWindow2(self, event):
+        disabler = wx.WindowDisabler()
+        c = InProgressFrame(self, disabler, self.console)
+        c.show()
+
+    def testThread(self, t, consoleObj, disabler, busyinfo):
+        for i in range(0, t):
+            time.sleep(0.01)
+            if i % 20 == 0:
+                print('test threading working', i)
+            consoleObj.addText(str(i))
+        del disabler, busyinfo
 
 class Console(wx.TextCtrl):
     def __init__(self, parent):
@@ -104,13 +113,40 @@ class Console(wx.TextCtrl):
         self.SetValue('')
 
     def addText(self, text):
-        if self.curLines >= 5:
-            print('yes')
-            self.Remove(0, self.GetLineLength(0))
-        else:
-            print('no')
-        self.AppendText(text)
-        self.curLines += 1
+        print('add text')
+        self.AppendText(text+'\n')
+        print('add text2')
+
+class InProgressFrame(wx.Frame):
+    def __init__(self, parent, disabler, console):
+        _ = wx.Frame.__init__(self, parent, title = 'inprogressframe')
+        self.disabler = disabler
+        self.parent = parent
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.labelSizer = wx.BoxSizer(wx.VERTICAL)
+        self.labels = []
+        for i in range(0, 5):
+            self.labels.append(wx.TextCtrl(self, style = wx.ALIGN_CENTRE_HORIZONTAL))
+            self.labelSizer.Add(self.labels[i], 1, wx.EXPAND)
+        newBtn1 = wx.Button(self, -1, 'ddddd')
+        self.labelSizer.Add(newBtn1, 1, wx.EXPAND)
+        self.Bind(wx.EVT_BUTTON, self.OnButton, newBtn1)
+    
+    def show(self):
+        self.SetSizer(self.labelSizer)
+        self.SetAutoLayout(1)
+        self.labelSizer.Fit(self)
+        self.Show(True)
+
+    def OnButton(self, event):
+        for i in range(0, 1000):
+            if i % 500 == 0:
+                self.labels[i].AppendText('done')
+
+    def OnClose(self, event):
+        self.Destroy()
+        self.parent.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
+
 
 if __name__ == '__main__':
     app = wx.App(False)
