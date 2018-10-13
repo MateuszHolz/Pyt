@@ -154,8 +154,10 @@ class DevicesPanel(wx.Panel):
         self.panel = wx.Panel.__init__(self, parent, size = (5, 400))
         self.parent = parent
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(RefreshButtonPanel(self), 1, wx.EXPAND, border = 2)
-        self.sizer.Add(DevicesCheckboxesPanel(self), 10, wx.EXPAND, border = 2)
+        self.checkBoxesPanel = DevicesCheckboxesPanel(self)
+        self.refreshButtonPanel = RefreshButtonPanel(self, self.checkBoxesPanel)
+        self.sizer.Add(self.refreshButtonPanel, 1, wx.EXPAND, border = 2)
+        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND, border = 2)
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.sizer.Fit(self)
@@ -182,13 +184,14 @@ class RefreshButtonPanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.btn = wx.Button(self, wx.ID_ANY, 'refresh')
         self.sizer.Add(self.btn, 0, wx.ALIGN_CENTER)
-        self.Bind(wx.EVT_BUTTON, parent.parent.ButtonPressed, self.btn)
+        self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, self.btn)
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.sizer.Fit(self)
 
     def refreshDevicesPanel(self):
         pass
+        
 if __name__ == '__main__':
     app = wx.App(False)
     MainFrame(None, 'dupa')
