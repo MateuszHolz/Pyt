@@ -7,12 +7,17 @@ import wx
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
-        self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(300, -1))
+        self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
+        self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        #text editor
+        #creating devices panel and placing it on first place in box sizer
+        self.devicesPanel = DevicesPanel(self)
+        self.mainSizer.Add(self.devicesPanel, 1)
+        #creating Console object and place it on second place in box sizer
         self.console = Console(self)
+        self.mainSizer.Add(self.console, 1)
 
-        #set-up menu
+        #set-up top menu
         fileMenu = wx.Menu()
         m_about = fileMenu.Append(wx.ID_ANY, 'about', 'info about this program')
         fileMenu.AppendSeparator()
@@ -25,43 +30,45 @@ class MainFrame(wx.Frame):
         menuBar.Append(fileMenu, 'File')
         self.SetMenuBar(menuBar)
 
-        #creating button
-        self.btnSizer = wx.BoxSizer(wx.VERTICAL)
-        self.buttons = []
+        #creating left panel, place it on first (from the left) place on main BoxSizer
+        #self.buttons = []
 
-        self.buttons.append(wx.Button(self, -1, 'Refresh Devices'))
+        #self.buttons.append(wx.Button(self, -1, 'Refresh Devices'))
 
-        for i in range(0, 3):
-            self.buttons.append(wx.Button(self, -1, 'Button #{}'.format(i)))
-            self.btnSizer.Add(self.buttons[i], 1, wx.EXPAND)
+        #for i in range(0, 3):
+        #    self.buttons.append(wx.Button(self, -1, 'Button #{}'.format(i)))
+        #    self.btnSizer.Add(self.buttons[i], 1, wx.EXPAND)
 
-        newBtn = wx.Button(self, -1, 'ShowBusyWindow')
-        self.btnSizer.Add(newBtn, 1, wx.EXPAND)
+        #newBtn = wx.Button(self, -1, 'ShowBusyWindow')
+        #self.btnSizer.Add(newBtn, 1, wx.EXPAND)
 
-        self.txtField = wx.TextCtrl(self)
-        self.btnSizer.Add(self.txtField, 1, wx.EXPAND)
+        # self.txtField = wx.TextCtrl(self)
+        # self.btnSizer.Add(self.txtField, 1, wx.EXPAND)
         
-        self.quote = wx.StaticText(self, label = 'dupa', style = wx.ALIGN_CENTRE_HORIZONTAL)
-        self.btnSizer.Add(self.quote, 1, wx.EXPAND)
+        # self.quote = wx.StaticText(self, label = 'dupa', style = wx.ALIGN_CENTRE_HORIZONTAL)
+        # self.btnSizer.Add(self.quote, 1, wx.EXPAND)
 
-        self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.mainSizer.Add(self.btnSizer, 1, wx.EXPAND)
-        self.mainSizer.Add(self.console, 0, wx.EXPAND)
+        # self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        # self.mainSizer.Add(self.btnSizer, 1, wx.EXPAND)
+        # self.mainSizer.Add(self.console, 0, wx.EXPAND)
 
         #binding events
         self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
         self.Bind(wx.EVT_MENU, self.OnExit, m_exit)
-        self.Bind(wx.EVT_BUTTON, self.OnButton, self.buttons[0])
-        self.Bind(wx.EVT_BUTTON, self.OnClear, self.buttons[1])
-        self.Bind(wx.EVT_BUTTON, self.ShowBusyWindow2, newBtn)
-        self.Bind(wx.EVT_TEXT, self.OnChangeTxtFieldText, self.txtField)
-        self.Bind(wx.EVT_CHAR, self.OnChangeTxtFieldChar, self.txtField)
+        # self.Bind(wx.EVT_BUTTON, self.OnButton, self.buttons[0])
+        # self.Bind(wx.EVT_BUTTON, self.OnClear, self.buttons[1])
+        # self.Bind(wx.EVT_BUTTON, self.ShowBusyWindow2, newBtn)
+        # self.Bind(wx.EVT_TEXT, self.OnChangeTxtFieldText, self.txtField)
+        # self.Bind(wx.EVT_CHAR, self.OnChangeTxtFieldChar, self.txtField)
 
         self.SetSizer(self.mainSizer)
         self.SetAutoLayout(1)
         self.mainSizer.Fit(self)
         self.Show(True)
     
+    def ButtonPressed(self, event):
+        self.console.addText('button pressed!')
+
     def OnClear(self, event):
         self.console.clear()
 
@@ -92,7 +99,7 @@ class MainFrame(wx.Frame):
 
 class Console(wx.TextCtrl):
     def __init__(self, parent):
-        self.console = wx.TextCtrl.__init__(self, parent, style = wx.TE_MULTILINE | wx.TE_READONLY)
+        self.console = wx.TextCtrl.__init__(self, parent, style = wx.TE_MULTILINE | wx.TE_READONLY, size = (300, 400))
         self.curLines = 0
 
     def clear(self):
@@ -142,6 +149,46 @@ class InProgressFrame(wx.Frame):
         self.Destroy()
         self.parent.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
 
+class DevicesPanel(wx.Panel):
+    def __init__(self, parent):
+        self.panel = wx.Panel.__init__(self, parent, size = (5, 400))
+        self.parent = parent
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(RefreshButtonPanel(self), 1, wx.EXPAND, border = 2)
+        self.sizer.Add(DevicesCheckboxesPanel(self), 10, wx.EXPAND, border = 2)
+        self.SetSizer(self.sizer)
+        self.SetAutoLayout(1)
+        self.sizer.Fit(self)
+
+class DevicesCheckboxesPanel(wx.Panel):
+    def __init__(self, parent):
+        self.panel = wx.Panel.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.checkBoxes = []
+        for i in self.getListOfDevices():
+            checkBx = wx.CheckBox(self, -1, label = i, size = (50, 50), style = wx.ALIGN_RIGHT)
+            self.sizer.Add(checkBx, 0, wx.ALIGN_CENTER)
+        self.SetSizer(self.sizer)
+        self.SetAutoLayout(1)
+        self.sizer.Fit(self)
+    
+    def getListOfDevices(self):
+        return ('asd1', 'asd2', 'asd3')
+
+class RefreshButtonPanel(wx.Panel):
+    def __init__(self, parent, devicesPanel):
+        self.panel = wx.Panel.__init__(self, parent)
+        self.devicesPanel = devicesPanel
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.btn = wx.Button(self, wx.ID_ANY, 'refresh')
+        self.sizer.Add(self.btn, 0, wx.ALIGN_CENTER)
+        self.Bind(wx.EVT_BUTTON, parent.parent.ButtonPressed, self.btn)
+        self.SetSizer(self.sizer)
+        self.SetAutoLayout(1)
+        self.sizer.Fit(self)
+
+    def refreshDevicesPanel(self):
+        pass
 if __name__ == '__main__':
     app = wx.App(False)
     MainFrame(None, 'dupa')
