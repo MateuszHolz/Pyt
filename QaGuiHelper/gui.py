@@ -30,67 +30,16 @@ class MainFrame(wx.Frame):
         menuBar.Append(fileMenu, 'File')
         self.SetMenuBar(menuBar)
 
-        #creating left panel, place it on first (from the left) place on main BoxSizer
-        #self.buttons = []
-
-        #self.buttons.append(wx.Button(self, -1, 'Refresh Devices'))
-
-        #for i in range(0, 3):
-        #    self.buttons.append(wx.Button(self, -1, 'Button #{}'.format(i)))
-        #    self.btnSizer.Add(self.buttons[i], 1, wx.EXPAND)
-
-        #newBtn = wx.Button(self, -1, 'ShowBusyWindow')
-        #self.btnSizer.Add(newBtn, 1, wx.EXPAND)
-
-        # self.txtField = wx.TextCtrl(self)
-        # self.btnSizer.Add(self.txtField, 1, wx.EXPAND)
-        
-        # self.quote = wx.StaticText(self, label = 'dupa', style = wx.ALIGN_CENTRE_HORIZONTAL)
-        # self.btnSizer.Add(self.quote, 1, wx.EXPAND)
-
-        # self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
-        # self.mainSizer.Add(self.btnSizer, 1, wx.EXPAND)
-        # self.mainSizer.Add(self.console, 0, wx.EXPAND)
-
         #binding events
-        self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
-        self.Bind(wx.EVT_MENU, self.OnExit, m_exit)
-        # self.Bind(wx.EVT_BUTTON, self.OnButton, self.buttons[0])
-        # self.Bind(wx.EVT_BUTTON, self.OnClear, self.buttons[1])
-        # self.Bind(wx.EVT_BUTTON, self.ShowBusyWindow2, newBtn)
-        # self.Bind(wx.EVT_TEXT, self.OnChangeTxtFieldText, self.txtField)
-        # self.Bind(wx.EVT_CHAR, self.OnChangeTxtFieldChar, self.txtField)
+        self.Bind(wx.EVT_MENU, self.ShowBusyWindow2, m_exit)
 
         self.SetSizer(self.mainSizer)
         self.SetAutoLayout(1)
         self.mainSizer.Fit(self)
         self.Show(True)
-    
-    def ButtonPressed(self, event):
-        self.console.addText('button pressed!')
-
-    def OnClear(self, event):
-        self.console.clear()
-
-    def OnChangeTxtFieldChar(self, event):
-        print('OnChangeTxtFieldChar')
-    
-    def OnChangeTxtFieldText(self, event):
-        print('OnChangeTxtFieldText')
-
-    def AddToConsole(self, event):
-        self.console.addText('dupa123')
-
-    def OnAbout(self, event):
-        aboutDialog = wx.MessageDialog(self, 'small text editor', 'about sample editor')
-        aboutDialog.ShowModal()
-        aboutDialog.Destroy()
         
     def OnExit(self, event):
         self.Close(True)
-
-    def OnButton(self, event):
-        print('d')
 
     def ShowBusyWindow2(self, event):
         disabler = wx.WindowDisabler()
@@ -106,23 +55,22 @@ class Console(wx.TextCtrl):
         self.SetValue('')
 
     def addText(self, text):
-        print('add text')
         self.AppendText(text+'\n')
-        print('add text2')
 
 class InProgressFrame(wx.Frame):
     def __init__(self, parent, disabler, console):
-        _ = wx.Frame.__init__(self, parent, title = 'inprogressframe')
+        self.frame = wx.Frame.__init__(self, parent, title = 'inprogressframe')
         self.disabler = disabler
         self.parent = parent
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
         self.labelSizer = wx.BoxSizer(wx.VERTICAL)
         self.labels = []
         for i in range(0, 5):
-            self.labels.append(wx.TextCtrl(self, style = wx.ALIGN_CENTRE_HORIZONTAL))
+            self.labels.append(wx.TextCtrl(self, style = wx.ALIGN_CENTRE_HORIZONTAL | wx.TE_READONLY))
             self.labelSizer.Add(self.labels[i], 1, wx.EXPAND)
         self.newBtn1 = wx.Button(self, -1, 'ddddd')
         self.labelSizer.Add(self.newBtn1, 1, wx.EXPAND)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_BUTTON, self.OnButton, self.newBtn1)
         self.stopWorking = False
     
