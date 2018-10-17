@@ -102,43 +102,80 @@ class DevicesPanel(wx.Panel):
         self.panel = wx.Panel.__init__(self, parent, size = (5, 400))
         self.parent = parent
         self.sizer = wx.BoxSizer(wx.VERTICAL)
+
         self.checkBoxesPanel = DevicesCheckboxesPanel(self)
-        self.refreshButtonPanel = RefreshButtonPanel(self, self.checkBoxesPanel)
+        self.refreshButtonPanel = RefreshButtonPanel(self)
+
         self.sizer.Add(self.refreshButtonPanel, 1, wx.EXPAND, border = 2)
         self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND, border = 2)
+
         self.SetSizer(self.sizer)
-        self.SetAutoLayout(1)
-        self.sizer.Fit(self)
+        self.sizer.Layout()
+        self.Fit()
+    
+    def refreshCheckBoxesPanel(self):
+        self.sizer.Remove(1)
+        self.checkBoxesPanel.Destroy()
+        self.checkBoxesPanel = DevicesCheckboxesPanel(self)
+        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND, border = 2)
+        self.sizer.Layout()
+        self.Fit()
+        self.parent.Layout()
+        self.parent.Fit()
+    
+    def printCheckedRecords(self):
+        checkedRecords = []
+        for i, j in zip(self.checkBoxesPanel.checkBoxesCtrls, self.checkBoxesPanel.activeDeviceList):
+            if i.GetValue() == True:
+                checkedRecords.append(j)
+        for i in checkedRecords:
+            self.parent.console.addText(i.rstrip())      
 
 class DevicesCheckboxesPanel(wx.Panel):
     def __init__(self, parent):
         self.panel = wx.Panel.__init__(self, parent)
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.checkBoxes = []
-        for i in self.getListOfDevices():
-            checkBx = wx.CheckBox(self, -1, label = i, size = (50, 50), style = wx.ALIGN_RIGHT)
-            self.sizer.Add(checkBx, 0, wx.ALIGN_CENTER)
-        self.SetSizer(self.sizer)
-        self.SetAutoLayout(1)
-        self.sizer.Fit(self)
-    
+        self.parent = parent
+        self.activeDeviceList = []
+        self.checkBoxesCtrls = []
+        self.createCheckBoxControls()
+
     def getListOfDevices(self):
-        return ('asd1', 'asd2', 'asd3')
+        with open('devices.txt', 'r') as f:
+            dev = f.readlines()
+        return dev
+
+    def createCheckBoxControls(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.activeDeviceList = self.getListOfDevices()
+        for i in self.activeDeviceList:
+            checkBx = wx.CheckBox(self, -1, label = i, size = (150, 20), style = wx.ALIGN_RIGHT)
+            self.checkBoxesCtrls.append(checkBx)
+            sizer.Add(checkBx, 0, wx.ALIGN_CENTER)
+        self.SetSizer(sizer)
+        sizer.Layout()
+        self.Fit()
 
 class RefreshButtonPanel(wx.Panel):
-    def __init__(self, parent, devicesPanel):
+    def __init__(self, parent):
         self.panel = wx.Panel.__init__(self, parent)
-        self.devicesPanel = devicesPanel
+        self.parent = parent
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.btn = wx.Button(self, wx.ID_ANY, 'refresh')
-        self.sizer.Add(self.btn, 0, wx.ALIGN_CENTER)
-        self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, self.btn)
+        self.btn1 = wx.Button(self, wx.ID_ANY, 'refresh')
+        self.sizer.Add(self.btn1, 0, wx.ALIGN_CENTER)
+        self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, self.btn1)
+        self.btn2 = wx.Button(self, wx.ID_ANY, 'getstate')
+        self.sizer.Add(self.btn2, 0, wx.ALIGN_CENTER)
+        self.Bind(wx.EVT_BUTTON, self.getstateofcheckboxes, self.btn2)
+
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.sizer.Fit(self)
 
-    def refreshDevicesPanel(self):
-        pass
+    def refreshDevicesPanel(self, event):
+        self.parent.refreshCheckBoxesPanel()
+
+    def getstateofcheckboxes(self, event):
+        self.parent.printCheckedRecords()
         
 if __name__ == '__main__':
     app = wx.App(False)

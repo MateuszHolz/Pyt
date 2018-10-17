@@ -1,3 +1,1 @@
-Google Pixel 2 - 192.168.67.133
-Samsung Galaxy Note8 - 192.168.65.147
-None - 192.168.67.59
+Samsung Galaxy Tab S2 - 192.168.65.149
