@@ -9,21 +9,15 @@ class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
         self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        #creating devices panel and placing it on first place in box sizer
-        self.devicesPanel = DevicesPanel(self)
-        self.mainSizer.Add(self.devicesPanel, 1)
-        #creating Console object and place it on second place in box sizer
         self.console = Console(self)
+        self.devicesPanel = DevicesPanel(self, self.console)
+        self.mainSizer.Add(self.devicesPanel, 1)
         self.mainSizer.Add(self.console, 1)
 
         #set-up top menu
         fileMenu = wx.Menu()
-        m_about = fileMenu.Append(wx.ID_ANY, 'about', 'info about this program')
         fileMenu.AppendSeparator()
         m_exit = fileMenu.Append(wx.ID_ANY, 'exit', 'exit!')
-        fileMenu.AppendSeparator()
-        m_open = fileMenu.Append(wx.ID_ANY, 'open', 'open file')
 
         #creating menubar (on top of frame)
         menuBar = wx.MenuBar()
@@ -98,12 +92,13 @@ class InProgressFrame(wx.Frame):
         self.parent.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
 
 class DevicesPanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, console):
         self.panel = wx.Panel.__init__(self, parent, size = (5, 400))
         self.parent = parent
+        self.console = console
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.checkBoxesPanel = DevicesCheckboxesPanel(self)
+        self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent)
         self.refreshButtonPanel = RefreshButtonPanel(self)
 
         self.sizer.Add(self.refreshButtonPanel, 1, wx.EXPAND, border = 2)
@@ -116,7 +111,7 @@ class DevicesPanel(wx.Panel):
     def refreshCheckBoxesPanel(self):
         self.sizer.Remove(1)
         self.checkBoxesPanel.Destroy()
-        self.checkBoxesPanel = DevicesCheckboxesPanel(self)
+        self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent)
         self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND, border = 2)
         self.sizer.Layout()
         self.Fit()
@@ -129,43 +124,72 @@ class DevicesPanel(wx.Panel):
             if i.GetValue() == True:
                 checkedRecords.append(j)
         for i in checkedRecords:
-            self.parent.console.addText(i.rstrip())      
+            self.console.addText(i.rstrip())      
 
 class DevicesCheckboxesPanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, mainWindow):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
+        self.mainWindow = mainWindow
         self.activeDeviceList = []
         self.checkBoxesCtrls = []
-        self.createCheckBoxControls()
+        self.createPanel()
 
     def getListOfDevices(self):
         with open('devices.txt', 'r') as f:
             dev = f.readlines()
         return dev
 
-    def createCheckBoxControls(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)
+    def createPanel(self):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.activeDeviceList = self.getListOfDevices()
+        id = 0
         for i in self.activeDeviceList:
+            # local sizer of one record
+            recordSizer = wx.BoxSizer(wx.HORIZONTAL)
+
+            # creating checkbox, adding it to self.checkboxes list (so we can later on get its state), and placing it on local sizer
             checkBx = wx.CheckBox(self, -1, label = i, size = (150, 20), style = wx.ALIGN_RIGHT)
             self.checkBoxesCtrls.append(checkBx)
-            sizer.Add(checkBx, 0, wx.ALIGN_CENTER)
-        self.SetSizer(sizer)
-        sizer.Layout()
+            recordSizer.Add(checkBx, 0, wx.ALIGN_CENTER)
+
+            # creating info button, binding its EVT_BUTTON event to function that takes its id as parametr and adding the button to local sizer
+            infoButton = wx.Button(self, label = 'i', size = (20, 20))
+            self.Bind(wx.EVT_BUTTON, self.OnInfoButton(id), infoButton)
+            recordSizer.Add(infoButton, 0, wx.ALIGN_CENTER)
+
+            # adding local sizer to main sizer, increasing ID by 1
+            mainSizer.Add(recordSizer, 0, wx.ALIGN_CENTER)
+            id += 1
+        self.SetSizer(mainSizer)
+        mainSizer.Layout()
         self.Fit()
+    
+    def OnInfoButton(self, id):
+        def OnClick(event):
+            # for debug purposes:
+            self.parent.console.addText('id elementu: {} nazwa devica: {}'.format(id, self.activeDeviceList[id]))
+            disabler = wx.WindowDisabler()
+            DeviceInfoWindow(self, self.mainWindow, id, disabler)
+            # TODO: open new window (block its parent from getting input), 
+            # show some info about device (by invoking few adb commands). 
+            # in future: get info via http get request from Szmegers API
+        return OnClick
 
 class RefreshButtonPanel(wx.Panel):
     def __init__(self, parent):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.btn1 = wx.Button(self, wx.ID_ANY, 'refresh')
-        self.sizer.Add(self.btn1, 0, wx.ALIGN_CENTER)
-        self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, self.btn1)
-        self.btn2 = wx.Button(self, wx.ID_ANY, 'getstate')
-        self.sizer.Add(self.btn2, 0, wx.ALIGN_CENTER)
-        self.Bind(wx.EVT_BUTTON, self.getstateofcheckboxes, self.btn2)
+        self.createPanel()
+
+    def createPanel(self):
+        btn1 = wx.Button(self, wx.ID_ANY, 'refresh')
+        self.sizer.Add(btn1, 0, wx.ALIGN_CENTER)
+        self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, btn1)
+        btn2 = wx.Button(self, wx.ID_ANY, 'getstate')
+        self.sizer.Add(btn2, 0, wx.ALIGN_CENTER)
+        self.Bind(wx.EVT_BUTTON, self.getStateOfCheckboxes, btn2)
 
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
@@ -174,10 +198,54 @@ class RefreshButtonPanel(wx.Panel):
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckBoxesPanel()
 
-    def getstateofcheckboxes(self, event):
+    def getStateOfCheckboxes(self, event):
         self.parent.printCheckedRecords()
-        
+
+class DeviceInfoWindow(wx.Frame):
+    def __init__(self, parent, mainWindow, deviceId, disabler):
+        self.window = wx.Frame.__init__(self, parent, title = 'Device Info')
+        self.parent = parent
+        self.mainWindow = mainWindow
+        self.deviceId = deviceId
+        self.disabler = disabler
+        self.info = self.getDeviceInfo()
+        self.createControls()
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+        self.Show(True)
+
+    def getDeviceInfo(self, mock = False):
+        # TO DO - change this function to return proper info of device (using its unique id)
+        localList = []
+        res = '1920x1080'
+        localList.append(('Device Resolution', res))
+        aspectRatio = '16:9'
+        localList.append(('Aspect Ratio', aspectRatio))
+        ip = '192.168.0.255'
+        localList.append(('IP Address', ip))
+        batteryStatus = '95%'
+        localList.append(('Battery', batteryStatus))
+        return localList
+    
+    def createControls(self):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        for i in self.info:
+            sizer = wx.BoxSizer(wx.HORIZONTAL)
+            label = wx.StaticText(self, label = i[0], size = (100, -1))
+            sizer.Add(label, 0, wx.EXPAND)
+            content = wx.TextCtrl(self, value = i[1], style = wx.TE_READONLY)
+            sizer.Add(content, 0, wx.ALIGN_RIGHT)
+            mainSizer.Add(sizer, 0)
+        self.SetSizer(mainSizer)
+        self.SetAutoLayout(1)
+        mainSizer.Fit(self)
+
+    def OnClose(self, event):
+        self.Destroy()
+        self.mainWindow.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
+    
+
 if __name__ == '__main__':
     app = wx.App(False)
-    MainFrame(None, 'dupa')
+    MainFrame(None, 'ADB GUI')
     app.MainLoop()
