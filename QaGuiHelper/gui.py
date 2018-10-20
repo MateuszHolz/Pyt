@@ -9,8 +9,10 @@ class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
         self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+
         self.console = Console(self)
         self.devicesPanel = DevicesPanel(self, self.console)
+
         self.mainSizer.Add(self.devicesPanel, 1)
         self.mainSizer.Add(self.console, 1)
 
@@ -99,20 +101,20 @@ class DevicesPanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent)
-        self.refreshButtonPanel = RefreshButtonPanel(self)
+        self.buttonsPanel = RefreshButtonPanel(self)
 
-        self.sizer.Add(self.refreshButtonPanel, 1, wx.EXPAND, border = 2)
-        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND, border = 2)
+        self.sizer.Add(self.buttonsPanel, 1, wx.EXPAND)
+        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND)
 
         self.SetSizer(self.sizer)
         self.sizer.Layout()
         self.Fit()
     
-    def refreshCheckBoxesPanel(self):
+    def refreshCheckboxesPanel(self):
         self.sizer.Remove(1)
         self.checkBoxesPanel.Destroy()
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent)
-        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND, border = 2)
+        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND)
         self.sizer.Layout()
         self.Fit()
         self.parent.Layout()
@@ -184,22 +186,41 @@ class RefreshButtonPanel(wx.Panel):
         self.createPanel()
 
     def createPanel(self):
-        btn1 = wx.Button(self, wx.ID_ANY, 'refresh')
-        self.sizer.Add(btn1, 0, wx.ALIGN_CENTER)
-        self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, btn1)
-        btn2 = wx.Button(self, wx.ID_ANY, 'getstate')
-        self.sizer.Add(btn2, 0, wx.ALIGN_CENTER)
-        self.Bind(wx.EVT_BUTTON, self.getStateOfCheckboxes, btn2)
+        topRow = wx.BoxSizer(wx.HORIZONTAL)
+        captureSSBtn = wx.Button(self, wx.ID_ANY, 'Capture SS')
+        installBuildBtn = wx.Button(self, wx.ID_ANY, 'Install Build')
+        topRow.Add(captureSSBtn, 0, wx.ALIGN_CENTER)
+        topRow.Add(installBuildBtn, 0, wx.ALIGN_CENTER)
+
+        bottomRow = wx.BoxSizer(wx.HORIZONTAL)
+        refreshDevicesBtn = wx.Button(self, wx.ID_ANY, 'Refresh')
+        bottomRow.Add(refreshDevicesBtn, 0, wx.ALIGN_CENTER)
+        placeholderBtn = wx.Button(self, wx.ID_ANY, 'Placeholder')
+        bottomRow.Add(placeholderBtn, 0, wx.ALIGN_CENTER)
+
+        self.sizer.Add(topRow, 0, wx.ALIGN_CENTER)
+        self.sizer.Add(bottomRow, 0, wx.ALIGN_CENTER)
+
+        self.Bind(wx.EVT_BUTTON, self.getStateOfCheckboxes, captureSSBtn)
+        self.Bind(wx.EVT_BUTTON, self.getAndInstallBuild, installBuildBtn)
+        self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, refreshDevicesBtn)
+        self.Bind(wx.EVT_BUTTON, self.placeholderMethod, placeholderBtn)
 
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.sizer.Fit(self)
 
     def refreshDevicesPanel(self, event):
-        self.parent.refreshCheckBoxesPanel()
+        self.parent.refreshCheckboxesPanel()
 
     def getStateOfCheckboxes(self, event):
         self.parent.printCheckedRecords()
+    
+    def getAndInstallBuild(self, event):
+        print('getAndInstallBuild')
+
+    def placeholderMethod(self, event):
+        print('placeholderMethod')
 
 class DeviceInfoWindow(wx.Frame):
     def __init__(self, parent, mainWindow, deviceId, disabler):
