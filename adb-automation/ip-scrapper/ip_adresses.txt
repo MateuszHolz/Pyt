@@ -1,2 +1,2 @@
-Samsung Galaxy S8 - 192.168.67.185
-None - 192.168.67.53
+Samsung Galaxy Tab S2 - 192.168.67.120
+Samsung Galaxy S8+ - 192.168.199.147

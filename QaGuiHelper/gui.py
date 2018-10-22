@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+import subprocess
 
 import wx
 
@@ -10,8 +11,9 @@ class MainFrame(wx.Frame):
         self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
         self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
 
+        self.adb = Adb()
         self.console = Console(self)
-        self.devicesPanel = DevicesPanel(self, self.console)
+        self.devicesPanel = DevicesPanel(self, self.console, self.adb)
 
         self.mainSizer.Add(self.devicesPanel, 1)
         self.mainSizer.Add(self.console, 1)
@@ -94,13 +96,14 @@ class InProgressFrame(wx.Frame):
         self.parent.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
 
 class DevicesPanel(wx.Panel):
-    def __init__(self, parent, console):
+    def __init__(self, parent, console, adb):
         self.panel = wx.Panel.__init__(self, parent, size = (5, 400))
         self.parent = parent
+        self.adb = adb
         self.console = console
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent)
+        self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
         self.buttonsPanel = RefreshButtonPanel(self)
 
         self.sizer.Add(self.buttonsPanel, 1, wx.EXPAND)
@@ -129,22 +132,17 @@ class DevicesPanel(wx.Panel):
             self.console.addText(i.rstrip())      
 
 class DevicesCheckboxesPanel(wx.Panel):
-    def __init__(self, parent, mainWindow):
+    def __init__(self, parent, mainWindow, adb):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
+        self.adb = adb
         self.mainWindow = mainWindow
-        self.activeDeviceList = []
+        self.activeDeviceList = self.adb.getListOfAttachedDevices()
         self.checkBoxesCtrls = []
         self.createPanel()
 
-    def getListOfDevices(self):
-        with open('devices.txt', 'r') as f:
-            dev = f.readlines()
-        return dev
-
     def createPanel(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.activeDeviceList = self.getListOfDevices()
         id = 0
         for i in self.activeDeviceList:
             # local sizer of one record
@@ -172,7 +170,7 @@ class DevicesCheckboxesPanel(wx.Panel):
             # for debug purposes:
             self.parent.console.addText('id elementu: {} nazwa devica: {}'.format(id, self.activeDeviceList[id]))
             disabler = wx.WindowDisabler()
-            DeviceInfoWindow(self, self.mainWindow, id, disabler)
+            DeviceInfoWindow(self, self.mainWindow, self.activeDeviceList[id], disabler, self.adb)
             # TODO: open new window (block its parent from getting input), 
             # show some info about device (by invoking few adb commands). 
             # in future: get info via http get request from Szmegers API
@@ -223,11 +221,12 @@ class RefreshButtonPanel(wx.Panel):
         print('placeholderMethod')
 
 class DeviceInfoWindow(wx.Frame):
-    def __init__(self, parent, mainWindow, deviceId, disabler):
+    def __init__(self, parent, mainWindow, deviceId, disabler, adb):
         self.window = wx.Frame.__init__(self, parent, title = 'Device Info')
         self.parent = parent
         self.mainWindow = mainWindow
         self.deviceId = deviceId
+        self.adb = adb
         self.disabler = disabler
         self.info = self.getDeviceInfo()
         self.createControls()
@@ -242,7 +241,7 @@ class DeviceInfoWindow(wx.Frame):
         localList.append(('Device Resolution', res))
         aspectRatio = '16:9'
         localList.append(('Aspect Ratio', aspectRatio))
-        ip = '192.168.0.255'
+        ip = self.adb.getDeviceIpAddress(self.deviceId)
         localList.append(('IP Address', ip))
         batteryStatus = '95%'
         localList.append(('Battery', batteryStatus))
@@ -264,7 +263,43 @@ class DeviceInfoWindow(wx.Frame):
     def OnClose(self, event):
         self.Destroy()
         self.mainWindow.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
-    
+
+class Adb():
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def getListOfAttachedDevices():
+        devices = []
+        retries = 0
+        while True:
+            print("tries:", retries)
+            if retries > 4:
+                break
+            else:
+                try:
+                    _l = subprocess.check_output(r"adb devices")
+                    if "doesn't" in _l.decode():
+                        retries += 1
+                        continue
+                    else:
+                        break
+                except subprocess.CalledProcessError:
+                    retries += 1
+                    continue
+        rawList = _l.rsplit()
+        tempList = rawList[4:]
+        for i in range(len(tempList)):
+            if i%2 == 0:
+                devices.append(tempList[i].decode())
+        return devices
+
+    @staticmethod
+    def getDeviceIpAddress(device):
+        raw = subprocess.check_output(r"adb -s {} shell ip addr show wlan0".format(device)).decode().split()
+        for i in raw:
+            if i[0:7] == '192.168':
+                return i[0:len(i)-3]
 
 if __name__ == '__main__':
     app = wx.App(False)

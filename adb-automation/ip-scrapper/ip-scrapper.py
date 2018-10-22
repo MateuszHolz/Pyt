@@ -99,7 +99,7 @@ def getDevicesList(adbPath, devicesJson):
 def writeIpAdresses(deviceIdList, deviceDataDict, adbpath, outputFile, cmd):
     with open(outputFile, 'w') as file:
         for i in deviceIdList:
-            ipAdress = subprocess.check_output(r"{}\adb -s {} {}".format(adbpath, i, cmd)).decode().split()
+            ipAdress = subprocess.check_output(r"{}\adb -s {} shell ip addr show wlan0".format(adbpath, i)).decode().split()
             for j in ipAdress:
                 if j[0:7] == '192.168':
                     file.write("{} - {}\n".format(getDeviceInfo(i, deviceDataDict), j[0:len(j)-3]))
