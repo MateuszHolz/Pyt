@@ -116,7 +116,7 @@ class DevicesPanel(wx.Panel):
     def refreshCheckboxesPanel(self):
         self.sizer.Remove(1)
         self.checkBoxesPanel.Destroy()
-        self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent)
+        self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
         self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND)
         self.sizer.Layout()
         self.Fit()
@@ -226,26 +226,19 @@ class DeviceInfoWindow(wx.Frame):
         self.parent = parent
         self.mainWindow = mainWindow
         self.deviceId = deviceId
-        self.adb = adb
+        self.adb = Adb(deviceId)
         self.disabler = disabler
         self.info = self.getDeviceInfo()
+        self.deviceInfoTable = (
+            ('Device Resolution', self.adb.getDeviceScreenSize),
+            ('Aspect Ratio', self.adb.getDeviceAspectRatio),
+            ('IP Address', self.adb.getDeviceIpAddress),
+            ('Battery', self.adb.getBatteryStatus)
+        )
         self.createControls()
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         self.Show(True)
-
-    def getDeviceInfo(self, mock = False):
-        # TO DO - change this function to return proper info of device (using its unique id)
-        localList = []
-        res = '1920x1080'
-        localList.append(('Device Resolution', res))
-        aspectRatio = '16:9'
-        localList.append(('Aspect Ratio', aspectRatio))
-        ip = self.adb.getDeviceIpAddress(self.deviceId)
-        localList.append(('IP Address', ip))
-        batteryStatus = '95%'
-        localList.append(('Battery', batteryStatus))
-        return localList
     
     def createControls(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -296,10 +289,21 @@ class Adb():
 
     @staticmethod
     def getDeviceIpAddress(device):
-        raw = subprocess.check_output(r"adb -s {} shell ip addr show wlan0".format(device)).decode().split()
+        try:
+            raw = subprocess.check_output(r"adb -s {} shell ip addr show wlan0".format(device)).decode().split()
+        except subprocess.CalledProcessError:
+            return 'couldnt retrieve ip'
         for i in raw:
             if i[0:7] == '192.168':
                 return i[0:len(i)-3]
+
+    @staticmethod
+    def getDeviceScreenSize(device):
+        raise NotImplementedError
+
+    @staticmethod
+    def getDeviceAspectRatio(device):
+        
 
 if __name__ == '__main__':
     app = wx.App(False)
