@@ -226,32 +226,52 @@ class DeviceInfoWindow(wx.Frame):
         self.parent = parent
         self.mainWindow = mainWindow
         self.deviceId = deviceId
-        self.adb = Adb(deviceId)
         self.disabler = disabler
-        self.info = self.getDeviceInfo()
+        self.deviceInfoControls = []
+        self.adb = Adb()
         self.deviceInfoTable = (
-            ('Device Resolution', self.adb.getDeviceScreenSize),
-            ('Aspect Ratio', self.adb.getDeviceAspectRatio),
+            ('Model', self.adb.getDeviceModel),
+            ('Brand', self.adb.getBrand),
+            ('Screen size', self.adb.getDeviceScreenSize),
             ('IP Address', self.adb.getDeviceIpAddress),
-            ('Battery', self.adb.getBatteryStatus)
+            ('Battery', self.adb.getBatteryStatus),
+            ('Plugged in?', self.adb.getPluggedInStatus),
+            ('OS version', self.adb.getOsVersion),
+            ('API version', self.adb.getApiVersion),
+            ('Device timezone', self.adb.getDeviceTimezone),
+            ('Device language', self.adb.getDeviceLanguage),
+            ('Marketing name', self.adb.getMarketingName)
         )
         self.createControls()
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         self.Show(True)
+        self.updateFields()
     
     def createControls(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        for i in self.info:
+        for i in self.deviceInfoTable:
             sizer = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self, label = i[0], size = (100, -1))
             sizer.Add(label, 0, wx.EXPAND)
-            content = wx.TextCtrl(self, value = i[1], style = wx.TE_READONLY)
+            content = wx.TextCtrl(self, value = '...', style = wx.TE_READONLY)
+            self.deviceInfoControls.append(content)
             sizer.Add(content, 0, wx.ALIGN_RIGHT)
             mainSizer.Add(sizer, 0)
         self.SetSizer(mainSizer)
         self.SetAutoLayout(1)
         mainSizer.Fit(self)
+
+    def updateFields(self):
+        for func, ctrl in zip(self.deviceInfoTable, self.deviceInfoControls):
+            localThread = threading.Thread(target = self.updateSingleControl, args = (ctrl, self.deviceId, func[1]))
+            localThread.start()
+
+    def updateSingleControl(self, textCtrl, deviceId, functionToCall):
+        try:
+            textCtrl.SetValue(functionToCall(deviceId))
+        except RuntimeError:
+            print('got it!')
 
     def OnClose(self, event):
         self.Destroy()
@@ -266,7 +286,6 @@ class Adb():
         devices = []
         retries = 0
         while True:
-            print("tries:", retries)
             if retries > 4:
                 break
             else:
@@ -299,12 +318,51 @@ class Adb():
 
     @staticmethod
     def getDeviceScreenSize(device):
-        raise NotImplementedError
+        return 'mock devscreen'
+        #to do - proper implementation (get this info via adb command)
+
+    # @staticmethod
+    # def getDeviceAspectRatio(screenSize):
+    #     return 'get device aspect ratio mock'
+    #     #to do - create json file where all available resolutions are present and their corresponding aspect ratios are retrievable.
 
     @staticmethod
-    def getDeviceAspectRatio(device):
-        
+    def getBatteryStatus(device):
+        return 'mock battery status'
+        #to do - return battery level retrieved by adb command
 
+    @staticmethod
+    def getPluggedInStatus(device):
+        return 'mock plugged in stat'
+
+    @staticmethod
+    def getOsVersion(device):
+        return subprocess.check_output(r'adb -s {} shell getprop ro.build.version.release'.format(device))
+
+    @staticmethod
+    def getApiVersion(device):
+        return subprocess.check_output(r'adb -s {} shell getprop ro.build.version.sdk'.format(device))
+
+    @staticmethod
+    def getDeviceModel(device):
+        return subprocess.check_output(r'adb -s {} shell getprop ro.product.model'.format(device))
+
+    @staticmethod
+    def getDeviceTimezone(device):
+        return subprocess.check_output(r'adb -s {} shell getprop persist.sys.timezone'.format(device))
+
+    @staticmethod
+    def getDeviceLanguage(device):
+        return subprocess.check_output(r'adb -s {} shell getprop persist.sys.locale'.format(device))
+
+    @staticmethod
+    def getMarketingName(device):
+        return subprocess.check_output(r'adb -s {} shell getprop ro.config.marketing_name'.format(device))
+
+    @staticmethod
+    def getBrand(device):
+        return subprocess.check_output(r'adb -s {} shell getprop ro.product.brand'.format(device))
+    
 if __name__ == '__main__':
     app = wx.App(False)
     MainFrame(None, 'ADB GUI')
