@@ -121,15 +121,7 @@ class DevicesPanel(wx.Panel):
         self.sizer.Layout()
         self.Fit()
         self.parent.Layout()
-        self.parent.Fit()
-    
-    def printCheckedRecords(self):
-        checkedRecords = []
-        for i, j in zip(self.checkBoxesPanel.checkBoxesCtrls, self.checkBoxesPanel.activeDeviceList):
-            if i.GetValue() == True:
-                checkedRecords.append(j)
-        for i in checkedRecords:
-            self.console.addText(i.rstrip())      
+        self.parent.Fit()   
 
 class DevicesCheckboxesPanel(wx.Panel):
     def __init__(self, parent, mainWindow, adb):
@@ -164,6 +156,13 @@ class DevicesCheckboxesPanel(wx.Panel):
         self.SetSizer(mainSizer)
         mainSizer.Layout()
         self.Fit()
+
+    def getCheckedDevices(self):
+        checkedRecords = []
+        for i, j in zip(self.checkBoxesCtrls, self.activeDeviceList):
+            if i.GetValue() == True:
+                checkedRecords.append(j)
+        return checkedRecords
     
     def OnInfoButton(self, id):
         def OnClick(event):
@@ -202,7 +201,7 @@ class RefreshButtonPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.getStateOfCheckboxes, captureSSBtn)
         self.Bind(wx.EVT_BUTTON, self.getAndInstallBuild, installBuildBtn)
         self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, refreshDevicesBtn)
-        self.Bind(wx.EVT_BUTTON, self.placeholderMethod, placeholderBtn)
+        self.Bind(wx.EVT_BUTTON, self.getStateOfCheckboxes, placeholderBtn)
 
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
@@ -212,7 +211,7 @@ class RefreshButtonPanel(wx.Panel):
         self.parent.refreshCheckboxesPanel()
 
     def getStateOfCheckboxes(self, event):
-        self.parent.printCheckedRecords()
+        print(self.parent.checkBoxesPanel.getCheckedDevices())
     
     def getAndInstallBuild(self, event):
         print('getAndInstallBuild')
@@ -240,7 +239,8 @@ class DeviceInfoWindow(wx.Frame):
             ('API version', self.adb.getApiVersion),
             ('Device timezone', self.adb.getDeviceTimezone),
             ('Device language', self.adb.getDeviceLanguage),
-            ('Marketing name', self.adb.getMarketingName)
+            ('Marketing name', self.adb.getMarketingName),
+            ('Wifi name', self.adb.getWifiName)
         )
         self.createControls()
         self.Bind(wx.EVT_CLOSE, self.OnClose)
@@ -252,9 +252,9 @@ class DeviceInfoWindow(wx.Frame):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         for i in self.deviceInfoTable:
             sizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self, label = i[0], size = (100, -1))
+            label = wx.StaticText(self, label = i[0], size = (100, -1), style = wx.TE_CENTRE)
             sizer.Add(label, 0, wx.EXPAND)
-            content = wx.TextCtrl(self, value = '...', style = wx.TE_READONLY)
+            content = wx.TextCtrl(self, value = '...', size = (150, -1), style = wx.TE_READONLY)
             self.deviceInfoControls.append(content)
             sizer.Add(content, 0, wx.ALIGN_RIGHT)
             mainSizer.Add(sizer, 0)
@@ -290,7 +290,7 @@ class Adb():
                 break
             else:
                 try:
-                    _l = subprocess.check_output(r"adb devices")
+                    _l = subprocess.check_output(r"adb devices", shell = True)
                     if "doesn't" in _l.decode():
                         retries += 1
                         continue
@@ -309,7 +309,7 @@ class Adb():
     @staticmethod
     def getDeviceIpAddress(device):
         try:
-            raw = subprocess.check_output(r"adb -s {} shell ip addr show wlan0".format(device)).decode().split()
+            raw = subprocess.check_output(r"adb -s {} shell ip addr show wlan0".format(device), shell = True).decode().split()
         except subprocess.CalledProcessError:
             return 'couldnt retrieve ip'
         for i in raw:
@@ -328,40 +328,71 @@ class Adb():
 
     @staticmethod
     def getBatteryStatus(device):
-        return 'mock battery status'
-        #to do - return battery level retrieved by adb command
+        out = subprocess.check_output(r'adb -s {} shell dumpsys battery'.format(device), shell = True).decode().split()
+        for i in range(len(out)):
+            if out[i] == 'level:':
+                return out[i+1]+'%'
 
     @staticmethod
     def getPluggedInStatus(device):
-        return 'mock plugged in stat'
+        out = subprocess.check_output(r'adb -s {} shell dumpsys battery'.format(device), shell = True).decode().split()
+        for i in range(len(out)):
+            if out[i] == 'AC' or out[i] == 'USB':
+                if out[i+2] == 'true':
+                    return 'True, {} powered'.format(out[i])
+        return 'False'
 
     @staticmethod
     def getOsVersion(device):
-        return subprocess.check_output(r'adb -s {} shell getprop ro.build.version.release'.format(device))
+        return subprocess.check_output(r'adb -s {} shell getprop ro.build.version.release'.format(device), shell = True)
 
     @staticmethod
     def getApiVersion(device):
-        return subprocess.check_output(r'adb -s {} shell getprop ro.build.version.sdk'.format(device))
+        return subprocess.check_output(r'adb -s {} shell getprop ro.build.version.sdk'.format(device), shell = True)
 
     @staticmethod
     def getDeviceModel(device):
-        return subprocess.check_output(r'adb -s {} shell getprop ro.product.model'.format(device))
+        return subprocess.check_output(r'adb -s {} shell getprop ro.product.model'.format(device), shell = True)
 
     @staticmethod
     def getDeviceTimezone(device):
-        return subprocess.check_output(r'adb -s {} shell getprop persist.sys.timezone'.format(device))
+        return subprocess.check_output(r'adb -s {} shell getprop persist.sys.timezone'.format(device), shell = True)
 
     @staticmethod
     def getDeviceLanguage(device):
-        return subprocess.check_output(r'adb -s {} shell getprop persist.sys.locale'.format(device))
+        return subprocess.check_output(r'adb -s {} shell getprop persist.sys.locale'.format(device), shell = True)
 
     @staticmethod
     def getMarketingName(device):
-        return subprocess.check_output(r'adb -s {} shell getprop ro.config.marketing_name'.format(device))
+        name = subprocess.check_output(r'adb -s {} shell getprop ro.config.marketing_name'.format(device), shell = True).rstrip()
+        print(len(name))
+        if len(name) > 0:
+            return name
+        else:
+            return 'N/A'
 
     @staticmethod
     def getBrand(device):
-        return subprocess.check_output(r'adb -s {} shell getprop ro.product.brand'.format(device))
+        return subprocess.check_output(r'adb -s {} shell getprop ro.product.brand'.format(device), shell = True)
+
+    @staticmethod
+    def getWifiName(device):
+        out = subprocess.check_output(r'adb -s {} shell dumpsys wifi'.format(device), shell = True).decode().split()
+        for i in range(len(out)):
+            if out[i] == 'mWifiInfo':
+                return out[i+2][:-1]
+
+    @staticmethod
+    def getListOfHuuugePackages(device):
+        packages = []
+        list = ('huuuge', 'gamelion')
+        output = subprocess.check_output(r'adb -s {} shell pm list packages'.format(device), shell = True).decode().split()
+        for i in list:
+            for j in output:
+                if i in j:
+                    packages.append(j)
+        print(packages)
+        return packages[0][8:]
     
 if __name__ == '__main__':
     app = wx.App(False)
