@@ -1,8 +1,9 @@
+import json
 import os
+import re
 import threading
 import time
 import subprocess
-
 import wx
 
 
@@ -10,6 +11,15 @@ class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
         self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.appDataPath = os.getenv('APPDATA')
+        self.optionsPath = os.path.join(self.appDataPath, 'adbgui')
+        self.optionsFilePath = os.path.join(self.optionsPath, 'options.json')
+        self.__optionsCategories = (
+            'Screenshots folder',
+            'Builds folder',
+            'Jenkins credentials'
+        )
+        self.__options = self.getOptionsIfAlreadyExist(self.optionsPath, self.optionsFilePath)
 
         self.adb = Adb()
         self.console = Console(self)
@@ -20,8 +30,9 @@ class MainFrame(wx.Frame):
 
         #set-up top menu
         fileMenu = wx.Menu()
+        options = fileMenu.Append(wx.ID_ANY, 'Options')
         fileMenu.AppendSeparator()
-        m_exit = fileMenu.Append(wx.ID_ANY, 'exit', 'exit!')
+        ext = fileMenu.Append(wx.ID_ANY, 'Exit')
 
         #creating menubar (on top of frame)
         menuBar = wx.MenuBar()
@@ -29,20 +40,96 @@ class MainFrame(wx.Frame):
         self.SetMenuBar(menuBar)
 
         #binding events
-        self.Bind(wx.EVT_MENU, self.ShowBusyWindow2, m_exit)
+        self.Bind(wx.EVT_MENU, self.showOptions, options)
+        self.Bind(wx.EVT_MENU, self.onExit, ext)
+        self.Bind(wx.EVT_CLOSE, self.onExit)
 
         self.SetSizer(self.mainSizer)
         self.SetAutoLayout(1)
         self.mainSizer.Fit(self)
         self.Show(True)
+
+    def getOptionsIfAlreadyExist(self, folderPath, filePath):
+        if os.path.exists(folderPath):
+            try:
+                with open (filePath, 'r') as f:
+                    try:
+                        return json.loads(f.read())
+                    except json.decoder.JSONDecodeError:
+                        return {}
+            except FileNotFoundError:
+                return {}
+        else:
+            os.mkdir(folderPath)
+            return {}
         
-    def OnExit(self, event):
-        self.Close(True)
+    def onExit(self, event):
+        self.saveOptionsToFile(self.optionsFilePath)
+        self.Destroy()
 
     def ShowBusyWindow2(self, event):
         disabler = wx.WindowDisabler()
         c = InProgressFrame(self, disabler, self.console)
         c.show()
+
+    def showOptions(self, event):
+        disabler2 = wx.WindowDisabler()
+        OptionsFrame(self, disabler2)
+
+    def setOption(self, option, value):
+        self.__options[option] = value
+
+    def getOption(self, option):
+        try:
+            return self.__options[option]
+        except KeyError:
+            return ''
+
+    def saveOptionsToFile(self, filePath):
+        with open(filePath, 'w+') as f:
+            json.dump(self.__options, f)
+
+    def getOptionsCategories(self):
+        return self.__optionsCategories
+
+class OptionsFrame(wx.Frame):
+    def __init__(self, parent, disabler):
+        self.frame = wx.Frame.__init__(self, parent, title = 'Options')
+        self.parent = parent
+        self.disabler = disabler
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        for i in self.parent.getOptionsCategories():
+            localSizer = wx.BoxSizer(wx.HORIZONTAL)
+            label = wx.StaticText(self, label = i, style = wx.TE_CENTRE, size = (100, 10))
+            localSizer.Add(label, 0, wx.EXPAND)
+            valueCtrl = wx.TextCtrl(self, value = self.parent.getOption(i), size = (100, 20), style = wx.TE_READONLY)
+            localSizer.Add(valueCtrl, 0, wx.EXPAND)
+            editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
+            localSizer.Add(editBtn, 0, wx.EXPAND)
+            self.Bind(wx.EVT_BUTTON, self.editOption(i, valueCtrl), editBtn)
+            self.sizer.Add(localSizer, 0, wx.EXPAND)
+
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.show()
+
+    def onClose(self, event):
+        self.Destroy()
+        self.parent.Raise()
+    
+    def editOption(self, option, valueControl):
+        def editOptionEvent(event):
+            #mock function - later on it will be returned by modal popup
+            newOption = '{}i'.format(self.parent.getOption(option))
+            self.parent.setOption(option, newOption)
+            valueControl.SetValue(newOption)
+        return editOptionEvent
+
+    def show(self):
+        self.SetSizer(self.sizer)
+        self.SetAutoLayout(1)
+        self.sizer.Fit(self)
+        self.Show(True)
 
 class Console(wx.TextCtrl):
     def __init__(self, parent):
@@ -198,7 +285,7 @@ class RefreshButtonPanel(wx.Panel):
         self.sizer.Add(topRow, 0, wx.ALIGN_CENTER)
         self.sizer.Add(bottomRow, 0, wx.ALIGN_CENTER)
 
-        self.Bind(wx.EVT_BUTTON, self.getStateOfCheckboxes, captureSSBtn)
+        self.Bind(wx.EVT_BUTTON, self.getScreenshotFromDevices, captureSSBtn)
         self.Bind(wx.EVT_BUTTON, self.getAndInstallBuild, installBuildBtn)
         self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, refreshDevicesBtn)
         self.Bind(wx.EVT_BUTTON, self.getStateOfCheckboxes, placeholderBtn)
@@ -206,6 +293,9 @@ class RefreshButtonPanel(wx.Panel):
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.sizer.Fit(self)
+
+    def getScreenshotFromDevices(self, event):
+        raise Exception('not implemented yet')
 
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckboxesPanel()
@@ -229,10 +319,11 @@ class DeviceInfoWindow(wx.Frame):
         self.deviceInfoControls = []
         self.adb = Adb()
         self.deviceInfoTable = (
-            ('Model', self.adb.getDeviceModel),
             ('Brand', self.adb.getBrand),
+            ('Model', self.adb.getDeviceModel),
             ('Screen size', self.adb.getDeviceScreenSize),
             ('IP Address', self.adb.getDeviceIpAddress),
+            ('ADB tcpip port', self.adb.getTcpipPort),
             ('Battery', self.adb.getBatteryStatus),
             ('Plugged in?', self.adb.getPluggedInStatus),
             ('OS version', self.adb.getOsVersion),
@@ -240,8 +331,7 @@ class DeviceInfoWindow(wx.Frame):
             ('Device timezone', self.adb.getDeviceTimezone),
             ('Device language', self.adb.getDeviceLanguage),
             ('Marketing name', self.adb.getMarketingName),
-            ('Wifi name', self.adb.getWifiName)
-        )
+            ('Wifi name', self.adb.getWifiName))
         self.createControls()
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
@@ -318,13 +408,9 @@ class Adb():
 
     @staticmethod
     def getDeviceScreenSize(device):
-        return 'mock devscreen'
-        #to do - proper implementation (get this info via adb command)
-
-    # @staticmethod
-    # def getDeviceAspectRatio(screenSize):
-    #     return 'get device aspect ratio mock'
-    #     #to do - create json file where all available resolutions are present and their corresponding aspect ratios are retrievable.
+        rawData = subprocess.check_output(r"adb -s {} shell wm size".format(device)).decode().split()
+        res = re.sub('x', ' ', rawData[2]).split()
+        return "{}x{}".format(res[1], res[0])
 
     @staticmethod
     def getBatteryStatus(device):
@@ -365,7 +451,6 @@ class Adb():
     @staticmethod
     def getMarketingName(device):
         name = subprocess.check_output(r'adb -s {} shell getprop ro.config.marketing_name'.format(device), shell = True).rstrip()
-        print(len(name))
         if len(name) > 0:
             return name
         else:
@@ -391,8 +476,15 @@ class Adb():
             for j in output:
                 if i in j:
                     packages.append(j)
-        print(packages)
         return packages[0][8:]
+    
+    @staticmethod
+    def getTcpipPort(device):
+        port = subprocess.check_output(r'adb -s {} shell getprop service.adb.tcp.port'.format(device), shell = True).rstrip()
+        if len(port) > 0:
+            return port
+        else:
+            return 'Not set'
     
 if __name__ == '__main__':
     app = wx.App(False)
