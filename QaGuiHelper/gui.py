@@ -103,7 +103,7 @@ class OptionsFrame(wx.Frame):
             localSizer = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self, label = i, style = wx.TE_CENTRE, size = (100, 10))
             localSizer.Add(label, 0, wx.EXPAND)
-            valueCtrl = wx.TextCtrl(self, value = self.parent.getOption(i), size = (100, 20), style = wx.TE_READONLY)
+            valueCtrl = wx.TextCtrl(self, value = self.parent.getOption(i), size = (200, 20), style = wx.TE_READONLY)
             localSizer.Add(valueCtrl, 0, wx.EXPAND)
             editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
             localSizer.Add(editBtn, 0, wx.EXPAND)
@@ -119,10 +119,15 @@ class OptionsFrame(wx.Frame):
     
     def editOption(self, option, valueControl):
         def editOptionEvent(event):
-            #mock function - later on it will be returned by modal popup
-            newOption = '{}i'.format(self.parent.getOption(option))
-            self.parent.setOption(option, newOption)
-            valueControl.SetValue(newOption)
+            # #mock function - later on it will be returned by modal popup
+            # newOption = '{}i'.format(self.parent.getOption(option))
+            # self.parent.setOption(option, newOption)
+            # valueControl.SetValue(newOption)
+            with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
+                if dlg.ShowModal() == wx.ID_OK:
+                    newOption = dlg.GetPath()
+                    self.parent.setOption(option, newOption)
+                    valueControl.SetValue(newOption)
         return editOptionEvent
 
     def show(self):
