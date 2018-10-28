@@ -15,9 +15,9 @@ class MainFrame(wx.Frame):
         self.optionsPath = os.path.join(self.appDataPath, 'adbgui')
         self.optionsFilePath = os.path.join(self.optionsPath, 'options.json')
         self.__optionsCategories = (
-            'Screenshots folder',
-            'Builds folder',
-            'Jenkins credentials'
+            ('Screenshots folder', 'folder'),
+            ('Builds folder', 'folder'),
+            ('Jenkins credentials', 'input')
         )
         self.__options = self.getOptionsIfAlreadyExist(self.optionsPath, self.optionsFilePath)
 
@@ -99,16 +99,20 @@ class OptionsFrame(wx.Frame):
         self.disabler = disabler
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        for i in self.parent.getOptionsCategories():
+        for i, j in self.parent.getOptionsCategories():
             localSizer = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self, label = i, style = wx.TE_CENTRE, size = (100, 10))
             localSizer.Add(label, 0, wx.EXPAND)
-            valueCtrl = wx.TextCtrl(self, value = self.parent.getOption(i), size = (200, 20), style = wx.TE_READONLY)
-            localSizer.Add(valueCtrl, 0, wx.EXPAND)
-            editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
-            localSizer.Add(editBtn, 0, wx.EXPAND)
-            self.Bind(wx.EVT_BUTTON, self.editOption(i, valueCtrl), editBtn)
-            self.sizer.Add(localSizer, 0, wx.EXPAND)
+            if j == 'folder':
+                valueCtrl = wx.TextCtrl(self, value = self.parent.getOption(i), size = (200, 20), style = wx.TE_READONLY)
+                localSizer.Add(valueCtrl, 0, wx.EXPAND)
+                editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
+                localSizer.Add(editBtn, 0, wx.EXPAND)
+                self.Bind(wx.EVT_BUTTON, self.editOption(i, valueCtrl), editBtn)
+                self.sizer.Add(localSizer, 0, wx.EXPAND)
+            elif j == 'input':
+                #make 2 input fields (that have *** chars and save button that saves input into the file)
+                pass
 
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.show()
