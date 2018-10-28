@@ -64,13 +64,8 @@ class MainFrame(wx.Frame):
             return {}
         
     def onExit(self, event):
-        self.saveOptionsToFile(self.optionsFilePath)
+        self.saveOptionsToFile()
         self.Destroy()
-
-    def ShowBusyWindow2(self, event):
-        disabler = wx.WindowDisabler()
-        c = InProgressFrame(self, disabler, self.console)
-        c.show()
 
     def showOptions(self, event):
         disabler2 = wx.WindowDisabler()
@@ -79,14 +74,17 @@ class MainFrame(wx.Frame):
     def setOption(self, option, value):
         self.__options[option] = value
 
-    def getOption(self, option):
+    def getOption(self, option, t = False):
         try:
             return self.__options[option]
         except KeyError:
-            return ''
+            if t:
+                return ('', '')
+            else:
+                return ''
 
-    def saveOptionsToFile(self, filePath):
-        with open(filePath, 'w+') as f:
+    def saveOptionsToFile(self):
+        with open(self.optionsFilePath, 'w+') as f:
             json.dump(self.__options, f)
 
     def getOptionsCategories(self):
@@ -108,11 +106,16 @@ class OptionsFrame(wx.Frame):
                 localSizer.Add(valueCtrl, 0, wx.EXPAND)
                 editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
                 localSizer.Add(editBtn, 0, wx.EXPAND)
-                self.Bind(wx.EVT_BUTTON, self.editOption(i, valueCtrl), editBtn)
-                self.sizer.Add(localSizer, 0, wx.EXPAND)
+                self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl), editBtn)
             elif j == 'input':
-                #make 2 input fields (that have *** chars and save button that saves input into the file)
-                pass
+                inputUsername = wx.TextCtrl(self, value = self.parent.getOption(i, True)[0], size = (100, 20))
+                localSizer.Add(inputUsername, 0, wx.EXPAND)
+                inputPassword = wx.TextCtrl(self, value = self.parent.getOption(i, True)[1], size = (100, 20))
+                localSizer.Add(inputPassword, 0, wx.EXPAND)
+                saveBtn = wx.Button(self, wx.ID_ANY, 'Save')
+                localSizer.Add(saveBtn, 0, wx.EXPAND)
+                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption(i, inputUsername, inputPassword), saveBtn)
+            self.sizer.Add(localSizer, 0, wx.EXPAND)
 
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.show()
@@ -121,18 +124,19 @@ class OptionsFrame(wx.Frame):
         self.Destroy()
         self.parent.Raise()
     
-    def editOption(self, option, valueControl):
+    def editFileOption(self, option, valueControl):
         def editOptionEvent(event):
-            # #mock function - later on it will be returned by modal popup
-            # newOption = '{}i'.format(self.parent.getOption(option))
-            # self.parent.setOption(option, newOption)
-            # valueControl.SetValue(newOption)
             with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
                 if dlg.ShowModal() == wx.ID_OK:
                     newOption = dlg.GetPath()
                     self.parent.setOption(option, newOption)
                     valueControl.SetValue(newOption)
         return editOptionEvent
+    
+    def editCredentialsOption(self, option, username, password):
+        def editCredentialsEvent(event):
+            self.parent.setOption(option, (username.GetValue(), password.GetValue()))
+        return editCredentialsEvent
 
     def show(self):
         self.SetSizer(self.sizer)
@@ -262,13 +266,8 @@ class DevicesCheckboxesPanel(wx.Panel):
     
     def OnInfoButton(self, id):
         def OnClick(event):
-            # for debug purposes:
-            self.parent.console.addText('id elementu: {} nazwa devica: {}'.format(id, self.activeDeviceList[id]))
             disabler = wx.WindowDisabler()
             DeviceInfoWindow(self, self.mainWindow, self.activeDeviceList[id], disabler, self.adb)
-            # TODO: open new window (block its parent from getting input), 
-            # show some info about device (by invoking few adb commands). 
-            # in future: get info via http get request from Szmegers API
         return OnClick
 
 class RefreshButtonPanel(wx.Panel):
