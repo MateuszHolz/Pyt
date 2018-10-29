@@ -6,11 +6,10 @@ import time
 import subprocess
 import wx
 
-
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
-        self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.appDataPath = os.getenv('APPDATA')
         self.optionsPath = os.path.join(self.appDataPath, 'adbgui')
         self.optionsFilePath = os.path.join(self.optionsPath, 'options.json')
@@ -25,29 +24,40 @@ class MainFrame(wx.Frame):
         self.console = Console(self)
         self.devicesPanel = DevicesPanel(self, self.console, self.adb)
 
-        self.mainSizer.Add(self.devicesPanel, 1)
-        self.mainSizer.Add(self.console, 1)
+        mainSizer.Add(self.devicesPanel, 1)
+        mainSizer.Add(self.console, 1)
 
-        #set-up top menu
         fileMenu = wx.Menu()
         options = fileMenu.Append(wx.ID_ANY, 'Options')
         fileMenu.AppendSeparator()
         ext = fileMenu.Append(wx.ID_ANY, 'Exit')
 
-        #creating menubar (on top of frame)
+        jenkinsMenu = wx.Menu()
+        for i in ('Huuuge Stars', 'Huuuge Casino', 'Billionaire Casino'):
+            projectMenu = wx.Menu()
+            for j in ('debug', 'rls', 'asd'):
+                menuItem = projectMenu.Append(wx.ID_ANY, j)
+                self.Bind(wx.EVT_MENU, self.getBuild(i, j), menuItem)
+            jenkinsMenu.Append(wx.ID_ANY, i, projectMenu)
+            
         menuBar = wx.MenuBar()
         menuBar.Append(fileMenu, 'File')
+        menuBar.Append(jenkinsMenu, 'Jenkins')
         self.SetMenuBar(menuBar)
 
-        #binding events
         self.Bind(wx.EVT_MENU, self.showOptions, options)
         self.Bind(wx.EVT_MENU, self.onExit, ext)
         self.Bind(wx.EVT_CLOSE, self.onExit)
 
-        self.SetSizer(self.mainSizer)
+        self.SetSizer(mainSizer)
         self.SetAutoLayout(1)
-        self.mainSizer.Fit(self)
+        mainSizer.Fit(self)
         self.Show(True)
+
+    def getBuild(self, project, version):
+        def getBuildEvent(event):
+            print('Event download build: {} {}'.format(project, version))
+        return getBuildEvent
 
     def getOptionsIfAlreadyExist(self, folderPath, filePath):
         if os.path.exists(folderPath):
@@ -237,20 +247,16 @@ class DevicesCheckboxesPanel(wx.Panel):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         id = 0
         for i in self.activeDeviceList:
-            # local sizer of one record
             recordSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-            # creating checkbox, adding it to self.checkboxes list (so we can later on get its state), and placing it on local sizer
             checkBx = wx.CheckBox(self, -1, label = i, size = (150, 20), style = wx.ALIGN_RIGHT)
             self.checkBoxesCtrls.append(checkBx)
             recordSizer.Add(checkBx, 0, wx.ALIGN_CENTER)
 
-            # creating info button, binding its EVT_BUTTON event to function that takes its id as parametr and adding the button to local sizer
             infoButton = wx.Button(self, label = 'i', size = (20, 20))
             self.Bind(wx.EVT_BUTTON, self.OnInfoButton(id), infoButton)
             recordSizer.Add(infoButton, 0, wx.ALIGN_CENTER)
 
-            # adding local sizer to main sizer, increasing ID by 1
             mainSizer.Add(recordSizer, 0, wx.ALIGN_CENTER)
             id += 1
         self.SetSizer(mainSizer)
