@@ -1,0 +1,50 @@
+{
+    "Google Play":{
+        "Huuuge Stars":{
+            "Dev":{
+                "Debug":{
+                    "Latest Any": "Link GP HS DEV DEBUG LATEST ANY",
+                    "Latest Master": "LINK GP HS DEV DEBUG LATEST MASTER"
+                },
+                "Release":{
+                    "Latest Any": "Link GP HS DEV RELEASE LATEST ANY",
+                    "Latest Master": "LINK GP HS DEV RELEASE LATEST MASTER"
+                }
+            },
+            "PROD":{
+                "Debug":{
+                    "Latest Any": "Link GP HS PROD DEBUG LATEST ANY",
+                    "Latest Master": "LINK GP HS PROD DEBUG LATEST MASTER"
+                },
+                "Release":{
+                    "Latest Any": "Link GP HS PROD RELEASE LATEST ANY",
+                    "Latest Master": "LINK GP HS PROD RELEASE LATEST MASTER"
+                }
+            }
+        }
+    },
+    "IOS":{
+        "Huuuge Stars":{
+            "Dev":{
+                "Debug":{
+                    "Latest Any": "Link IOS HS DEV DEBUG LATEST ANY",
+                    "Latest Master": "LINK IOS HS DEV DEBUG LATEST MASTER"
+                },
+                "ADHOC":{
+                    "Latest Any": "Link IOS HS DEV ADHOC LATEST ANY",
+                    "Latest Master": "LINK IOS HS DEV ADHOC LATEST MASTER"
+                }
+            },
+            "Prod":{
+                "Debug":{
+                    "Latest Any": "Link IOS HS PROD DEBUG LATEST ANY",
+                    "Latest Master": "LINK IOS HS PROD DEBUG LATEST MASTER"
+                },
+                "ADHOC":{
+                    "Latest Any": "Link IOS HS PROD ADHOC LATEST ANY",
+                    "Latest Master": "LINK IOS HS PROD ADHOC LATEST MASTER"
+                }
+            }
+        }
+    }
+}

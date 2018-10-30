@@ -10,15 +10,14 @@ class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.appDataPath = os.getenv('APPDATA')
-        self.optionsPath = os.path.join(self.appDataPath, 'adbgui')
-        self.optionsFilePath = os.path.join(self.optionsPath, 'options.json')
+        optionsPath = os.path.join(os.getenv('APPDATA'), 'adbgui')
+        self.optionsFilePath = os.path.join(optionsPath, 'options.json')
         self.__optionsCategories = (
             ('Screenshots folder', 'folder'),
             ('Builds folder', 'folder'),
             ('Jenkins credentials', 'input')
         )
-        self.__options = self.getOptionsIfAlreadyExist(self.optionsPath, self.optionsFilePath)
+        self.__options = self.getOptionsIfAlreadyExist(optionsPath, self.optionsFilePath)
 
         self.adb = Adb()
         self.console = Console(self)
@@ -33,12 +32,25 @@ class MainFrame(wx.Frame):
         ext = fileMenu.Append(wx.ID_ANY, 'Exit')
 
         jenkinsMenu = wx.Menu()
-        for i in ('Huuuge Stars', 'Huuuge Casino', 'Billionaire Casino'):
-            projectMenu = wx.Menu()
-            for j in ('debug', 'rls', 'asd'):
-                menuItem = projectMenu.Append(wx.ID_ANY, j)
-                self.Bind(wx.EVT_MENU, self.getBuild(i, j), menuItem)
-            jenkinsMenu.Append(wx.ID_ANY, i, projectMenu)
+
+        links = {}
+        with open('links.json', 'r') as f:
+            links = json.loads(f.read())
+        for platforms in links.keys():
+            platformMenu = wx.Menu()
+            for projects in links[platforms].keys():
+                projectMenu = wx.Menu()
+                for environment in links[platforms][projects].keys():
+                    environmentMenu = wx.Menu()
+                    for buildVersion in links[platforms][projects][environment].keys():
+                        buildVersionMenu = wx.Menu()
+                        for branchOption in links[platforms][projects][environment][buildVersion].keys():
+                            menuItem = buildVersionMenu.Append(wx.ID_ANY, branchOption)
+                            self.Bind(wx.EVT_MENU, self.getBuild(links[platforms][projects][environment][buildVersion][branchOption]), menuItem)
+                        environmentMenu.Append(wx.ID_ANY, buildVersion, buildVersionMenu)
+                    projectMenu.Append(wx.ID_ANY, environment, environmentMenu)
+                platformMenu.Append(wx.ID_ANY, projects, projectMenu)
+            jenkinsMenu.Append(wx.ID_ANY, platforms, platformMenu)
             
         menuBar = wx.MenuBar()
         menuBar.Append(fileMenu, 'File')
@@ -54,9 +66,9 @@ class MainFrame(wx.Frame):
         mainSizer.Fit(self)
         self.Show(True)
 
-    def getBuild(self, project, version):
+    def getBuild(self, buildLink):
         def getBuildEvent(event):
-            print('Event download build: {} {}'.format(project, version))
+            print('Event download build: {}'.format(buildLink))
         return getBuildEvent
 
     def getOptionsIfAlreadyExist(self, folderPath, filePath):
@@ -249,7 +261,7 @@ class DevicesCheckboxesPanel(wx.Panel):
         for i in self.activeDeviceList:
             recordSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-            checkBx = wx.CheckBox(self, -1, label = i, size = (150, 20), style = wx.ALIGN_RIGHT)
+            checkBx = wx.CheckBox(self, -1, label = self.adb.getDeviceModel(i), size = (100, 20), style = wx.ALIGN_RIGHT)
             self.checkBoxesCtrls.append(checkBx)
             recordSizer.Add(checkBx, 0, wx.ALIGN_CENTER)
 
