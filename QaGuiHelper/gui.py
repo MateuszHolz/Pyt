@@ -31,26 +31,7 @@ class MainFrame(wx.Frame):
         fileMenu.AppendSeparator()
         ext = fileMenu.Append(wx.ID_ANY, 'Exit')
 
-        jenkinsMenu = wx.Menu()
-
-        links = {}
-        with open('links.json', 'r') as f:
-            links = json.loads(f.read())
-        for platforms in links.keys():
-            platformMenu = wx.Menu()
-            for projects in links[platforms].keys():
-                projectMenu = wx.Menu()
-                for environment in links[platforms][projects].keys():
-                    environmentMenu = wx.Menu()
-                    for buildVersion in links[platforms][projects][environment].keys():
-                        buildVersionMenu = wx.Menu()
-                        for branchOption in links[platforms][projects][environment][buildVersion].keys():
-                            menuItem = buildVersionMenu.Append(wx.ID_ANY, branchOption)
-                            self.Bind(wx.EVT_MENU, self.getBuild(links[platforms][projects][environment][buildVersion][branchOption]), menuItem)
-                        environmentMenu.Append(wx.ID_ANY, buildVersion, buildVersionMenu)
-                    projectMenu.Append(wx.ID_ANY, environment, environmentMenu)
-                platformMenu.Append(wx.ID_ANY, projects, projectMenu)
-            jenkinsMenu.Append(wx.ID_ANY, platforms, platformMenu)
+        jenkinsMenu = JenkinsMenu(self, 'links.json')
             
         menuBar = wx.MenuBar()
         menuBar.Append(fileMenu, 'File')
@@ -65,11 +46,6 @@ class MainFrame(wx.Frame):
         self.SetAutoLayout(1)
         mainSizer.Fit(self)
         self.Show(True)
-
-    def getBuild(self, buildLink):
-        def getBuildEvent(event):
-            print('Event download build: {}'.format(buildLink))
-        return getBuildEvent
 
     def getOptionsIfAlreadyExist(self, folderPath, filePath):
         if os.path.exists(folderPath):
@@ -111,6 +87,50 @@ class MainFrame(wx.Frame):
 
     def getOptionsCategories(self):
         return self.__optionsCategories
+
+class JenkinsMenu(wx.Menu):
+    def __init__(self, parent, pathToJsonFile):
+        self.menu = wx.Menu.__init__(self)
+        self.parent = parent
+        links = {}
+        with open(pathToJsonFile, 'r') as f:
+            links = json.loads(f.read())
+        for platforms in links.keys():
+            platformMenu = wx.Menu()
+            for projects in links[platforms].keys():
+                projectMenu = wx.Menu()
+                for environment in links[platforms][projects].keys():
+                    environmentMenu = wx.Menu()
+                    for buildVersion in links[platforms][projects][environment].keys():
+                        buildVersionMenu = wx.Menu()
+                        for branchOption in links[platforms][projects][environment][buildVersion].keys():
+                            menuItem = buildVersionMenu.Append(wx.ID_ANY, branchOption)
+                            self.parent.Bind(wx.EVT_MENU, self.getBuild(
+                                                                        links[platforms][projects][environment][buildVersion][branchOption]),
+                                                                        menuItem)
+                        environmentMenu.Append(wx.ID_ANY, buildVersion, buildVersionMenu)
+                    projectMenu.Append(wx.ID_ANY, environment, environmentMenu)
+                platformMenu.Append(wx.ID_ANY, projects, projectMenu)
+            self.Append(wx.ID_ANY, platforms, platformMenu)
+
+    def getBuild(self, info):
+        def getBuildEvent(event):
+            directLink = None
+            if info[1] == '':
+                directLink = self.getDirectLinkToBuild(info[0], info[2])
+            else:
+                directLink = self.getDirectLinkToBuild(self.getLinkToLatestBranch(info[0], info[1]), info[2])
+        return getBuildEvent
+    
+    def getDirectLinkToBuild(self, jobLink, buildVer):
+        # directLink = bezposredni link do builda z joblinka o danej opcji (debug/release)
+        return 'directlink'        
+
+    def getLinkToLatestBranch(self, jobLink, branch):
+        # masterBuildJobLink = build do ostatniego succesfull builda z mastera
+        return 'masterBuildJobLink'
+
+        
 
 class OptionsFrame(wx.Frame):
     def __init__(self, parent, disabler):

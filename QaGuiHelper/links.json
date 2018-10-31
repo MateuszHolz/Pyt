@@ -3,22 +3,54 @@
         "Huuuge Stars":{
             "Dev":{
                 "Debug":{
-                    "Latest Any": "Link GP HS DEV DEBUG LATEST ANY",
-                    "Latest Master": "LINK GP HS DEV DEBUG LATEST MASTER"
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-android/lastSuccessfulBuild/",
+                        "",
+                        "debug"
+                    ],
+                    "Latest Master":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-android/lastSuccessfulBuild/",
+                        "master",
+                        "debug"
+                    ]                    
                 },
                 "Release":{
-                    "Latest Any": "Link GP HS DEV RELEASE LATEST ANY",
-                    "Latest Master": "LINK GP HS DEV RELEASE LATEST MASTER"
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-android/lastSuccessfulBuild/",
+                        "",
+                        "release"
+                    ],
+                    "Latest Master":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-android/lastSuccessfulBuild/",
+                        "master",
+                        "release"
+                    ]
                 }
             },
             "PROD":{
                 "Debug":{
-                    "Latest Any": "Link GP HS PROD DEBUG LATEST ANY",
-                    "Latest Master": "LINK GP HS PROD DEBUG LATEST MASTER"
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
+                        "",
+                        "debug"
+                    ],
+                    "Latest Production":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
+                        "master",
+                        "debug"
+                    ]                    
                 },
                 "Release":{
-                    "Latest Any": "Link GP HS PROD RELEASE LATEST ANY",
-                    "Latest Master": "LINK GP HS PROD RELEASE LATEST MASTER"
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
+                        "",
+                        "release"
+                    ],
+                    "Latest Production":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
+                        "master",
+                        "release"
+                    ]
                 }
             }
         }
