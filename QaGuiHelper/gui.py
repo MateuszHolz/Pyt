@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import requests
 import threading
 import time
 import subprocess
@@ -115,22 +116,9 @@ class JenkinsMenu(wx.Menu):
 
     def getBuild(self, info):
         def getBuildEvent(event):
-            directLink = None
-            if info[1] == '':
-                directLink = self.getDirectLinkToBuild(info[0], info[2])
-            else:
-                directLink = self.getDirectLinkToBuild(self.getLinkToLatestBranch(info[0], info[1]), info[2])
+            directLink = RetrieveLinkDialog(self.parent, info).getLink()
+            print(directLink)
         return getBuildEvent
-    
-    def getDirectLinkToBuild(self, jobLink, buildVer):
-        # directLink = bezposredni link do builda z joblinka o danej opcji (debug/release)
-        return 'directlink'        
-
-    def getLinkToLatestBranch(self, jobLink, branch):
-        # masterBuildJobLink = build do ostatniego succesfull builda z mastera
-        return 'masterBuildJobLink'
-
-        
 
 class OptionsFrame(wx.Frame):
     def __init__(self, parent, disabler):
@@ -197,6 +185,66 @@ class Console(wx.TextCtrl):
     def addText(self, text):
         self.AppendText(text+'\n')
 
+class RetrieveLinkDialog(wx.GenericProgressDialog):
+    def __init__(self, parent, info):
+        self.frame = wx.GenericProgressDialog.__init__(self, 'Retrieving Build...', 'Retrieving build', maximum = 100, style = wx.PD_APP_MODAL)
+        self.parent = parent
+        self.info = info
+
+    def getLink(self):
+        if self.info[1] == '':
+            link = self.getDirectLinkToBuild(self.info[0], self.info[2])
+        else:
+            link = self.getLinkToLatestBranch(self.info[0], self.info[1])
+        self.Destroy()
+        return link
+
+    def getLinkToLatestBranch(self, jobLink, branchName):
+        self.Pulse()
+        auth = self.parent.getOption('Jenkins credentials')
+        linkContent = requests.get(jobLink, auth = (auth[0], auth[1]))
+        curBuildName = self.getBuildName(linkContent, '')
+        if branchName in curBuildName:
+            return jobLink
+        else:
+            self.Pulse()
+            lastCheckedVersionCode = self.getVersionCode(jobLink)
+            newLink = '{}{}'.format(jobLink[:jobLink.find('lastSuccessfulBuild')], int(lastCheckedVersionCode)-1)
+            while True:
+                self.Pulse()
+                newSiteContent = requests.get(newLink, auth = (auth[0], auth[1]))
+                self.Pulse()
+                newBuildName = self.getBuildName(newSiteContent, '')
+                if branchName in newBuildName:
+                    time.sleep(0.2)
+                    return newLink
+                else:
+                    lastCheckedVersionCode = self.getVersionCode(newLink)
+                    newLink = '{}{}/'.format(newLink[:newLink.find(lastCheckedVersionCode)], int(lastCheckedVersionCode)-1)
+    
+    def getVersionCode(self, link):
+        auth = self.parent.getOption('Jenkins credentials')
+        siteContent = requests.get(link, auth = (auth[0], auth[1]))
+        version = siteContent.text.find('Build #')
+        version = siteContent.text[version:version+40].split()
+        return version[1][1:]
+
+    def getDirectLinkToBuild(self, jobLink, buildVer):
+        auth = self.parent.getOption('Jenkins credentials')
+        linkContent = requests.get(jobLink, auth = (auth[0], auth[1]))
+        buildName = self.getBuildName(linkContent, buildVer)
+        directLink = '{}{}{}'.format(jobLink, 'artifact/output/', buildName)
+        self.Update(50)
+        time.sleep(0.2)
+        return directLink
+
+    def getBuildName(self, siteContent, buildVer):
+        for i in siteContent.text.split():
+            if "HuuugeStars" in i and buildVer in i:
+                id1 = i.find("HuuugeStars")
+                id2 = i.find(".apk")+4
+                return i.rstrip()[id1:id2]
+
 class InProgressFrame(wx.Frame):
     def __init__(self, parent, disabler, console):
         self.frame = wx.Frame.__init__(self, parent, title = 'inprogressframe')
@@ -227,7 +275,6 @@ class InProgressFrame(wx.Frame):
     def worker(self, frame):
         for i in range(0, 1000):
             if frame.stopWorking:
-                print('stop working')
                 return
             self.labels[1].SetValue(str(i))
             time.sleep(0.01)
