@@ -10,7 +10,7 @@
                     ],
                     "Latest Master":[
                         "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-android/lastSuccessfulBuild/",
-                        "STARS-3470-additional_lock",
+                        "master",
                         "debug"
                     ]                    
                 },
@@ -22,7 +22,7 @@
                     ],
                     "Latest Master":[
                         "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-android/lastSuccessfulBuild/",
-                        "STARS-3470-additional_lock",
+                        "master",
                         "release"
                     ]
                 }

@@ -187,7 +187,7 @@ class Console(wx.TextCtrl):
 
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info):
-        self.frame = wx.GenericProgressDialog.__init__(self, 'Retrieving Build...', 'Retrieving build', maximum = 100, style = wx.PD_APP_MODAL)
+        self.frame = wx.GenericProgressDialog.__init__(self, 'Working...', 'Retrieving build information...', style = wx.PD_APP_MODAL)
         self.parent = parent
         self.info = info
 
