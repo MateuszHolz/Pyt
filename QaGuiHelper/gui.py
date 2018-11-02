@@ -195,7 +195,7 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
         if self.info[1] == '':
             link = self.getDirectLinkToBuild(self.info[0], self.info[2])
         else:
-            link = self.getLinkToLatestBranch(self.info[0], self.info[1])
+            link = self.getDirectLinkToBuild(self.getLinkToLatestBranch(self.info[0], self.info[1]), self.info[2])
         self.Destroy()
         return link
 
@@ -244,6 +244,7 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
                 id1 = i.find("HuuugeStars")
                 id2 = i.find(".apk")+4
                 return i.rstrip()[id1:id2]
+        return ''
 
 class InProgressFrame(wx.Frame):
     def __init__(self, parent, disabler, console):

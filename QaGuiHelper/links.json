@@ -29,26 +29,16 @@
             },
             "PROD":{
                 "Debug":{
-                    "Latest Any":[
-                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
-                        "",
-                        "debug"
-                    ],
                     "Latest Production":[
                         "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
-                        "master",
+                        "production",
                         "debug"
                     ]                    
                 },
                 "Release":{
-                    "Latest Any":[
-                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
-                        "",
-                        "release"
-                    ],
                     "Latest Production":[
                         "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
-                        "master",
+                        "production",
                         "release"
                     ]
                 }
