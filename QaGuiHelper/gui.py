@@ -279,7 +279,7 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
                 updateCount += 1
                 f.write(b)
                 curProgress = int((progress / buildSize)* 100)
-                if updateCount % 20 == 0:
+                if updateCount % 50 == 0:
                     self.Update(curProgress)
 
 class InProgressFrame(wx.Frame):
