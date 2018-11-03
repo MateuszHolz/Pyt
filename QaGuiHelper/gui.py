@@ -116,8 +116,13 @@ class JenkinsMenu(wx.Menu):
 
     def getBuild(self, info):
         def getBuildEvent(event):
-            directLink = RetrieveLinkDialog(self.parent, info).getLink()
-            print(directLink)
+            if len(self.parent.getOption('Jenkins credentials')) != 2:
+                errorDlg = wx.MessageDialog(self.parent, 'Please provide your jenkins credentials (file -> options)', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+                errorDlg.ShowModal()
+                return
+            buildInfo = RetrieveLinkDialog(self.parent, info).getLink()
+            DownloadBuildDialog(self.parent, buildInfo)
+
         return getBuildEvent
 
 class OptionsFrame(wx.Frame):
@@ -187,7 +192,7 @@ class Console(wx.TextCtrl):
 
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info):
-        self.frame = wx.GenericProgressDialog.__init__(self, 'Working...', 'Retrieving build information...', style = wx.PD_APP_MODAL)
+        self.dlg = wx.GenericProgressDialog.__init__(self, 'Working...', 'Retrieving build information...', style = wx.PD_APP_MODAL)
         self.parent = parent
         self.info = info
 
@@ -233,10 +238,11 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
         auth = self.parent.getOption('Jenkins credentials')
         linkContent = requests.get(jobLink, auth = (auth[0], auth[1]))
         buildName = self.getBuildName(linkContent, buildVer)
+        buildSize = self.getBuildSize(linkContent, buildName)
         directLink = '{}{}{}'.format(jobLink, 'artifact/output/', buildName)
         self.Update(50)
         time.sleep(0.2)
-        return directLink
+        return directLink, buildName, buildSize
 
     def getBuildName(self, siteContent, buildVer):
         for i in siteContent.text.split():
@@ -245,6 +251,36 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
                 id2 = i.find(".apk")+4
                 return i.rstrip()[id1:id2]
         return ''
+
+    def getBuildSize(self, siteContent, buildName):
+        localId = siteContent.text.find(buildName)
+        cont = siteContent.text[localId:localId+300].split()
+        for i in cont:
+            if 'fileSize' in i:
+                return i[i.find('>')+1:]
+
+class DownloadBuildDialog(wx.GenericProgressDialog):
+    def __init__(self, parent, info):
+        self.parent = parent
+        self.info = info
+        self.dlg = wx.GenericProgressDialog.__init__(self, 'Downloading build!', self.info[1], style = wx.PD_APP_MODAL)
+        self.downloadBuild()
+
+    def downloadBuild(self):
+        buildFolder = self.parent.getOption('Builds folder')
+        auth = self.parent.getOption('Jenkins credentials')
+        response = requests.get(self.info[0], auth = (auth[0], auth[1]), stream = True)
+        with open(os.path.join(buildFolder, self.info[1]), 'wb') as f:
+            buildSize = float(self.info[2]) * 1048576
+            progress = 0
+            updateCount = 0
+            for b in response.iter_content(chunk_size = 4096):
+                progress += len(b)
+                updateCount += 1
+                f.write(b)
+                curProgress = int((progress / buildSize)* 100)
+                if updateCount % 20 == 0:
+                    self.Update(curProgress)
 
 class InProgressFrame(wx.Frame):
     def __init__(self, parent, disabler, console):
