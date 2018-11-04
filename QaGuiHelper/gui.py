@@ -121,7 +121,7 @@ class JenkinsMenu(wx.Menu):
                 errorDlg.ShowModal()
                 return
             buildInfo = RetrieveLinkDialog(self.parent, info).getLink()
-            DownloadBuildDialog(self.parent, buildInfo)
+            DownloadBuildDialog(self.parent, buildInfo).downloadBuild()
 
         return getBuildEvent
 
@@ -263,8 +263,7 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info):
         self.parent = parent
         self.info = info
-        self.dlg = wx.GenericProgressDialog.__init__(self, 'Downloading build!', self.info[1], style = wx.PD_APP_MODAL)
-        self.downloadBuild()
+        self.dlg = wx.GenericProgressDialog.__init__(self, 'Downloading build!', self.info[1])
 
     def downloadBuild(self):
         buildFolder = self.parent.getOption('Builds folder')
