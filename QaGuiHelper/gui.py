@@ -177,22 +177,12 @@ class OptionsFrame(wx.Frame):
         self.sizer.Fit(self)
         self.Show(True)
 
-class Console(wx.TextCtrl):
-    def __init__(self, parent):
-        self.console = wx.TextCtrl.__init__(self, parent, style = wx.TE_MULTILINE | wx.TE_READONLY, size = (300, 400))
-        self.curLines = 0
-
-    def clear(self):
-        self.SetValue('')
-
-    def addText(self, text):
-        self.AppendText(text+'\n')
-
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info):
         self.dlg = wx.GenericProgressDialog.__init__(self, 'Working...', 'Retrieving build information...', style = wx.PD_APP_MODAL)
         self.parent = parent
         self.info = info
+        self.auth = self.parent.getOption('Jenkins credentials')
 
     def getLink(self):
         if self.info[1] == '':
@@ -204,8 +194,7 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
 
     def getLinkToLatestBranch(self, jobLink, branchName):
         self.Pulse()
-        auth = self.parent.getOption('Jenkins credentials')
-        linkContent = requests.get(jobLink, auth = (auth[0], auth[1]))
+        linkContent = self.requestSiteContent(jobLink)
         curBuildName = self.getBuildName(linkContent, '')
         if branchName in curBuildName:
             return jobLink
@@ -215,7 +204,7 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
             newLink = '{}{}'.format(jobLink[:jobLink.find('lastSuccessfulBuild')], int(lastCheckedVersionCode)-1)
             while True:
                 self.Pulse()
-                newSiteContent = requests.get(newLink, auth = (auth[0], auth[1]))
+                newSiteContent = self.requestSiteContent(newLink)
                 self.Pulse()
                 newBuildName = self.getBuildName(newSiteContent, '')
                 if branchName in newBuildName:
@@ -226,15 +215,13 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
                     newLink = '{}{}/'.format(newLink[:newLink.find(lastCheckedVersionCode)], int(lastCheckedVersionCode)-1)
     
     def getVersionCode(self, link):
-        auth = self.parent.getOption('Jenkins credentials')
-        siteContent = requests.get(link, auth = (auth[0], auth[1]))
+        siteContent = self.requestSiteContent(link)
         version = siteContent.text.find('Build #')
         version = siteContent.text[version:version+40].split()
         return version[1][1:]
 
     def getDirectLinkToBuild(self, jobLink, buildVer):
-        auth = self.parent.getOption('Jenkins credentials')
-        linkContent = requests.get(jobLink, auth = (auth[0], auth[1]))
+        linkContent = self.requestSiteContent(jobLink)
         buildName = self.getBuildName(linkContent, buildVer)
         buildSize = self.getBuildSize(linkContent, buildName)
         directLink = '{}{}{}'.format(jobLink, '/artifact/output/', buildName)
@@ -243,7 +230,6 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
         return directLink, buildName, buildSize
 
     def getBuildName(self, siteContent, buildVer):
-        print(buildVer)
         for i in siteContent.text.split():
             if "HuuugeStars" in i and buildVer in i and not 'dSYM.zip' in i:
                 id1 = i.find("HuuugeStars")
@@ -260,6 +246,15 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
         for i in cont:
             if 'fileSize' in i:
                 return i[i.find('>')+1:]
+
+    def requestSiteContent(self, link):
+        response = requests.get(link, auth = (self.auth[0], self.auth[1]))
+        if response.ok:
+            return response
+        else:
+            errorDlg = wx.MessageDialog(self.parent, 'Incorrect response from jenkins! Error code: {}.'.format(response.status_code), 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            self.Destroy()
 
 class DownloadBuildDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info):
