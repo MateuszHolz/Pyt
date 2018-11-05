@@ -288,7 +288,7 @@ class DevicesPanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
-        self.buttonsPanel = RefreshButtonPanel(self)
+        self.buttonsPanel = RefreshButtonPanel(self, self.parent)
 
         self.sizer.Add(self.buttonsPanel, 1, wx.EXPAND)
         self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND)
@@ -351,9 +351,10 @@ class DevicesCheckboxesPanel(wx.Panel):
         return OnClick
 
 class RefreshButtonPanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, mainWindow):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
+        self.mainWindow = mainWindow
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.createPanel()
 
@@ -383,7 +384,9 @@ class RefreshButtonPanel(wx.Panel):
         self.sizer.Fit(self)
 
     def getScreenshotFromDevices(self, event):
-        raise Exception('not implemented yet')
+        devices = self.parent.checkBoxesPanel.getCheckedDevices()
+        disabler = wx.WindowDisabler()
+        ScreenshotCaptureFrame(self, self.mainWindow, disabler, devices)
 
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckboxesPanel()
@@ -454,6 +457,28 @@ class DeviceInfoWindow(wx.Frame):
     def OnClose(self, event):
         self.Destroy()
         self.mainWindow.Raise() ## without that, parent frame hides behind opened windows
+
+class ScreenshotCaptureFrame(wx.Frame):
+    def __init__(self, parent, mainWindow, disabler, listOfDevices):
+        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!')
+        self.disabler = disabler
+        self.listOfDevices = listOfDevices
+        self.createWindowContent()
+        self.Show(True)
+
+    def createWindowContent(self):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        for i in self.listOfDevices:
+            row = wx.BoxSizer(wx.HORIZONTAL)
+            nameLabel = wx.StaticText(self, label = i, size = (-1, 30), style = wx.TE_CENTRE)
+            row.Add(nameLabel, 0, wx.EXPAND | wx.TOP, 10)
+            statusLabel = wx.StaticText(self, label = '...', size = (-1, 30), style = wx.TE_CENTRE)
+            row.Add(statusLabel, 0, wx.EXPAND | wx.TOP, 10)            
+            mainSizer.Add(row, 0)
+
+        self.SetSizer(mainSizer)
+        self.SetAutoLayout(1)
+        mainSizer.Fit(self)
 
 class Adb():
     def __init__(self):
@@ -573,7 +598,7 @@ class Adb():
             return port
         else:
             return 'Not set'
-    
+
 if __name__ == '__main__':
     app = wx.App(False)
     MainFrame(None, 'ADB GUI')
