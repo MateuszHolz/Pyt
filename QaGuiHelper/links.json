@@ -1,7 +1,7 @@
 {
     "Google Play":{
         "Huuuge Stars":{
-            "Dev":{
+            "Development":{
                 "Debug":{
                     "Latest Any":[
                         "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-android/lastSuccessfulBuild/",
@@ -27,7 +27,7 @@
                     ]
                 }
             },
-            "PROD":{
+            "Production":{
                 "Debug":{
                     "Latest Production":[
                         "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-android/lastSuccessfulBuild/",
@@ -47,24 +47,68 @@
     },
     "IOS":{
         "Huuuge Stars":{
-            "Dev":{
+            "Development":{
                 "Debug":{
-                    "Latest Any": "Link IOS HS DEV DEBUG LATEST ANY",
-                    "Latest Master": "LINK IOS HS DEV DEBUG LATEST MASTER"
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-ios/lastSuccessfulBuild/",
+                        "",
+                        "debug"
+                    ],
+                    "Latest Master":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-ios/lastSuccessfulBuild//",
+                        "master",
+                        "debug"
+                    ]                    
                 },
-                "ADHOC":{
-                    "Latest Any": "Link IOS HS DEV ADHOC LATEST ANY",
-                    "Latest Master": "LINK IOS HS DEV ADHOC LATEST MASTER"
+                "Ad-Hoc":{
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-ios/lastSuccessfulBuild/",
+                        "",
+                        "ad-hoc"
+                    ],
+                    "Latest Master":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-ios/lastSuccessfulBuild/",
+                        "master",
+                        "ad-hoc"
+                    ]
                 }
             },
-            "Prod":{
+            "Production":{
                 "Debug":{
-                    "Latest Any": "Link IOS HS PROD DEBUG LATEST ANY",
-                    "Latest Master": "LINK IOS HS PROD DEBUG LATEST MASTER"
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-ios/lastSuccessfulBuild/",
+                        "",
+                        "debug"
+                    ],
+                    "Latest Master":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-ios/lastSuccessfulBuild/",
+                        "production",
+                        "debug"
+                    ]                    
                 },
-                "ADHOC":{
-                    "Latest Any": "Link IOS HS PROD ADHOC LATEST ANY",
-                    "Latest Master": "LINK IOS HS PROD ADHOC LATEST MASTER"
+                "Release":{
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-ios/lastSuccessfulBuild/",
+                        "",
+                        "ad-hoc"
+                    ],
+                    "Latest Master":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-ios/lastSuccessfulBuild/",
+                        "master",
+                        "ad-hoc"
+                    ]
+                },
+                "Dist":{
+                    "Latest Any":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-ios/lastSuccessfulBuild/",
+                        "",
+                        "dist"
+                    ],
+                    "Latest Master":[
+                        "http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-prod/job/hs-ios/lastSuccessfulBuild/",
+                        "master",
+                        "dist"
+                    ]
                 }
             }
         }

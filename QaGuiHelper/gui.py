@@ -21,11 +21,9 @@ class MainFrame(wx.Frame):
         self.__options = self.getOptionsIfAlreadyExist(optionsPath, self.optionsFilePath)
 
         self.adb = Adb()
-        self.console = Console(self)
-        self.devicesPanel = DevicesPanel(self, self.console, self.adb)
+        self.devicesPanel = DevicesPanel(self, self.adb)
 
         mainSizer.Add(self.devicesPanel, 1)
-        mainSizer.Add(self.console, 1)
 
         fileMenu = wx.Menu()
         options = fileMenu.Append(wx.ID_ANY, 'Options')
@@ -239,16 +237,20 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
         linkContent = requests.get(jobLink, auth = (auth[0], auth[1]))
         buildName = self.getBuildName(linkContent, buildVer)
         buildSize = self.getBuildSize(linkContent, buildName)
-        directLink = '{}{}{}'.format(jobLink, 'artifact/output/', buildName)
+        directLink = '{}{}{}'.format(jobLink, '/artifact/output/', buildName)
         self.Update(50)
         time.sleep(0.2)
         return directLink, buildName, buildSize
 
     def getBuildName(self, siteContent, buildVer):
+        print(buildVer)
         for i in siteContent.text.split():
-            if "HuuugeStars" in i and buildVer in i:
+            if "HuuugeStars" in i and buildVer in i and not 'dSYM.zip' in i:
                 id1 = i.find("HuuugeStars")
-                id2 = i.find(".apk")+4
+                if i.find(".apk") > 0:
+                    id2 = i.find(".apk")+4
+                else:
+                    id2 = i.find(".ipa")+4
                 return i.rstrip()[id1:id2]
         return ''
 
@@ -264,13 +266,14 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
         self.parent = parent
         self.info = info
         self.dlg = wx.GenericProgressDialog.__init__(self, 'Downloading build!', self.info[1])
+        print(self.info)
 
     def downloadBuild(self):
         buildFolder = self.parent.getOption('Builds folder')
         auth = self.parent.getOption('Jenkins credentials')
         response = requests.get(self.info[0], auth = (auth[0], auth[1]), stream = True)
         with open(os.path.join(buildFolder, self.info[1]), 'wb') as f:
-            buildSize = float(self.info[2]) * 1048576
+            buildSize = float(self.info[2]) * 1048576 
             progress = 0
             updateCount = 0
             for b in response.iter_content(chunk_size = 4096):
@@ -279,53 +282,14 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
                 f.write(b)
                 curProgress = int((progress / buildSize)* 100)
                 if updateCount % 50 == 0:
-                    self.Update(curProgress)
-
-class InProgressFrame(wx.Frame):
-    def __init__(self, parent, disabler, console):
-        self.frame = wx.Frame.__init__(self, parent, title = 'inprogressframe')
-        self.disabler = disabler
-        self.parent = parent
-
-        self.labelSizer = wx.BoxSizer(wx.VERTICAL)
-        self.labels = []
-        for i in range(0, 5):
-            self.labels.append(wx.TextCtrl(self, style = wx.ALIGN_CENTRE_HORIZONTAL | wx.TE_READONLY))
-            self.labelSizer.Add(self.labels[i], 1, wx.EXPAND)
-        self.newBtn1 = wx.Button(self, -1, 'ddddd')
-        self.labelSizer.Add(self.newBtn1, 1, wx.EXPAND)
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
-        self.Bind(wx.EVT_BUTTON, self.OnButton, self.newBtn1)
-        self.stopWorking = False
-    
-    def show(self):
-        self.SetSizer(self.labelSizer)
-        self.SetAutoLayout(1)
-        self.labelSizer.Fit(self)
-        self.Show(True)
-
-    def OnButton(self, event):
-        self.t = threading.Thread(target = self.worker, args = (self, ))
-        self.t.start()
-    
-    def worker(self, frame):
-        for i in range(0, 1000):
-            if frame.stopWorking:
-                return
-            self.labels[1].SetValue(str(i))
-            time.sleep(0.01)
-
-    def OnClose(self, event):
-        self.stopWorking = True
-        self.Destroy()
-        self.parent.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
+                    progressInMb = str(float(self.info[2]) * (curProgress / 100))
+                    self.Update(curProgress, '{} \n {}MB / {}MB'.format(self.info[1], progressInMb[:progressInMb.find('.')+3], self.info[2]))
 
 class DevicesPanel(wx.Panel):
-    def __init__(self, parent, console, adb):
-        self.panel = wx.Panel.__init__(self, parent, size = (5, 400))
+    def __init__(self, parent, adb):
+        self.panel = wx.Panel.__init__(self, parent, size = (300, 400))
         self.parent = parent
         self.adb = adb
-        self.console = console
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
@@ -494,7 +458,7 @@ class DeviceInfoWindow(wx.Frame):
 
     def OnClose(self, event):
         self.Destroy()
-        self.mainWindow.Raise() ## without that, parent frame hides behind opened windows (for example google chrome)
+        self.mainWindow.Raise() ## without that, parent frame hides behind opened windows
 
 class Adb():
     def __init__(self):
