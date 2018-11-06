@@ -120,7 +120,6 @@ class JenkinsMenu(wx.Menu):
                 return
             buildInfo = RetrieveLinkDialog(self.parent, info).getLink()
             DownloadBuildDialog(self.parent, buildInfo).downloadBuild()
-
         return getBuildEvent
 
 class OptionsFrame(wx.Frame):
@@ -186,10 +185,10 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
 
     def getLink(self):
         if self.info[1] == '':
-            link = self.getDirectLinkToBuild(self.info[0], self.info[2])
+            link = self.getDirectLinkToBuild(self.info[0], self.info[2]), self.auth
         else:
-            link = self.getDirectLinkToBuild(self.getLinkToLatestBranch(self.info[0], self.info[1]), self.info[2])
-        self.Destroy()
+            link = self.getDirectLinkToBuild(self.getLinkToLatestBranch(self.info[0], self.info[1]), self.info[2]), self.auth
+        self.Close()
         return link
 
     def getLinkToLatestBranch(self, jobLink, branchName):
@@ -225,8 +224,6 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
         buildName = self.getBuildName(linkContent, buildVer)
         buildSize = self.getBuildSize(linkContent, buildName)
         directLink = '{}{}{}'.format(jobLink, '/artifact/output/', buildName)
-        self.Update(50)
-        time.sleep(0.2)
         return directLink, buildName, buildSize
 
     def getBuildName(self, siteContent, buildVer):
@@ -255,20 +252,19 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
             errorDlg = wx.MessageDialog(self.parent, 'Incorrect response from jenkins! Error code: {}.'.format(response.status_code), 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             self.Destroy()
+            return
 
 class DownloadBuildDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info):
         self.parent = parent
         self.info = info
-        self.dlg = wx.GenericProgressDialog.__init__(self, 'Downloading build!', self.info[1])
-        print(self.info)
+        self.dlg = wx.GenericProgressDialog.__init__(self, 'Downloading build!', self.info[0][1])
 
     def downloadBuild(self):
         buildFolder = self.parent.getOption('Builds folder')
-        auth = self.parent.getOption('Jenkins credentials')
-        response = requests.get(self.info[0], auth = (auth[0], auth[1]), stream = True)
-        with open(os.path.join(buildFolder, self.info[1]), 'wb') as f:
-            buildSize = float(self.info[2]) * 1048576 
+        response = requests.get(self.info[0][0], auth = (self.info[1][0], self.info[1][1]), stream = True)
+        with open(os.path.join(buildFolder, self.info[0][1]), 'wb') as f:
+            buildSize = float(self.info[0][2]) * 1048576 
             progress = 0
             updateCount = 0
             for b in response.iter_content(chunk_size = 4096):
@@ -277,8 +273,8 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
                 f.write(b)
                 curProgress = int((progress / buildSize)* 100)
                 if updateCount % 50 == 0:
-                    progressInMb = str(float(self.info[2]) * (curProgress / 100))
-                    self.Update(curProgress, '{} \n {}MB / {}MB'.format(self.info[1], progressInMb[:progressInMb.find('.')+3], self.info[2]))
+                    progressInMb = str(float(self.info[0][2]) * (curProgress / 100))
+                    self.Update(curProgress, '{} \n {}MB / {}MB'.format(self.info[0][1], progressInMb[:progressInMb.find('.')+3], self.info[0][2]))
 
 class DevicesPanel(wx.Panel):
     def __init__(self, parent, adb):
@@ -288,7 +284,7 @@ class DevicesPanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
-        self.buttonsPanel = RefreshButtonPanel(self, self.parent)
+        self.buttonsPanel = RefreshButtonPanel(self, self.parent, self.adb)
 
         self.sizer.Add(self.buttonsPanel, 1, wx.EXPAND)
         self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND)
@@ -351,9 +347,10 @@ class DevicesCheckboxesPanel(wx.Panel):
         return OnClick
 
 class RefreshButtonPanel(wx.Panel):
-    def __init__(self, parent, mainWindow):
+    def __init__(self, parent, mainWindow, adb):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
+        self.adb = adb
         self.mainWindow = mainWindow
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.createPanel()
@@ -386,7 +383,7 @@ class RefreshButtonPanel(wx.Panel):
     def getScreenshotFromDevices(self, event):
         devices = self.parent.checkBoxesPanel.getCheckedDevices()
         disabler = wx.WindowDisabler()
-        ScreenshotCaptureFrame(self, self.mainWindow, disabler, devices)
+        ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices)
 
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckboxesPanel()
@@ -459,26 +456,70 @@ class DeviceInfoWindow(wx.Frame):
         self.mainWindow.Raise() ## without that, parent frame hides behind opened windows
 
 class ScreenshotCaptureFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, disabler, listOfDevices):
+    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices):
         self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!')
         self.disabler = disabler
+        self.mainWindow = mainWindow
+        self.adb = adb
         self.listOfDevices = listOfDevices
+        self.directoryForScreenshots = self.mainWindow.getOption('Screenshots folder')
+        self.statusLabels = []
+
         self.createWindowContent()
-        self.Show(True)
+        self.bindEvents()
+        self.deployScreenshotThreads()
 
     def createWindowContent(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
+        header = wx.BoxSizer(wx.HORIZONTAL)
+        headerLabel = wx.StaticText(self, label = 'Capturing screenshots of {} device(s)'.format(len(self.listOfDevices)), size = (200, 30), style = wx.ALIGN_CENTER)
+        header.Add(headerLabel, 0, wx.EXPAND)
+        mainSizer.Add(header, 0)
         for i in self.listOfDevices:
             row = wx.BoxSizer(wx.HORIZONTAL)
-            nameLabel = wx.StaticText(self, label = i, size = (-1, 30), style = wx.TE_CENTRE)
+            nameLabel = wx.StaticText(self, label = i, size = (130, 30), style = wx.ALIGN_RIGHT)
             row.Add(nameLabel, 0, wx.EXPAND | wx.TOP, 10)
-            statusLabel = wx.StaticText(self, label = '...', size = (-1, 30), style = wx.TE_CENTRE)
-            row.Add(statusLabel, 0, wx.EXPAND | wx.TOP, 10)            
+            statusLabel = wx.StaticText(self, label = '...', size = (130, 30), style = wx.ALIGN_CENTER)
+            row.Add(statusLabel, 0, wx.EXPAND | wx.TOP, 10)
+            self.statusLabels.append(statusLabel)
             mainSizer.Add(row, 0)
 
         self.SetSizer(mainSizer)
         self.SetAutoLayout(1)
         mainSizer.Fit(self)
+        self.Show(True)
+
+    def bindEvents(self):
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+
+    def deployScreenshotThreads(self):
+        if os.path.exists(self.directoryForScreenshots):
+            pass
+        else:
+            time.sleep(0.2)
+            errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            self.Close()
+            return
+        for i, j in zip(self.listOfDevices, self.statusLabels):
+            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i, self.directoryForScreenshots, j))
+            localThread.start()
+        
+    def captureAndPullScreenshot(self, device, directory, statusLabel):
+        statusLabel.SetLabel('Taking screenshot...')
+        pathToScreenOnDevice = ''
+        fileName = '{}-{}.png'.format(self.adb.getDeviceModel(device), self.adb.getDeviceScreenSize(device))
+        clbk = self.adb.captureScreenshot(device, fileName)
+        statusLabel.SetLabel(clbk[0])
+        if not clbk[1]:
+            return
+        pathToScreenOnDevice = clbk[1]
+        clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, directory)
+        statusLabel.SetLabel(clbk)
+
+    def onClose(self, event):
+        self.Destroy()
+        self.mainWindow.Raise()
 
 class Adb():
     def __init__(self):
@@ -508,6 +549,29 @@ class Adb():
             if i%2 == 0:
                 devices.append(tempList[i].decode())
         return devices
+    
+    @staticmethod
+    def captureScreenshot(device, filename):
+        dirOnDevice = os.path.join('sdcard/', filename)
+        timeout = 10
+        try:
+            subprocess.check_output(r'adb -s {} shell screencap "{}"'.format(device, dirOnDevice), timeout = timeout)
+            return ('Pulling file...', dirOnDevice)
+        except subprocess.CalledProcessError:
+            return ('An error occured while taking screenshot!', False)
+        except subprocess.TimeoutExpired:
+            return ('Timed out! ({}s)'.format(timeout), False)
+
+    @staticmethod
+    def pullScreenshot(device, fullPathOnDevice, destinationDirectory):
+        timeout = 15
+        try:
+            subprocess.check_output(r'adb -s {} pull "{}" {}'.format(device, fullPathOnDevice, destinationDirectory))
+            return 'Done!'
+        except subprocess.CalledProcessError:
+            return 'An error ocurred!'
+        except subprocess.TimeoutExpired:
+            return 'Timed out! ({}s)'.format(timeout)
 
     @staticmethod
     def getDeviceIpAddress(device):
@@ -551,7 +615,7 @@ class Adb():
 
     @staticmethod
     def getDeviceModel(device):
-        return subprocess.check_output(r'adb -s {} shell getprop ro.product.model'.format(device), shell = True)
+        return subprocess.check_output(r'adb -s {} shell getprop ro.product.model'.format(device), shell = True).rstrip().decode()
 
     @staticmethod
     def getDeviceTimezone(device):
