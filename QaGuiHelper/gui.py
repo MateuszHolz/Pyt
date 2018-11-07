@@ -286,8 +286,8 @@ class DevicesPanel(wx.Panel):
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
         self.buttonsPanel = RefreshButtonPanel(self, self.parent, self.adb)
 
-        self.sizer.Add(self.buttonsPanel, 1, wx.EXPAND)
-        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND)
+        self.sizer.Add(self.buttonsPanel, 1, wx.EXPAND | wx.ALL, 5)
+        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND | wx.TOP, 10)
 
         self.SetSizer(self.sizer)
         self.sizer.Layout()
@@ -332,13 +332,13 @@ class DevicesCheckboxesPanel(wx.Panel):
 
             infoButton = wx.Button(self, label = 'i', size = (20, 20))
             self.Bind(wx.EVT_BUTTON, self.OnInfoButton(id), infoButton)
-            recordSizer.Add(infoButton, 0, wx.ALIGN_CENTER)
+            recordSizer.Add(infoButton, 0, wx.ALIGN_CENTER | wx.LEFT, 5)
 
-            mainSizer.Add(recordSizer, 0, wx.ALIGN_CENTER)
+            mainSizer.Add(recordSizer, 0, wx.ALIGN_CENTER | wx.TOP, 3)
             id += 1
 
         checkAllCheckBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
-        checkAllCheckbox = wx.CheckBox(self, -1, label = '', size = (80, 20), style = wx.ALIGN_RIGHT)
+        checkAllCheckbox = wx.CheckBox(self, -1, label = '', size = (74, 20), style = wx.ALIGN_RIGHT)
         self.Bind(wx.EVT_CHECKBOX, self.switchAllCheckboxes(checkAllCheckbox), checkAllCheckbox)
         checkAllCheckBoxSizer.Add(checkAllCheckbox, 0, wx.ALIGN_CENTER)
         mainSizer.Add(checkAllCheckBoxSizer, 0, wx.ALIGN_CENTER)
@@ -392,7 +392,7 @@ class RefreshButtonPanel(wx.Panel):
         self.sizer.Add(bottomRow, 0, wx.ALIGN_CENTER)
 
         self.Bind(wx.EVT_BUTTON, self.getScreenshotFromDevices, captureSSBtn)
-        self.Bind(wx.EVT_BUTTON, self.getAndInstallBuild, installBuildBtn)
+        self.Bind(wx.EVT_BUTTON, self.installBuild, installBuildBtn)
         self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, refreshDevicesBtn)
         self.Bind(wx.EVT_BUTTON, self.placeholderMethod, placeholderBtn)
 
@@ -412,8 +412,14 @@ class RefreshButtonPanel(wx.Panel):
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckboxesPanel()
     
-    def getAndInstallBuild(self, event):
-        print('getAndInstallBuild')
+    def installBuild(self, event):
+        devices = self.parent.checkBoxesPanel.getCheckedDevices()
+        if (len(devices)) == 0:
+            errorDlg = wx.MessageDialog(self.parent, 'At least 1 device must be selected!', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return
+        disabler = wx.WindowDisabler()
+        BuildInstallerFrame(self.mainWindow, disabler, self.adb, devices)
 
     def placeholderMethod(self, event):
         print('placeholderMethod')
@@ -481,21 +487,35 @@ class ScreenshotCaptureFrame(wx.Frame):
         self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!')
         self.disabler = disabler
         self.mainWindow = mainWindow
-        self.adb = adb
-        self.listOfDevices = listOfDevices
-        self.directoryForScreenshots = self.mainWindow.getOption('Screenshots folder')
-        self.statusLabels = []
 
-        self.createWindowContent()
+        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, self.mainWindow.getOption('Screenshots folder'))
         self.bindEvents()
+        self.Show()
+
+    def bindEvents(self):
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+
+    def onClose(self, event):
+        del self.disabler
+        self.Destroy()
+        self.mainWindow.Raise()
+
+class ScreenshotCapturePanel(wx.Panel):
+    def __init__(self, parent, adb, listOfDevices, directoryForScreenshots):
+        self.panel = wx.Panel.__init__(self, parent)
+        self.adb = adb
+        self.directoryForScreenshots = directoryForScreenshots
+        self.listOfDevices = listOfDevices
+        self.statusLabels = []
+        self.createWindowContent()
         self.deployScreenshotThreads()
 
     def createWindowContent(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         header = wx.BoxSizer(wx.HORIZONTAL)
         headerLabel = wx.StaticText(self, label = 'Capturing screenshots of {} device(s)'.format(len(self.listOfDevices)), size = (200, 30), style = wx.ALIGN_CENTER)
-        header.Add(headerLabel, 0, wx.EXPAND)
-        mainSizer.Add(header, 0)
+        header.Add(headerLabel, 0, wx.CENTER)
+        mainSizer.Add(header, 0, wx.CENTER)
         for i in self.listOfDevices:
             row = wx.BoxSizer(wx.HORIZONTAL)
             nameLabel = wx.StaticText(self, label = i, size = (130, 30), style = wx.ALIGN_RIGHT)
@@ -509,14 +529,12 @@ class ScreenshotCaptureFrame(wx.Frame):
         self.SetAutoLayout(1)
         mainSizer.Fit(self)
         self.Show(True)
-
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose)
-
+    
     def deployScreenshotThreads(self):
         if not os.path.exists(self.directoryForScreenshots):
             time.sleep(0.2)
-            errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
+                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             self.Close()
             return
@@ -529,12 +547,18 @@ class ScreenshotCaptureFrame(wx.Frame):
         pathToScreenOnDevice = ''
         fileName = self.getFileName(device)
         clbk = self.adb.captureScreenshot(device, fileName)
-        statusLabel.SetLabel(clbk[0])
+        try:
+            statusLabel.SetLabel(clbk[0])
+        except RuntimeError:
+            return
         if not clbk[1]:
             return
         pathToScreenOnDevice = clbk[1]
         clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, directory)
-        statusLabel.SetLabel(clbk)
+        try:            
+            statusLabel.SetLabel(clbk)
+        except RuntimeError:
+            return
     
     def getFileName(self, device):
         model = self.adb.getDeviceModel(device)
@@ -544,9 +568,29 @@ class ScreenshotCaptureFrame(wx.Frame):
         deviceScreenSize = self.adb.getDeviceScreenSize(device)
         return '{}-{}.png'.format(model, deviceScreenSize)
 
+class BuildInstallerFrame(wx.Frame):
+    def __init__(self, mainWindow, disabler, adb, deviceList):
+        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Installing builds.')
+        self.disabler = disabler
+        self.mainWindow = mainWindow
+
+        self.mainSizer = wx.BoxSizer(wx.VERTICAL)
+        self.topPanel = BuildInstallerTopPanel(self, self.mainWindow.getOption('Builds folder'))
+        #self.bottomPanel = BuildInstallerBottomPanel(self, adb, deviceList)
+        self.bindEvents()
+        self.Show()
+    
     def onClose(self, event):
         self.Destroy()
         self.mainWindow.Raise()
+
+    def bindEvents(self):
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+
+class BuildInstallerTopPanel(wx.Panel):
+    def __init__(self, parent, buildFolder):
+        self.panel = wx.Panel.__init__(self, parent)
+        self.buildFolder = buildFolder
 
 class Adb():
     def __init__(self):
