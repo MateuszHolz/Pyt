@@ -309,9 +309,16 @@ class DevicesCheckboxesPanel(wx.Panel):
         self.parent = parent
         self.adb = adb
         self.mainWindow = mainWindow
-        self.activeDeviceList = self.adb.getListOfAttachedDevices()
+        self.activeDeviceList = self.getAuthorizedDevices(self.adb.getListOfAttachedDevices())
         self.checkBoxesCtrls = []
         self.createPanel()
+
+    def getAuthorizedDevices(self, rawList):
+        activeList = []
+        for i in rawList:
+            if i[1] == 'device':
+                activeList.append(i[0])
+        return activeList
 
     def createPanel(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -329,6 +336,13 @@ class DevicesCheckboxesPanel(wx.Panel):
 
             mainSizer.Add(recordSizer, 0, wx.ALIGN_CENTER)
             id += 1
+
+        checkAllCheckBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
+        checkAllCheckbox = wx.CheckBox(self, -1, label = '', size = (80, 20), style = wx.ALIGN_RIGHT)
+        self.Bind(wx.EVT_CHECKBOX, self.switchAllCheckboxes(checkAllCheckbox), checkAllCheckbox)
+        checkAllCheckBoxSizer.Add(checkAllCheckbox, 0, wx.ALIGN_CENTER)
+        mainSizer.Add(checkAllCheckBoxSizer, 0, wx.ALIGN_CENTER)
+
         self.SetSizer(mainSizer)
         mainSizer.Layout()
         self.Fit()
@@ -345,6 +359,12 @@ class DevicesCheckboxesPanel(wx.Panel):
             disabler = wx.WindowDisabler()
             DeviceInfoWindow(self, self.mainWindow, self.activeDeviceList[id], disabler, self.adb)
         return OnClick
+    
+    def switchAllCheckboxes(self, checkboxCtrl):
+        def switchAllCheckboxesEvent(event):
+            for i in self.checkBoxesCtrls:
+                i.SetValue(checkboxCtrl.GetValue())
+        return switchAllCheckboxesEvent
 
 class RefreshButtonPanel(wx.Panel):
     def __init__(self, parent, mainWindow, adb):
@@ -374,7 +394,7 @@ class RefreshButtonPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.getScreenshotFromDevices, captureSSBtn)
         self.Bind(wx.EVT_BUTTON, self.getAndInstallBuild, installBuildBtn)
         self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, refreshDevicesBtn)
-        self.Bind(wx.EVT_BUTTON, self.getStateOfCheckboxes, placeholderBtn)
+        self.Bind(wx.EVT_BUTTON, self.placeholderMethod, placeholderBtn)
 
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
@@ -382,14 +402,15 @@ class RefreshButtonPanel(wx.Panel):
 
     def getScreenshotFromDevices(self, event):
         devices = self.parent.checkBoxesPanel.getCheckedDevices()
+        if (len(devices)) == 0:
+            errorDlg = wx.MessageDialog(self.parent, 'At least 1 device must be selected!', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return
         disabler = wx.WindowDisabler()
         ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices)
 
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckboxesPanel()
-
-    def getStateOfCheckboxes(self, event):
-        print(self.parent.checkBoxesPanel.getCheckedDevices())
     
     def getAndInstallBuild(self, event):
         print('getAndInstallBuild')
@@ -493,9 +514,7 @@ class ScreenshotCaptureFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
     def deployScreenshotThreads(self):
-        if os.path.exists(self.directoryForScreenshots):
-            pass
-        else:
+        if not os.path.exists(self.directoryForScreenshots):
             time.sleep(0.2)
             errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
@@ -508,7 +527,7 @@ class ScreenshotCaptureFrame(wx.Frame):
     def captureAndPullScreenshot(self, device, directory, statusLabel):
         statusLabel.SetLabel('Taking screenshot...')
         pathToScreenOnDevice = ''
-        fileName = '{}-{}.png'.format(self.adb.getDeviceModel(device), self.adb.getDeviceScreenSize(device))
+        fileName = self.getFileName(device)
         clbk = self.adb.captureScreenshot(device, fileName)
         statusLabel.SetLabel(clbk[0])
         if not clbk[1]:
@@ -516,6 +535,14 @@ class ScreenshotCaptureFrame(wx.Frame):
         pathToScreenOnDevice = clbk[1]
         clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, directory)
         statusLabel.SetLabel(clbk)
+    
+    def getFileName(self, device):
+        model = self.adb.getDeviceModel(device)
+        unsupportedChars = (' ', '(', ')')
+        for i in unsupportedChars:
+            model = model.replace(i, '')
+        deviceScreenSize = self.adb.getDeviceScreenSize(device)
+        return '{}-{}.png'.format(model, deviceScreenSize)
 
     def onClose(self, event):
         self.Destroy()
@@ -547,7 +574,7 @@ class Adb():
         tempList = rawList[4:]
         for i in range(len(tempList)):
             if i%2 == 0:
-                devices.append(tempList[i].decode())
+                devices.append((tempList[i].decode(), tempList[i+1].decode()))
         return devices
     
     @staticmethod
