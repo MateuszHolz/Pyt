@@ -455,14 +455,19 @@ class DeviceInfoWindow(wx.Frame):
     
     def createControls(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
+        first = True
         for i in self.deviceInfoTable:
+            if first:
+                first = False
+            else:
+                mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self, label = i[0], size = (100, -1), style = wx.TE_CENTRE)
-            sizer.Add(label, 0, wx.EXPAND)
+            sizer.Add(label, 0, wx.EXPAND | wx.TOP, label.GetSize()[1]/3.5)
             content = wx.TextCtrl(self, value = '...', size = (150, -1), style = wx.TE_READONLY)
             self.deviceInfoControls.append(content)
             sizer.Add(content, 0, wx.ALIGN_RIGHT)
-            mainSizer.Add(sizer, 0)
+            mainSizer.Add(sizer, 0, wx.ALL, 5)
         self.SetSizer(mainSizer)
         self.SetAutoLayout(1)
         mainSizer.Fit(self)
@@ -570,12 +575,13 @@ class ScreenshotCapturePanel(wx.Panel):
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainWindow, disabler, adb, deviceList):
-        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Installing builds.')
+        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Installing builds')
         self.disabler = disabler
         self.mainWindow = mainWindow
 
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.topPanel = BuildInstallerTopPanel(self, self.mainWindow.getOption('Builds folder'))
+        self.mainSizer.Add(self.topPanel, 0, wx.EXPAND)
         #self.bottomPanel = BuildInstallerBottomPanel(self, adb, deviceList)
         self.bindEvents()
         self.Show()
@@ -591,6 +597,55 @@ class BuildInstallerTopPanel(wx.Panel):
     def __init__(self, parent, buildFolder):
         self.panel = wx.Panel.__init__(self, parent)
         self.buildFolder = buildFolder
+        self.buildChosen = ''
+        self.createPanelContent()
+
+    def createPanelContent(self):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        topRow = wx.BoxSizer(wx.HORIZONTAL)
+        selectBuildButton = wx.Button(self, wx.ID_ANY, 'Select build')
+        topRow.Add(selectBuildButton, 1, wx.ALL, 2)
+        chooseLatestButton = wx.Button(self, wx.ID_ANY, 'Get latest from default folder')
+        topRow.Add(chooseLatestButton, 2, wx.ALL, 2)
+        mainSizer.Add(topRow, 0, wx.EXPAND)
+
+        bottomRow = wx.TextCtrl(self, value = 'Choose build', style = wx.TE_READONLY | wx.TE_CENTRE)
+        mainSizer.Add(bottomRow, 0, wx.EXPAND | wx.ALL, 2)
+
+        buildTextCtrl = ''
+        self.Bind(wx.EVT_BUTTON, self.getLatestBuildFromOptionsFolder(bottomRow), chooseLatestButton)
+        self.Bind(wx.EVT_BUTTON, self.selectBuild(bottomRow), selectBuildButton)
+        self.SetSizer(mainSizer)
+
+    def selectBuild(self, textCtrl):
+        def selectBuildEvent(event):
+            print('dupa')
+            with wx.FileDialog(self, 'Choose build', wildcard = '*.apk', style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
+                if fd.ShowModal() == wx.ID_CANCEL:
+                    return ''
+                else:
+                    self.setBuild(fd.GetPath(), textCtrl)
+        return selectBuildEvent
+
+    def getLatestBuildFromOptionsFolder(self, textCtrl):
+        def getLatestBuildFromOptionsFolderEvent(event):
+            self.setBuild(self.buildFolder, textCtrl)
+        return getLatestBuildFromOptionsFolderEvent
+
+    def getBuild(self):
+        return self.buildChosen
+
+    def setBuild(self, build, textCtrl):
+        self.buildChosen = build
+        textCtrl.SetValue(build)
+
+class BuildInstallerBottomPanel(wx.Panel):
+    def __init__(self, parent, devices, build):
+        self.panel = wx.Panel.__init__(self, parent)
+        self.devices = devices
+        self.parent = parent
+        self.build = build
 
 class Adb():
     def __init__(self):
