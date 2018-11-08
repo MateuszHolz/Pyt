@@ -432,7 +432,7 @@ class DeviceInfoWindow(wx.Frame):
         self.deviceId = deviceId
         self.disabler = disabler
         self.deviceInfoControls = []
-        self.adb = Adb()
+        self.adb = adb
         self.deviceInfoTable = (
             ('Brand', self.adb.getBrand),
             ('Model', self.adb.getDeviceModel),
@@ -605,15 +605,17 @@ class BuildInstallerTopPanel(wx.Panel):
 
         topRow = wx.BoxSizer(wx.HORIZONTAL)
         selectBuildButton = wx.Button(self, wx.ID_ANY, 'Select build')
-        topRow.Add(selectBuildButton, 1, wx.ALL, 2)
+        topRow.Add(selectBuildButton, 1, wx.ALL, 5)
         chooseLatestButton = wx.Button(self, wx.ID_ANY, 'Get latest from default folder')
-        topRow.Add(chooseLatestButton, 2, wx.ALL, 2)
+        topRow.Add(chooseLatestButton, 2, wx.ALL, 5)
         mainSizer.Add(topRow, 0, wx.EXPAND)
 
         bottomRow = wx.TextCtrl(self, value = 'Choose build', style = wx.TE_READONLY | wx.TE_CENTRE)
-        mainSizer.Add(bottomRow, 0, wx.EXPAND | wx.ALL, 2)
+        mainSizer.Add(bottomRow, 0, wx.EXPAND | wx.ALL, 5)
 
         buildTextCtrl = ''
+        dragAndDropHandler = FileDragAndDropHandler(bottomRow)
+        bottomRow.SetDropTarget(dragAndDropHandler)
         self.Bind(wx.EVT_BUTTON, self.getLatestBuildFromOptionsFolder(bottomRow), chooseLatestButton)
         self.Bind(wx.EVT_BUTTON, self.selectBuild(bottomRow), selectBuildButton)
         self.SetSizer(mainSizer)
@@ -639,6 +641,23 @@ class BuildInstallerTopPanel(wx.Panel):
     def setBuild(self, build, textCtrl):
         self.buildChosen = build
         textCtrl.SetValue(build)
+
+class FileDragAndDropHandler(wx.FileDropTarget):
+    def __init__(self, target):
+        wx.FileDropTarget.__init__(self)
+        self.target = target
+
+    def OnDropFiles(self, x, y, filenames):
+        #self.target.SetInsertionPointEnd()
+        extension = '.apk'
+        if len(filenames) > 1:
+            self.target.SetValue('Only 1 file at time is allowed!')
+        else:
+            if filenames[0].endswith(extension):
+                self.target.SetValue(filenames[0])
+            else:
+                self.target.SetValue('Dropped file must end with {}'.format(extension))
+        return True
 
 class BuildInstallerBottomPanel(wx.Panel):
     def __init__(self, parent, devices, build):
