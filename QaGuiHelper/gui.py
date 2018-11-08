@@ -578,6 +578,7 @@ class BuildInstallerFrame(wx.Frame):
         self.frame = wx.Frame.__init__(self, mainWindow, title = 'Installing builds')
         self.disabler = disabler
         self.mainWindow = mainWindow
+        self.buildChosen = ''
 
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.topPanel = BuildInstallerTopPanel(self, self.mainWindow.getOption('Builds folder'))
@@ -587,17 +588,24 @@ class BuildInstallerFrame(wx.Frame):
         self.Show()
     
     def onClose(self, event):
+        del self.disabler
         self.Destroy()
         self.mainWindow.Raise()
 
     def bindEvents(self):
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
+    def setBuildChosen(self, build):
+        self.buildChosen = build
+
+    def getBuildChosen(self):
+        return self.buildChosen
+
 class BuildInstallerTopPanel(wx.Panel):
     def __init__(self, parent, buildFolder):
         self.panel = wx.Panel.__init__(self, parent)
+        self.parent = parent
         self.buildFolder = buildFolder
-        self.buildChosen = ''
         self.createPanelContent()
 
     def createPanelContent(self):
@@ -614,7 +622,7 @@ class BuildInstallerTopPanel(wx.Panel):
         mainSizer.Add(bottomRow, 0, wx.EXPAND | wx.ALL, 5)
 
         buildTextCtrl = ''
-        dragAndDropHandler = FileDragAndDropHandler(bottomRow)
+        dragAndDropHandler = FileDragAndDropHandler(bottomRow, self)
         bottomRow.SetDropTarget(dragAndDropHandler)
         self.Bind(wx.EVT_BUTTON, self.getLatestBuildFromOptionsFolder(bottomRow), chooseLatestButton)
         self.Bind(wx.EVT_BUTTON, self.selectBuild(bottomRow), selectBuildButton)
@@ -622,7 +630,6 @@ class BuildInstallerTopPanel(wx.Panel):
 
     def selectBuild(self, textCtrl):
         def selectBuildEvent(event):
-            print('dupa')
             with wx.FileDialog(self, 'Choose build', wildcard = '*.apk', style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
                 if fd.ShowModal() == wx.ID_CANCEL:
                     return ''
@@ -635,27 +642,26 @@ class BuildInstallerTopPanel(wx.Panel):
             self.setBuild(self.buildFolder, textCtrl)
         return getLatestBuildFromOptionsFolderEvent
 
-    def getBuild(self):
-        return self.buildChosen
-
     def setBuild(self, build, textCtrl):
-        self.buildChosen = build
+        self.parent.setBuildChosen(build)
         textCtrl.SetValue(build)
 
 class FileDragAndDropHandler(wx.FileDropTarget):
-    def __init__(self, target):
+    def __init__(self, target, parentPanel):
         wx.FileDropTarget.__init__(self)
         self.target = target
+        self.parentPanel = parentPanel
 
     def OnDropFiles(self, x, y, filenames):
-        #self.target.SetInsertionPointEnd()
         extension = '.apk'
         if len(filenames) > 1:
+            self.parentPanel.setBuild('', self.target)
             self.target.SetValue('Only 1 file at time is allowed!')
         else:
             if filenames[0].endswith(extension):
-                self.target.SetValue(filenames[0])
+                self.parentPanel.setBuild(filenames[0], self.target)
             else:
+                self.parentPanel.setBuild('', self.target)
                 self.target.SetValue('Dropped file must end with {}'.format(extension))
         return True
 
