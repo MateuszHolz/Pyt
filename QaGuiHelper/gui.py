@@ -104,9 +104,9 @@ class JenkinsMenu(wx.Menu):
                         buildVersionMenu = wx.Menu()
                         for branchOption in links[platforms][projects][environment][buildVersion].keys():
                             menuItem = buildVersionMenu.Append(wx.ID_ANY, branchOption)
-                            self.parent.Bind(wx.EVT_MENU, self.getBuild(
-                                                                        links[platforms][projects][environment][buildVersion][branchOption]),
-                                                                        menuItem)
+                            self.parent.Bind(wx.EVT_MENU, 
+                                            self.getBuild(links[platforms][projects][environment][buildVersion][branchOption]),
+                                            menuItem)
                         environmentMenu.Append(wx.ID_ANY, buildVersion, buildVersionMenu)
                     projectMenu.Append(wx.ID_ANY, environment, environmentMenu)
                 platformMenu.Append(wx.ID_ANY, projects, projectMenu)
@@ -326,8 +326,9 @@ class DevicesCheckboxesPanel(wx.Panel):
         for i in self.activeDeviceList:
             recordSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-            checkBx = wx.CheckBox(self, -1, label = self.adb.getDeviceModel(i), size = (100, 20), style = wx.ALIGN_RIGHT)
-            self.checkBoxesCtrls.append(checkBx)
+            model = self.adb.getDeviceModel(i)
+            checkBx = wx.CheckBox(self, -1, label = model, size = (100, 20), style = wx.ALIGN_RIGHT)
+            self.checkBoxesCtrls.append((checkBx, model))
             recordSizer.Add(checkBx, 0, wx.ALIGN_CENTER)
 
             infoButton = wx.Button(self, label = 'i', size = (20, 20))
@@ -350,8 +351,8 @@ class DevicesCheckboxesPanel(wx.Panel):
     def getCheckedDevices(self):
         checkedRecords = []
         for i, j in zip(self.checkBoxesCtrls, self.activeDeviceList):
-            if i.GetValue() == True:
-                checkedRecords.append(j)
+            if i[0].GetValue() == True:
+                checkedRecords.append((j, i[1]))
         return checkedRecords
     
     def OnInfoButton(self, id):
@@ -363,7 +364,7 @@ class DevicesCheckboxesPanel(wx.Panel):
     def switchAllCheckboxes(self, checkboxCtrl):
         def switchAllCheckboxesEvent(event):
             for i in self.checkBoxesCtrls:
-                i.SetValue(checkboxCtrl.GetValue())
+                i[0].SetValue(checkboxCtrl.GetValue())
         return switchAllCheckboxesEvent
 
 class RefreshButtonPanel(wx.Panel):
@@ -500,7 +501,6 @@ class DeviceInfoPanel(wx.Panel):
         except RuntimeError:
             print('got it!')
 
-
 class ScreenshotCaptureFrame(wx.Frame):
     def __init__(self, parent, mainWindow, disabler, adb, listOfDevices):
         self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!')
@@ -537,7 +537,7 @@ class ScreenshotCapturePanel(wx.Panel):
         mainSizer.Add(header, 0, wx.CENTER)
         for i in self.listOfDevices:
             row = wx.BoxSizer(wx.HORIZONTAL)
-            nameLabel = wx.StaticText(self, label = i, size = (130, 30), style = wx.ALIGN_RIGHT)
+            nameLabel = wx.StaticText(self, label = i[1], size = (130, 30), style = wx.ALIGN_RIGHT)
             row.Add(nameLabel, 0, wx.EXPAND | wx.TOP, 10)
             statusLabel = wx.StaticText(self, label = '...', size = (130, 30), style = wx.ALIGN_CENTER)
             row.Add(statusLabel, 0, wx.EXPAND | wx.TOP, 10)
@@ -558,13 +558,13 @@ class ScreenshotCapturePanel(wx.Panel):
             self.Close()
             return
         for i, j in zip(self.listOfDevices, self.statusLabels):
-            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i, self.directoryForScreenshots, j))
+            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], self.directoryForScreenshots, j, i[1]))
             localThread.start()
         
-    def captureAndPullScreenshot(self, device, directory, statusLabel):
+    def captureAndPullScreenshot(self, device, directory, statusLabel, model):
         statusLabel.SetLabel('Taking screenshot...')
         pathToScreenOnDevice = ''
-        fileName = self.getFileName(device)
+        fileName = self.getFileName(device, model)
         clbk = self.adb.captureScreenshot(device, fileName)
         try:
             statusLabel.SetLabel(clbk[0])
@@ -579,8 +579,7 @@ class ScreenshotCapturePanel(wx.Panel):
         except RuntimeError:
             return
     
-    def getFileName(self, device):
-        model = self.adb.getDeviceModel(device)
+    def getFileName(self, device, model):
         unsupportedChars = (' ', '(', ')')
         for i in unsupportedChars:
             model = model.replace(i, '')
@@ -589,16 +588,18 @@ class ScreenshotCapturePanel(wx.Panel):
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainWindow, disabler, adb, deviceList):
-        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Installing builds')
+        wx.Frame.__init__(self, mainWindow, title = 'Installing builds')
         self.disabler = disabler
         self.mainWindow = mainWindow
-        self.buildChosen = ''
 
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.topPanel = BuildInstallerTopPanel(self, self.mainWindow.getOption('Builds folder'))
+        self.bottomPanel = BuildInstallerBottomPanel(self, deviceList)
         self.mainSizer.Add(self.topPanel, 0, wx.EXPAND)
-        #self.bottomPanel = BuildInstallerBottomPanel(self, adb, deviceList)
+        self.mainSizer.Add(self.bottomPanel, 0, wx.EXPAND)
         self.bindEvents()
+        self.SetSizer(self.mainSizer)
+        self.mainSizer.Fit(self)
         self.Show()
     
     def onClose(self, event):
@@ -609,17 +610,15 @@ class BuildInstallerFrame(wx.Frame):
     def bindEvents(self):
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
-    def setBuildChosen(self, build):
-        self.buildChosen = build
-
-    def getBuildChosen(self):
-        return self.buildChosen
+    def installBuild(self, build):
+        self.bottomPanel.installBuild(build)
 
 class BuildInstallerTopPanel(wx.Panel):
     def __init__(self, parent, buildFolder):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
         self.buildFolder = buildFolder
+        self.buildChosen = ''
         self.createPanelContent()
 
     def createPanelContent(self):
@@ -632,12 +631,16 @@ class BuildInstallerTopPanel(wx.Panel):
         topRow.Add(chooseLatestButton, 2, wx.ALL, 5)
         mainSizer.Add(topRow, 0, wx.EXPAND)
 
-        bottomRow = wx.TextCtrl(self, value = 'Choose build', style = wx.TE_READONLY | wx.TE_CENTRE)
+        bottomRow = wx.TextCtrl(self, value = 'Drag and drop build here', style = wx.TE_READONLY | wx.TE_CENTRE)
         mainSizer.Add(bottomRow, 0, wx.EXPAND | wx.ALL, 5)
 
-        buildTextCtrl = ''
         dragAndDropHandler = FileDragAndDropHandler(bottomRow, self)
         bottomRow.SetDropTarget(dragAndDropHandler)
+
+        installButton = wx.Button(self, wx.ID_ANY, 'Install')
+        mainSizer.Add(installButton, 0, wx.CENTRE | wx.ALL, 5)
+
+        self.Bind(wx.EVT_BUTTON, self.startInstallingBuild, installButton)
         self.Bind(wx.EVT_BUTTON, self.getLatestBuildFromOptionsFolder(bottomRow), chooseLatestButton)
         self.Bind(wx.EVT_BUTTON, self.selectBuild(bottomRow), selectBuildButton)
         self.SetSizer(mainSizer)
@@ -657,8 +660,62 @@ class BuildInstallerTopPanel(wx.Panel):
         return getLatestBuildFromOptionsFolderEvent
 
     def setBuild(self, build, textCtrl):
-        self.parent.setBuildChosen(build)
+        self.buildChosen = build
         textCtrl.SetValue(build)
+
+    def startInstallingBuild(self, event):
+        self.parent.installBuild(self.buildChosen)
+
+class BuildInstallerBottomPanel(wx.Panel):
+    def __init__(self, parent, deviceList):
+        wx.Panel.__init__(self, parent)
+        self.parent = parent
+        self.deviceList = deviceList
+        self.statusLabels = []
+        self.createControls()
+
+    def createControls(self):
+        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        leftColumn = wx.BoxSizer(wx.VERTICAL)
+        rightColumn = wx.BoxSizer(wx.VERTICAL)
+        columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
+
+        devColumnNameLabel = wx.StaticText(self, label = 'Device', style = wx.CENTER)
+        devColumnNameLabel.SetFont(columnNameFont)
+        leftColumn.Add(devColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
+        leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+
+        statColumnNameLabel = wx.StaticText(self, label = 'Status', style = wx.CENTER)
+        statColumnNameLabel.SetFont(columnNameFont)
+        rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
+        rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+
+        for i in self.deviceList:
+            deviceLabel = wx.StaticText(self, label = i[1], style = wx.CENTER)
+            leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.ALL, 3)
+            leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+
+            statusLabel = wx.StaticText(self, label = 'Ready', style = wx.CENTER)
+            rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.ALL, 3)
+            rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            self.statusLabels.append(statusLabel)
+
+        mainSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 5)
+        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 5)
+        self.SetSizer(mainSizer)
+
+    def installBuild(self, build):
+        if not build.endswith('.apk'):
+            errorDlg = wx.MessageDialog(self, "Please choose build!", 'Error!',
+                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return
+        for i, j in zip(self.deviceList, self.statusLabels):
+            shortBuild = build[build.find('Huuuge'):build.find('Huuuge')+30]
+            j.SetLabel(shortBuild)
+            j.SetSize(-1, -1)
+            self.Fit()
 
 class FileDragAndDropHandler(wx.FileDropTarget):
     def __init__(self, target, parentPanel):
@@ -678,13 +735,6 @@ class FileDragAndDropHandler(wx.FileDropTarget):
                 self.parentPanel.setBuild('', self.target)
                 self.target.SetValue('Dropped file must end with {}'.format(extension))
         return True
-
-class BuildInstallerBottomPanel(wx.Panel):
-    def __init__(self, parent, devices, build):
-        self.panel = wx.Panel.__init__(self, parent)
-        self.devices = devices
-        self.parent = parent
-        self.build = build
 
 class Adb():
     def __init__(self):
