@@ -357,7 +357,7 @@ class DevicesCheckboxesPanel(wx.Panel):
     def OnInfoButton(self, id):
         def OnClick(event):
             disabler = wx.WindowDisabler()
-            DeviceInfoWindow(self, self.mainWindow, self.activeDeviceList[id], disabler, self.adb)
+            DeviceInfoFrame(self, self.mainWindow, self.activeDeviceList[id], disabler, self.adb)
         return OnClick
     
     def switchAllCheckboxes(self, checkboxCtrl):
@@ -424,15 +424,35 @@ class RefreshButtonPanel(wx.Panel):
     def placeholderMethod(self, event):
         print('placeholderMethod')
 
-class DeviceInfoWindow(wx.Frame):
+class DeviceInfoFrame(wx.Frame):
     def __init__(self, parent, mainWindow, deviceId, disabler, adb):
-        self.window = wx.Frame.__init__(self, parent, title = 'Device Info')
-        self.parent = parent
+        wx.Frame.__init__(self, parent, title = 'Device Info')
         self.mainWindow = mainWindow
-        self.deviceId = deviceId
         self.disabler = disabler
-        self.deviceInfoControls = []
+        self.panel = DeviceInfoPanel(self, deviceId, adb)
+        self.bindEvents()
+        self.Fit()
+
+        self.Show(True)
+    
+    def bindEvents(self):
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    def OnClose(self, event):
+        del self.disabler
+        self.Destroy()
+        self.mainWindow.Raise() ## without that, parent frame hides behind opened windows
+
+    def setSize(self, w, h):
+        self.SetSize(w, h)
+
+class DeviceInfoPanel(wx.Panel):
+    def __init__(self, parent, deviceId, adb):
+        wx.Panel.__init__(self, parent)
+        self.deviceId = deviceId
+        self.parent = parent
         self.adb = adb
+        self.deviceInfoControls = []
         self.deviceInfoTable = (
             ('Brand', self.adb.getBrand),
             ('Model', self.adb.getDeviceModel),
@@ -448,11 +468,8 @@ class DeviceInfoWindow(wx.Frame):
             ('Marketing name', self.adb.getMarketingName),
             ('Wifi name', self.adb.getWifiName))
         self.createControls()
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
-
-        self.Show(True)
         self.updateFields()
-    
+
     def createControls(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         first = True
@@ -483,9 +500,6 @@ class DeviceInfoWindow(wx.Frame):
         except RuntimeError:
             print('got it!')
 
-    def OnClose(self, event):
-        self.Destroy()
-        self.mainWindow.Raise() ## without that, parent frame hides behind opened windows
 
 class ScreenshotCaptureFrame(wx.Frame):
     def __init__(self, parent, mainWindow, disabler, adb, listOfDevices):
@@ -774,7 +788,11 @@ class Adb():
 
     @staticmethod
     def getDeviceLanguage(device):
-        return subprocess.check_output(r'adb -s {} shell getprop persist.sys.locale'.format(device), shell = True)
+        lang = subprocess.check_output(r'adb -s {} shell getprop persist.sys.locale'.format(device), shell = True).rstrip()
+        if len(lang) > 0:
+            return lang
+        else:
+            return 'N/A'
 
     @staticmethod
     def getMarketingName(device):
