@@ -278,7 +278,7 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
 
 class DevicesPanel(wx.Panel):
     def __init__(self, parent, adb):
-        self.panel = wx.Panel.__init__(self, parent, size = (300, 400))
+        self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
         self.adb = adb
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -286,18 +286,18 @@ class DevicesPanel(wx.Panel):
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
         self.buttonsPanel = RefreshButtonPanel(self, self.parent, self.adb)
 
-        self.sizer.Add(self.buttonsPanel, 1, wx.EXPAND | wx.ALL, 5)
-        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND | wx.TOP, 10)
+        self.sizer.Add(self.buttonsPanel, 0, wx.EXPAND | wx.ALL, 15)
+        self.sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+        self.sizer.Add(self.checkBoxesPanel, 0, wx.EXPAND | wx.BOTTOM | wx.LEFT | wx.RIGHT, 5)
 
         self.SetSizer(self.sizer)
-        self.sizer.Layout()
         self.Fit()
     
     def refreshCheckboxesPanel(self):
-        self.sizer.Remove(1)
+        self.sizer.Remove(2)
         self.checkBoxesPanel.Destroy()
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
-        self.sizer.Add(self.checkBoxesPanel, 10, wx.EXPAND)
+        self.sizer.Add(self.checkBoxesPanel, 0, wx.EXPAND | wx.BOTTOM | wx.LEFT | wx.RIGHT, 5)
         self.sizer.Layout()
         self.Fit()
         self.parent.Layout()
@@ -321,28 +321,47 @@ class DevicesCheckboxesPanel(wx.Panel):
         return activeList
 
     def createPanel(self):
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-        id = 0
+        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        leftColumn = wx.BoxSizer(wx.VERTICAL)
+        middleColumn = wx.BoxSizer(wx.VERTICAL)
+        rightColumn = wx.BoxSizer(wx.VERTICAL)
+        columnNameFont = wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.NORMAL)
+
+        leftColumnLabel = wx.StaticText(self, label = 'Device', style = wx.CENTER)
+        leftColumnLabel.SetFont(columnNameFont)
+        leftColumn.Add(leftColumnLabel, 1, wx.CENTER | wx.ALL, 3)
+
+        middleColumnLabel = wx.StaticText(self, label = 'Check', style = wx.CENTER)
+        middleColumnLabel.SetFont(columnNameFont)
+        middleColumn.Add(middleColumnLabel, 1, wx.CENTER | wx.ALL, 3)
+
+        rightColumnLabel = wx.StaticText(self, label = 'Info', style = wx.CENTER)
+        rightColumnLabel.SetFont(columnNameFont)
+        rightColumn.Add(rightColumnLabel, 1, wx.CENTER | wx.ALL, 3)
+
         for i in self.activeDeviceList:
-            recordSizer = wx.BoxSizer(wx.HORIZONTAL)
+            model = self.adb.getDeviceModel(i)    
 
-            model = self.adb.getDeviceModel(i)
-            checkBx = wx.CheckBox(self, -1, label = model, size = (100, 20), style = wx.ALIGN_RIGHT)
+            leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            middleColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+
+            modelLabel = wx.StaticText(self, label = model, style = wx.CENTER)
+            checkBx = wx.CheckBox(self, style = wx.CENTER)
+            infoButton = wx.Button(self, label = 'i', style = wx.CENTER)
+
+            leftColumn.Add(modelLabel, 1, wx.CENTER | wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 3)
+            middleColumn.Add(checkBx, 1, wx.CENTER | wx.ALL, 3)
+            rightColumn.Add(infoButton, 1, wx.CENTER | wx.ALL, 3)
+
             self.checkBoxesCtrls.append((checkBx, model))
-            recordSizer.Add(checkBx, 0, wx.ALIGN_CENTER)
+            self.Bind(wx.EVT_BUTTON, self.OnInfoButton(i), infoButton)
 
-            infoButton = wx.Button(self, label = 'i', size = (20, 20))
-            self.Bind(wx.EVT_BUTTON, self.OnInfoButton(id), infoButton)
-            recordSizer.Add(infoButton, 0, wx.ALIGN_CENTER | wx.LEFT, 5)
-
-            mainSizer.Add(recordSizer, 0, wx.ALIGN_CENTER | wx.TOP, 3)
-            id += 1
-
-        checkAllCheckBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
-        checkAllCheckbox = wx.CheckBox(self, -1, label = '', size = (74, 20), style = wx.ALIGN_RIGHT)
-        self.Bind(wx.EVT_CHECKBOX, self.switchAllCheckboxes(checkAllCheckbox), checkAllCheckbox)
-        checkAllCheckBoxSizer.Add(checkAllCheckbox, 0, wx.ALIGN_CENTER)
-        mainSizer.Add(checkAllCheckBoxSizer, 0, wx.ALIGN_CENTER)
+        mainSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 3)
+        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        mainSizer.Add(middleColumn, 1, wx.EXPAND | wx.ALL, 3)
+        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 3)
 
         self.SetSizer(mainSizer)
         mainSizer.Layout()
@@ -355,17 +374,15 @@ class DevicesCheckboxesPanel(wx.Panel):
                 checkedRecords.append((j, i[1]))
         return checkedRecords
     
-    def OnInfoButton(self, id):
+    def OnInfoButton(self, dev):
         def OnClick(event):
             disabler = wx.WindowDisabler()
-            DeviceInfoFrame(self, self.mainWindow, self.activeDeviceList[id], disabler, self.adb)
+            DeviceInfoFrame(self, self.mainWindow, dev, disabler, self.adb)
         return OnClick
     
-    def switchAllCheckboxes(self, checkboxCtrl):
-        def switchAllCheckboxesEvent(event):
-            for i in self.checkBoxesCtrls:
-                i[0].SetValue(checkboxCtrl.GetValue())
-        return switchAllCheckboxesEvent
+    def switchAllCheckboxes(self, state):
+        for i in self.checkBoxesCtrls:
+            i[0].SetValue(state)
 
 class RefreshButtonPanel(wx.Panel):
     def __init__(self, parent, mainWindow, adb):
@@ -375,6 +392,7 @@ class RefreshButtonPanel(wx.Panel):
         self.mainWindow = mainWindow
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.createPanel()
+        self.checkAllStatus = True
 
     def createPanel(self):
         topRow = wx.BoxSizer(wx.HORIZONTAL)
@@ -386,8 +404,8 @@ class RefreshButtonPanel(wx.Panel):
         bottomRow = wx.BoxSizer(wx.HORIZONTAL)
         refreshDevicesBtn = wx.Button(self, wx.ID_ANY, 'Refresh')
         bottomRow.Add(refreshDevicesBtn, 0, wx.ALIGN_CENTER)
-        placeholderBtn = wx.Button(self, wx.ID_ANY, 'Placeholder')
-        bottomRow.Add(placeholderBtn, 0, wx.ALIGN_CENTER)
+        checkAllButton = wx.Button(self, wx.ID_ANY, 'Select all')
+        bottomRow.Add(checkAllButton, 0, wx.ALIGN_CENTER)
 
         self.sizer.Add(topRow, 0, wx.ALIGN_CENTER)
         self.sizer.Add(bottomRow, 0, wx.ALIGN_CENTER)
@@ -395,7 +413,7 @@ class RefreshButtonPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.getScreenshotFromDevices, captureSSBtn)
         self.Bind(wx.EVT_BUTTON, self.installBuild, installBuildBtn)
         self.Bind(wx.EVT_BUTTON, self.refreshDevicesPanel, refreshDevicesBtn)
-        self.Bind(wx.EVT_BUTTON, self.placeholderMethod, placeholderBtn)
+        self.Bind(wx.EVT_BUTTON, self.checkAll(checkAllButton), checkAllButton)
 
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
@@ -422,8 +440,15 @@ class RefreshButtonPanel(wx.Panel):
         disabler = wx.WindowDisabler()
         BuildInstallerFrame(self.mainWindow, disabler, self.adb, devices)
 
-    def placeholderMethod(self, event):
-        print('placeholderMethod')
+    def checkAll(self, btn):
+        def checkAllEvent(event):
+            self.parent.checkBoxesPanel.switchAllCheckboxes(self.checkAllStatus)
+            self.checkAllStatus = not self.checkAllStatus
+            if self.checkAllStatus:
+                btn.SetLabel('Select all')
+            else:
+                btn.SetLabel('Deselect all')
+        return checkAllEvent
 
 class DeviceInfoFrame(wx.Frame):
     def __init__(self, parent, mainWindow, deviceId, disabler, adb):
@@ -467,7 +492,8 @@ class DeviceInfoPanel(wx.Panel):
             ('Device timezone', self.adb.getDeviceTimezone),
             ('Device language', self.adb.getDeviceLanguage),
             ('Marketing name', self.adb.getMarketingName),
-            ('Wifi name', self.adb.getWifiName))
+            ('Wifi name', self.adb.getWifiName),
+            ('Serial No', self.adb.getSerialNo))
         self.createControls()
         self.updateFields()
 
@@ -594,7 +620,7 @@ class BuildInstallerFrame(wx.Frame):
 
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.topPanel = BuildInstallerTopPanel(self, self.mainWindow.getOption('Builds folder'))
-        self.bottomPanel = BuildInstallerBottomPanel(self, deviceList)
+        self.bottomPanel = BuildInstallerBottomPanel(self, deviceList, adb)
         self.mainSizer.Add(self.topPanel, 0, wx.EXPAND)
         self.mainSizer.Add(self.bottomPanel, 0, wx.EXPAND)
         self.bindEvents()
@@ -667,12 +693,14 @@ class BuildInstallerTopPanel(wx.Panel):
         self.parent.installBuild(self.buildChosen)
 
 class BuildInstallerBottomPanel(wx.Panel):
-    def __init__(self, parent, deviceList):
+    def __init__(self, parent, deviceList, adb):
         wx.Panel.__init__(self, parent)
         self.parent = parent
         self.deviceList = deviceList
+        self.adb = adb
         self.statusLabels = []
         self.createControls()
+        self.Fit()
 
     def createControls(self):
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -683,21 +711,19 @@ class BuildInstallerBottomPanel(wx.Panel):
         devColumnNameLabel = wx.StaticText(self, label = 'Device', style = wx.CENTER)
         devColumnNameLabel.SetFont(columnNameFont)
         leftColumn.Add(devColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
-        leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
 
         statColumnNameLabel = wx.StaticText(self, label = 'Status', style = wx.CENTER)
         statColumnNameLabel.SetFont(columnNameFont)
         rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
-        rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
 
         for i in self.deviceList:
             deviceLabel = wx.StaticText(self, label = i[1], style = wx.CENTER)
-            leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.ALL, 3)
             leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.ALL, 3)
 
             statusLabel = wx.StaticText(self, label = 'Ready', style = wx.CENTER)
-            rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.ALL, 3)
             rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.ALL, 3)
             self.statusLabels.append(statusLabel)
 
         mainSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 5)
@@ -712,10 +738,12 @@ class BuildInstallerBottomPanel(wx.Panel):
             errorDlg.ShowModal()
             return
         for i, j in zip(self.deviceList, self.statusLabels):
-            shortBuild = build[build.find('Huuuge'):build.find('Huuuge')+30]
-            j.SetLabel(shortBuild)
-            j.SetSize(-1, -1)
-            self.Fit()
+            thread = threading.Thread(target = self.installingThread, args = (i[0], build, j))
+            thread.start()
+
+    def installingThread(self, device, build, statusLabel):
+        statusLabel.SetLabel('Installing...')
+        statusLabel.SetLabel(self.adb.installBuild(device, build))
 
 class FileDragAndDropHandler(wx.FileDropTarget):
     def __init__(self, target, parentPanel):
@@ -785,6 +813,18 @@ class Adb():
             return 'Done!'
         except subprocess.CalledProcessError:
             return 'An error ocurred!'
+        except subprocess.TimeoutExpired:
+            return 'Timed out! ({}s)'.format(timeout)
+
+    @staticmethod
+    def installBuild(device, build):
+        timeout = 60
+        try:
+            print('starting to install on {}'.format(device))
+            raw_out = subprocess.check_output(r'adb -s {} install -r "{}"'.format(device, build), timeout = timeout)
+            return 'Installed!'
+        except subprocess.CalledProcessError:
+            return 'Error!'
         except subprocess.TimeoutExpired:
             return 'Timed out! ({}s)'.format(timeout)
 
@@ -879,6 +919,14 @@ class Adb():
         port = subprocess.check_output(r'adb -s {} shell getprop service.adb.tcp.port'.format(device), shell = True).rstrip()
         if len(port) > 0:
             return port
+        else:
+            return 'Not set'
+
+    @staticmethod
+    def getSerialNo(device):
+        serial = subprocess.check_output(r'adb -s {} shell getprop ro.boot.serialno'.format(device), shell = True).rstrip()
+        if len(serial) > 0:
+            return serial
         else:
             return 'Not set'
 
