@@ -123,57 +123,74 @@ class JenkinsMenu(wx.Menu):
 
 class OptionsFrame(wx.Frame):
     def __init__(self, parent, disabler):
-        self.frame = wx.Frame.__init__(self, parent, title = 'Options')
-        self.parent = parent
+        wx.Frame.__init__(self, parent, title = 'Options')
+        self.mainWindow = parent
         self.disabler = disabler
+        self.panel = OptionsPanel(self, self.mainWindow)
+        self.bindEvents()
+        self.Fit()
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        for i, j in self.parent.getOptionsCategories():
-            localSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.Show(True)
+    
+    def bindEvents(self):
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    def OnClose(self, event):
+        del self.disabler
+        self.Destroy()
+        self.mainWindow.Raise()
+
+class OptionsPanel(wx.Panel):
+    def __init__(self, parent, mainWindow):
+        wx.Panel.__init__(self, parent)
+        self.mainWindow = mainWindow
+        self.optionCategories = self.mainWindow.getOptionsCategories()
+        self.createPanel()
+
+    def createPanel(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        first = True
+        for i, j in self.optionCategories:
+            rowSizer = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self, label = i, style = wx.TE_CENTRE, size = (100, 10))
-            localSizer.Add(label, 0, wx.EXPAND)
+            rowSizer.Add(label, 0, wx.EXPAND | wx.TOP, 8)
+            if not first:
+                sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+            else:
+                first = False
             if j == 'folder':
-                valueCtrl = wx.TextCtrl(self, value = self.parent.getOption(i), size = (200, 20), style = wx.TE_READONLY)
-                localSizer.Add(valueCtrl, 0, wx.EXPAND)
+                valueCtrl = wx.TextCtrl(self, value = self.mainWindow.getOption(i), size = (210, -1), style = wx.TE_READONLY)
+                rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
                 editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
-                localSizer.Add(editBtn, 0, wx.EXPAND)
+                rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl), editBtn)
             elif j == 'input':
-                inputUsername = wx.TextCtrl(self, value = self.parent.getOption(i, True)[0], size = (100, 20))
-                localSizer.Add(inputUsername, 0, wx.EXPAND)
-                inputPassword = wx.TextCtrl(self, value = self.parent.getOption(i, True)[1], size = (100, 20))
-                localSizer.Add(inputPassword, 0, wx.EXPAND)
+                inputUsername = wx.TextCtrl(self, value = self.mainWindow.getOption(i, True)[0], size = (100, -1))
+                rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
+                inputPassword = wx.TextCtrl(self, value = self.mainWindow.getOption(i, True)[1], size = (100, -1))
+                rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
                 saveBtn = wx.Button(self, wx.ID_ANY, 'Save')
-                localSizer.Add(saveBtn, 0, wx.EXPAND)
+                rowSizer.Add(saveBtn, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_BUTTON, self.editCredentialsOption(i, inputUsername, inputPassword), saveBtn)
-            self.sizer.Add(localSizer, 0, wx.EXPAND)
+            sizer.Add(rowSizer, 0, wx.EXPAND | wx.ALL, 5)
+        self.SetSizer(sizer)
+        self.Fit()
 
-        self.Bind(wx.EVT_CLOSE, self.onClose)
-        self.show()
-
-    def onClose(self, event):
-        self.Destroy()
-        self.parent.Raise()
-    
     def editFileOption(self, option, valueControl):
         def editOptionEvent(event):
             with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
                 if dlg.ShowModal() == wx.ID_OK:
                     newOption = dlg.GetPath()
-                    self.parent.setOption(option, newOption)
+                    self.mainWindow.setOption(option, newOption)
                     valueControl.SetValue(newOption)
         return editOptionEvent
-    
+
     def editCredentialsOption(self, option, username, password):
         def editCredentialsEvent(event):
-            self.parent.setOption(option, (username.GetValue(), password.GetValue()))
+            self.mainWindow.setOption(option, (username.GetValue(), password.GetValue()))
         return editCredentialsEvent
 
-    def show(self):
-        self.SetSizer(self.sizer)
-        self.SetAutoLayout(1)
-        self.sizer.Fit(self)
-        self.Show(True)
+
 
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info):
@@ -464,10 +481,7 @@ class DeviceInfoFrame(wx.Frame):
     def OnClose(self, event):
         del self.disabler
         self.Destroy()
-        self.mainWindow.Raise() ## without that, parent frame hides behind opened windows
-
-    def setSize(self, w, h):
-        self.SetSize(w, h)
+        self.mainWindow.Raise()
 
 class DeviceInfoPanel(wx.Panel):
     def __init__(self, parent, deviceId, adb):
