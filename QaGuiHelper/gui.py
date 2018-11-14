@@ -11,17 +11,10 @@ class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
-        optionsPath = os.path.join(os.getenv('APPDATA'), 'adbgui')
-        self.optionsFilePath = os.path.join(optionsPath, 'options.json')
-        self.__optionsCategories = (
-            ('Screenshots folder', 'folder'),
-            ('Builds folder', 'folder'),
-            ('Jenkins credentials', 'input')
-        )
-        self.__options = self.getOptionsIfAlreadyExist(optionsPath, self.optionsFilePath)
+        self.optionsHandler = OptionsHandler()
 
         self.adb = Adb()
-        self.devicesPanel = DevicesPanel(self, self.adb)
+        self.devicesPanel = DevicesPanel(self, self.adb, self.optionsHandler)
 
         mainSizer.Add(self.devicesPanel, 1)
 
@@ -30,7 +23,7 @@ class MainFrame(wx.Frame):
         fileMenu.AppendSeparator()
         ext = fileMenu.Append(wx.ID_ANY, 'Exit')
 
-        jenkinsMenu = JenkinsMenu(self, 'links.json')
+        jenkinsMenu = JenkinsMenu(self, 'links.json', self.optionsHandler)
             
         menuBar = wx.MenuBar()
         menuBar.Append(fileMenu, 'File')
@@ -44,6 +37,25 @@ class MainFrame(wx.Frame):
         self.SetSizer(mainSizer)
         self.Fit()
         self.Show(True)
+        
+    def onExit(self, event):
+        self.optionsHandler.saveOptionsToFile()
+        self.Destroy()
+
+    def showOptions(self, event):
+        disabler = wx.WindowDisabler()
+        OptionsFrame(self, disabler, self.optionsHandler)
+
+class OptionsHandler():
+    def __init__(self):
+        optionsPath = os.path.join(os.getenv('APPDATA'), 'adbgui')
+        self.optionsFilePath = os.path.join(optionsPath, 'options.json')
+        self.__optionsCategories = (
+            ('Screenshots folder', 'folder'),
+            ('Builds folder', 'folder'),
+            ('Jenkins credentials', 'input')
+        )
+        self.__options = self.getOptionsIfAlreadyExist(optionsPath, self.optionsFilePath)
 
     def getOptionsIfAlreadyExist(self, folderPath, filePath):
         if os.path.exists(folderPath):
@@ -58,14 +70,6 @@ class MainFrame(wx.Frame):
         else:
             os.mkdir(folderPath)
             return {}
-        
-    def onExit(self, event):
-        self.saveOptionsToFile()
-        self.Destroy()
-
-    def showOptions(self, event):
-        disabler2 = wx.WindowDisabler()
-        OptionsFrame(self, disabler2)
 
     def setOption(self, option, value):
         self.__options[option] = value
@@ -87,9 +91,10 @@ class MainFrame(wx.Frame):
         return self.__optionsCategories
 
 class JenkinsMenu(wx.Menu):
-    def __init__(self, parent, pathToJsonFile):
-        self.menu = wx.Menu.__init__(self)
+    def __init__(self, parent, pathToJsonFile, optionsHandler):
+        wx.Menu.__init__(self)
         self.parent = parent
+        self.optionsHandler = optionsHandler
         links = {}
         with open(pathToJsonFile, 'r') as f:
             links = json.loads(f.read())
@@ -113,44 +118,43 @@ class JenkinsMenu(wx.Menu):
 
     def getBuild(self, info):
         def getBuildEvent(event):
-            if len(self.parent.getOption('Jenkins credentials')) != 2:
+            if len(self.optionsHandler.getOption('Jenkins credentials')) != 2:
                 errorDlg = wx.MessageDialog(self.parent, 'Please provide your jenkins credentials (file -> options)', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
                 errorDlg.ShowModal()
                 return
-            buildInfo = RetrieveLinkDialog(self.parent, info).getLink()
-            DownloadBuildDialog(self.parent, buildInfo).downloadBuild()
+            buildInfo = RetrieveLinkDialog(self.parent, info, self.optionsHandler).getLink()
+            DownloadBuildDialog(self.parent, buildInfo, self.optionsHandler).downloadBuild()
         return getBuildEvent
 
 class OptionsFrame(wx.Frame):
-    def __init__(self, parent, disabler):
+    def __init__(self, parent, disabler, optionsHandler):
         wx.Frame.__init__(self, parent, title = 'Options')
         self.mainWindow = parent
         self.disabler = disabler
-        self.panel = OptionsPanel(self, self.mainWindow)
+        self.panel = OptionsPanel(self, optionsHandler)
         self.bindEvents()
         self.Fit()
-
         self.Show(True)
     
     def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
 
-    def OnClose(self, event):
+    def onClose(self, event):
         del self.disabler
         self.Destroy()
         self.mainWindow.Raise()
 
 class OptionsPanel(wx.Panel):
-    def __init__(self, parent, mainWindow):
+    def __init__(self, parent, optionsHandler):
         wx.Panel.__init__(self, parent)
-        self.mainWindow = mainWindow
-        self.optionCategories = self.mainWindow.getOptionsCategories()
+        self.parent = parent
+        self.optionsHandler = optionsHandler
         self.createPanel()
 
     def createPanel(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
         first = True
-        for i, j in self.optionCategories:
+        for i, j in self.optionsHandler.getOptionsCategories():
             rowSizer = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self, label = i, style = wx.TE_CENTRE, size = (100, 10))
             rowSizer.Add(label, 0, wx.EXPAND | wx.TOP, 8)
@@ -159,20 +163,27 @@ class OptionsPanel(wx.Panel):
             else:
                 first = False
             if j == 'folder':
-                valueCtrl = wx.TextCtrl(self, value = self.mainWindow.getOption(i), size = (210, -1), style = wx.TE_READONLY)
+                valueCtrl = wx.TextCtrl(self, value = self.optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
                 rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
                 editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl), editBtn)
             elif j == 'input':
-                inputUsername = wx.TextCtrl(self, value = self.mainWindow.getOption(i, True)[0], size = (100, -1))
+                inputUsername = wx.TextCtrl(self, value = self.optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
                 rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
-                inputPassword = wx.TextCtrl(self, value = self.mainWindow.getOption(i, True)[1], size = (100, -1))
+                inputPassword = wx.TextCtrl(self, value = self.optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
                 rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
-                saveBtn = wx.Button(self, wx.ID_ANY, 'Save')
-                rowSizer.Add(saveBtn, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption(i, inputUsername, inputPassword), saveBtn)
+                editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
+                rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
+                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption, editBtn)
             sizer.Add(rowSizer, 0, wx.EXPAND | wx.ALL, 5)
+        
+        sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+
+        closeBtn = wx.Button(self, wx.ID_ANY, 'Close')
+        self.Bind(wx.EVT_BUTTON, self.parent.onClose, closeBtn)
+        sizer.Add(closeBtn, 0, wx.CENTER | wx.ALL, 5)
+
         self.SetSizer(sizer)
         self.Fit()
 
@@ -181,23 +192,49 @@ class OptionsPanel(wx.Panel):
             with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
                 if dlg.ShowModal() == wx.ID_OK:
                     newOption = dlg.GetPath()
-                    self.mainWindow.setOption(option, newOption)
+                    self.optionsHandler.setOption(option, newOption)
                     valueControl.SetValue(newOption)
         return editOptionEvent
 
-    def editCredentialsOption(self, option, username, password):
-        def editCredentialsEvent(event):
-            self.mainWindow.setOption(option, (username.GetValue(), password.GetValue()))
-        return editCredentialsEvent
+    def editCredentialsOption(self, event):
+        disabler = wx.WindowDisabler()
+        JenkinsCredentialsEditFrame(self, self.optionsHandler, disabler)
 
+class JenkinsCredentialsEditFrame(wx.Frame):
+    def __init__(self, parent, mainWindow, disabler):
+        wx.Frame.__init__(self, parent, title = 'Edit credentials')
+        self.parent = parent
+        self.disabler = disabler
+        self.panel = JenkinsCredentialsEditPanel(self, mainWindow)
+        self.bindEvents()
+        self.Fit()
+        self.Show(True)
+    
+    def bindEvents(self):
+        self.Bind(wx.EVT_CLOSE, self.onClose)
 
+    def onClose(self, event):
+        del self.disabler
+        self.Destroy()
+        self.mainWindow.Raise()
+
+class JenkinsCredentialsEditPanel(wx.Panel):
+    def __init__(self, parent, mainWindow):
+        wx.Panel.__init__(self, parent)
+        self.parent = parent
+        self.mainWindow = mainWindow
+        self.createPanel()
+
+    def createPanel(self):
+        pass
 
 class RetrieveLinkDialog(wx.GenericProgressDialog):
-    def __init__(self, parent, info):
-        self.dlg = wx.GenericProgressDialog.__init__(self, 'Working...', 'Retrieving build information...', style = wx.PD_APP_MODAL)
+    def __init__(self, parent, info, optionsHandler):
+        wx.GenericProgressDialog.__init__(self, 'Working...', 'Retrieving build information...', style = wx.PD_APP_MODAL)
         self.parent = parent
+        self.optionsHandler = optionsHandler
         self.info = info
-        self.auth = self.parent.getOption('Jenkins credentials')
+        self.auth = self.optionsHandler.getOption('Jenkins credentials')
 
     def getLink(self):
         if self.info[1] == '':
@@ -271,13 +308,14 @@ class RetrieveLinkDialog(wx.GenericProgressDialog):
             return
 
 class DownloadBuildDialog(wx.GenericProgressDialog):
-    def __init__(self, parent, info):
+    def __init__(self, parent, info, optionsHandler):
         self.parent = parent
         self.info = info
+        self.optionsHandler = optionsHandler
         self.dlg = wx.GenericProgressDialog.__init__(self, 'Downloading build!', self.info[0][1])
 
     def downloadBuild(self):
-        buildFolder = self.parent.getOption('Builds folder')
+        buildFolder = self.optionsHandler.getOption('Builds folder')
         response = requests.get(self.info[0][0], auth = (self.info[1][0], self.info[1][1]), stream = True)
         with open(os.path.join(buildFolder, self.info[0][1]), 'wb') as f:
             buildSize = float(self.info[0][2]) * 1048576 
@@ -293,14 +331,14 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
                     self.Update(curProgress, '{} \n {}MB / {}MB'.format(self.info[0][1], progressInMb[:progressInMb.find('.')+3], self.info[0][2]))
 
 class DevicesPanel(wx.Panel):
-    def __init__(self, parent, adb):
+    def __init__(self, parent, adb, optionsHandler):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
         self.adb = adb
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
-        self.buttonsPanel = RefreshButtonPanel(self, self.parent, self.adb)
+        self.buttonsPanel = RefreshButtonPanel(self, self.parent, self.adb, optionsHandler)
 
         self.sizer.Add(self.buttonsPanel, 0, wx.EXPAND | wx.ALL, 15)
         self.sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.RIGHT | wx.LEFT, 6)
@@ -399,10 +437,11 @@ class DevicesCheckboxesPanel(wx.Panel):
             i[0].SetValue(state)
 
 class RefreshButtonPanel(wx.Panel):
-    def __init__(self, parent, mainWindow, adb):
+    def __init__(self, parent, mainWindow, adb, optionsHandler):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
         self.adb = adb
+        self.optionsHandler = optionsHandler
         self.mainWindow = mainWindow
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.createPanel()
@@ -440,7 +479,7 @@ class RefreshButtonPanel(wx.Panel):
             errorDlg.ShowModal()
             return
         disabler = wx.WindowDisabler()
-        ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices)
+        ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices, self.optionsHandler)
 
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckboxesPanel()
@@ -452,7 +491,7 @@ class RefreshButtonPanel(wx.Panel):
             errorDlg.ShowModal()
             return
         disabler = wx.WindowDisabler()
-        BuildInstallerFrame(self.mainWindow, disabler, self.adb, devices)
+        BuildInstallerFrame(self.mainWindow, disabler, self.adb, devices, self.optionsHandler)
 
     def checkAll(self, btn):
         def checkAllEvent(event):
@@ -539,12 +578,12 @@ class DeviceInfoPanel(wx.Panel):
             print('got it!')
 
 class ScreenshotCaptureFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices):
+    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, optionsHandler):
         self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!')
         self.disabler = disabler
         self.mainWindow = mainWindow
 
-        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, self.mainWindow.getOption('Screenshots folder'))
+        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, optionsHandler.getOption('Screenshots folder'))
         self.bindEvents()
         self.Show()
 
@@ -624,13 +663,13 @@ class ScreenshotCapturePanel(wx.Panel):
         return '{}-{}.png'.format(model, deviceScreenSize)
 
 class BuildInstallerFrame(wx.Frame):
-    def __init__(self, mainWindow, disabler, adb, deviceList):
+    def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
         wx.Frame.__init__(self, mainWindow, title = 'Installing builds')
         self.disabler = disabler
         self.mainWindow = mainWindow
 
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.topPanel = BuildInstallerTopPanel(self, self.mainWindow.getOption('Builds folder'))
+        self.topPanel = BuildInstallerTopPanel(self, optionsHandler.getOption('Builds folder'))
         self.bottomPanel = BuildInstallerBottomPanel(self, deviceList, adb)
         self.mainSizer.Add(self.topPanel, 0, wx.EXPAND)
         self.mainSizer.Add(self.bottomPanel, 0, wx.EXPAND)
