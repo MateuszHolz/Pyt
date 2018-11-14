@@ -42,8 +42,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.onExit)
 
         self.SetSizer(mainSizer)
-        self.SetAutoLayout(1)
-        mainSizer.Fit(self)
+        self.Fit()
         self.Show(True)
 
     def getOptionsIfAlreadyExist(self, folderPath, filePath):
@@ -287,21 +286,19 @@ class DevicesPanel(wx.Panel):
         self.buttonsPanel = RefreshButtonPanel(self, self.parent, self.adb)
 
         self.sizer.Add(self.buttonsPanel, 0, wx.EXPAND | wx.ALL, 15)
-        self.sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+        self.sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.RIGHT | wx.LEFT, 6)
         self.sizer.Add(self.checkBoxesPanel, 0, wx.EXPAND | wx.BOTTOM | wx.LEFT | wx.RIGHT, 5)
 
         self.SetSizer(self.sizer)
         self.Fit()
     
     def refreshCheckboxesPanel(self):
-        self.sizer.Remove(2)
         self.checkBoxesPanel.Destroy()
         self.checkBoxesPanel = DevicesCheckboxesPanel(self, self.parent, self.adb)
         self.sizer.Add(self.checkBoxesPanel, 0, wx.EXPAND | wx.BOTTOM | wx.LEFT | wx.RIGHT, 5)
-        self.sizer.Layout()
+        self.Layout()
         self.Fit()
-        self.parent.Layout()
-        self.parent.Fit()   
+        self.parent.Fit()
 
 class DevicesCheckboxesPanel(wx.Panel):
     def __init__(self, parent, mainWindow, adb):
