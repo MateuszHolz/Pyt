@@ -138,7 +138,7 @@ class OptionsFrame(wx.Frame):
     
     def bindEvents(self):
         self.Bind(wx.EVT_CLOSE, self.onClose)
-
+    
     def onClose(self, event):
         del self.disabler
         self.Destroy()
@@ -149,11 +149,22 @@ class OptionsPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.parent = parent
         self.optionsHandler = optionsHandler
+        self.changedOptions = {}
         self.createPanel()
 
     def createPanel(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
         first = True
+
+        buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        saveBtn = wx.Button(self, wx.ID_ANY, 'Save')
+        saveBtn.Disable()
+        buttonsSizer.Add(saveBtn, 0, wx.CENTER | wx.ALL, 5)
+        
+        closeBtn = wx.Button(self, wx.ID_ANY, 'Close')
+        buttonsSizer.Add(closeBtn, 0, wx.CENTER | wx.ALL, 5)
+
         for i, j in self.optionsHandler.getOptionsCategories():
             rowSizer = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self, label = i, style = wx.TE_CENTRE, size = (100, 10))
@@ -167,7 +178,7 @@ class OptionsPanel(wx.Panel):
                 rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
                 editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl), editBtn)
+                self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl, saveBtn), editBtn)
             elif j == 'input':
                 inputUsername = wx.TextCtrl(self, value = self.optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
                 rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
@@ -179,22 +190,34 @@ class OptionsPanel(wx.Panel):
             sizer.Add(rowSizer, 0, wx.EXPAND | wx.ALL, 5)
         
         sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+        sizer.Add(buttonsSizer, 0, wx.CENTER | wx.ALL, 5)
 
-        closeBtn = wx.Button(self, wx.ID_ANY, 'Close')
+        self.Bind(wx.EVT_BUTTON, self.saveChanges(saveBtn), saveBtn)
         self.Bind(wx.EVT_BUTTON, self.parent.onClose, closeBtn)
-        sizer.Add(closeBtn, 0, wx.CENTER | wx.ALL, 5)
-
+        
         self.SetSizer(sizer)
         self.Fit()
 
-    def editFileOption(self, option, valueControl):
+    def saveChanges(self, btn):
+        def saveChangesEvent(event):
+            for i in self.changedOptions.keys():
+                self.optionsHandler.setOption(i, self.changedOptions[i])
+            btn.Disable()
+        return saveChangesEvent
+
+
+    def editFileOption(self, option, valueControl, saveBtn):
         def editOptionEvent(event):
             with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
                 if dlg.ShowModal() == wx.ID_OK:
                     newOption = dlg.GetPath()
-                    self.optionsHandler.setOption(option, newOption)
-                    valueControl.SetValue(newOption)
+                    self.onChangedOption(option, newOption, valueControl, saveBtn)
         return editOptionEvent
+
+    def onChangedOption(self, option, value, textCtrl, saveBtn):
+        self.changedOptions[option] = value
+        textCtrl.SetValue(value)
+        saveBtn.Enable()
 
     def editCredentialsOption(self, event):
         disabler = wx.WindowDisabler()
@@ -216,13 +239,12 @@ class JenkinsCredentialsEditFrame(wx.Frame):
     def onClose(self, event):
         del self.disabler
         self.Destroy()
-        self.mainWindow.Raise()
+        self.parent.Raise()
 
 class JenkinsCredentialsEditPanel(wx.Panel):
     def __init__(self, parent, mainWindow):
         wx.Panel.__init__(self, parent)
         self.parent = parent
-        self.mainWindow = mainWindow
         self.createPanel()
 
     def createPanel(self):
