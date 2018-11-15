@@ -738,7 +738,7 @@ class BuildInstallerTopPanel(wx.Panel):
         buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
         installButton = wx.Button(self, wx.ID_ANY, 'Install')
         buttonsSizer.Add(installButton, 0, wx.EXPAND | wx.ALL, 3)
-        optionsComboBox = wx.ComboBox(self, wx.ID_ANY, value = 'Clean', choices = ('Overwrite', 'Clean'), style = wx.CB_READONLY | wx.CENTRE)
+        optionsComboBox = wx.ComboBox(self, wx.ID_ANY, value = 'Clean', choices = ('Clean', 'Overwrite'), style = wx.CB_READONLY)
         buttonsSizer.Add(optionsComboBox, 0, wx.EXPAND | wx.ALL, 3)
         mainSizer.Add(buttonsSizer, 0, wx.CENTRE | wx.ALL, 5)
 
@@ -842,9 +842,9 @@ class BuildInstallerBottomPanel(wx.Panel):
                 statusLabel.SetLabel(clbk)
             else:
                 statusLabel.SetLabel('Build not installed.')
-            time.sleep(1)
-            statusLabel.SetLabel('Installing...')
-            statusLabel.SetLabel(self.adb.installBuild(device, build))
+        time.sleep(1)
+        statusLabel.SetLabel('Installing...')
+        statusLabel.SetLabel(self.adb.installBuild(device, build))
 
 class FileDragAndDropHandler(wx.FileDropTarget):
     def __init__(self, target, parentPanel):
