@@ -422,9 +422,9 @@ class DevicesCheckboxesPanel(wx.Panel):
 
             modelLabel = wx.StaticText(self, label = model, style = wx.CENTER)
             checkBx = wx.CheckBox(self, style = wx.CENTER)
-            infoButton = wx.Button(self, label = 'i', style = wx.CENTER)
+            infoButton = wx.Button(self, label = 'i', style = wx.CENTER, size = (20, 5))
 
-            leftColumn.Add(modelLabel, 1, wx.CENTER | wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 3)
+            leftColumn.Add(modelLabel, 1, wx.CENTER | wx.ALL, 9)
             middleColumn.Add(checkBx, 1, wx.CENTER | wx.ALL, 3)
             rightColumn.Add(infoButton, 1, wx.CENTER | wx.ALL, 3)
 
@@ -735,10 +735,14 @@ class BuildInstallerTopPanel(wx.Panel):
         dragAndDropHandler = FileDragAndDropHandler(bottomRow, self)
         bottomRow.SetDropTarget(dragAndDropHandler)
 
+        buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
         installButton = wx.Button(self, wx.ID_ANY, 'Install')
-        mainSizer.Add(installButton, 0, wx.CENTRE | wx.ALL, 5)
+        buttonsSizer.Add(installButton, 0, wx.EXPAND | wx.ALL, 3)
+        optionsComboBox = wx.ComboBox(self, wx.ID_ANY, value = 'Clean', choices = ('Overwrite', 'Clean'), style = wx.CB_READONLY | wx.CENTRE)
+        buttonsSizer.Add(optionsComboBox, 0, wx.EXPAND | wx.ALL, 3)
+        mainSizer.Add(buttonsSizer, 0, wx.CENTRE | wx.ALL, 5)
 
-        self.Bind(wx.EVT_BUTTON, self.startInstallingBuild, installButton)
+        self.Bind(wx.EVT_BUTTON, self.startInstallingBuild(optionsComboBox), installButton)
         self.Bind(wx.EVT_BUTTON, self.getLatestBuildFromOptionsFolder(bottomRow), chooseLatestButton)
         self.Bind(wx.EVT_BUTTON, self.selectBuild(bottomRow), selectBuildButton)
         self.SetSizer(mainSizer)
@@ -761,8 +765,10 @@ class BuildInstallerTopPanel(wx.Panel):
         self.buildChosen = build
         textCtrl.SetValue(build)
 
-    def startInstallingBuild(self, event):
-        self.parent.installBuild(self.buildChosen)
+    def startInstallingBuild(self, comboBoxCtrl):
+        def startInstallingBuildEvent(event):
+            self.parent.bottomPanel.installBuild(self.buildChosen, comboBoxCtrl.GetStringSelection())
+        return startInstallingBuildEvent
 
 class BuildInstallerBottomPanel(wx.Panel):
     def __init__(self, parent, deviceList, adb):
@@ -803,19 +809,42 @@ class BuildInstallerBottomPanel(wx.Panel):
         mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(mainSizer)
 
-    def installBuild(self, build):
+    def installBuild(self, build, option):
         if not build.endswith('.apk'):
             errorDlg = wx.MessageDialog(self, "Please choose build!", 'Error!',
                                          style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             return
         for i, j in zip(self.deviceList, self.statusLabels):
-            thread = threading.Thread(target = self.installingThread, args = (i[0], build, j))
+            thread = threading.Thread(target = self.installingThread, args = (i[0], build, j, option))
             thread.start()
 
-    def installingThread(self, device, build, statusLabel):
-        statusLabel.SetLabel('Installing...')
-        statusLabel.SetLabel(self.adb.installBuild(device, build))
+    def installingThread(self, device, build, statusLabel, option):
+        if option == 'Clean':
+            buildPackage = self.adb.getPackageNameOfAppFromApk(build)
+            statusLabel.SetLabel('Checking if exists...'.format(buildPackage))
+            if self.adb.isBuildIsAlreadyInstalled(device, buildPackage):
+                statusLabel.SetLabel('Build exists!'.format(buildPackage))
+                time.sleep(1)
+                statusLabel.SetLabel('Checking version...')
+                time.sleep(1)
+                versionOfApk = self.adb.getBuildVersionFromApk(build)
+                versionOnDevice = self.adb.getBuildVersionFromDevice(device, buildPackage)
+                if versionOfApk == versionOnDevice:
+                    statusLabel.SetLabel('Versions match!')
+                    return
+                else:
+                    statusLabel.SetLabel('Versions dont match')
+                time.sleep(1)
+                statusLabel.SetLabel('Uninstalling {}'.format(buildPackage))
+                time.sleep(1)
+                clbk = self.adb.uninstallApp(device, buildPackage)
+                statusLabel.SetLabel(clbk)
+            else:
+                statusLabel.SetLabel('Build not installed.')
+            time.sleep(1)
+            statusLabel.SetLabel('Installing...')
+            statusLabel.SetLabel(self.adb.installBuild(device, build))
 
 class FileDragAndDropHandler(wx.FileDropTarget):
     def __init__(self, target, parentPanel):
@@ -839,6 +868,68 @@ class FileDragAndDropHandler(wx.FileDropTarget):
 class Adb():
     def __init__(self):
         pass
+
+    @staticmethod
+    def uninstallApp(device, pckg):
+        try:
+            subprocess.check_output(r'adb -s {} uninstall {}'.format(device, pckg))
+            return 'Done!'
+        except subprocess.CalledProcessError:
+            return 'An error occured.'
+
+    @staticmethod
+    def removeLocalAppData(device, pckg):
+        try:
+            subprocess.check_output(r'adb -s {} shell pm clear {}'.format(device, pckg))
+        except subprocess.CalledProcessError:
+            return False
+
+    @staticmethod
+    def isBuildIsAlreadyInstalled(device, pckg):
+        try:
+            out = subprocess.check_output(r'adb -s {} shell pm list packages'.format(device)).decode().split()
+            for i in out:
+                if pckg in i:
+                    return True
+            return False
+        except subprocess.CalledProcessError:
+            return False
+
+    @staticmethod
+    def getPackageNameOfAppFromApk(build):
+        try:
+            out = subprocess.check_output(r'aapt dump badging {}'.format(build)).decode().split()
+            for i in out:
+                if 'com.' in i:
+                    packageName = i[i.find('com.'):-1]
+                    return packageName
+        except FileNotFoundError:
+            return 'Aapt not found.'
+        except subprocess.CalledProcessError:
+            return 'An error occured.'
+
+    @staticmethod
+    def getBuildVersionFromApk(build):
+        try:
+            out = subprocess.check_output(r'aapt dump badging {}'.format(build)).decode().split()
+            for i in out:
+                if 'versionName' in i:
+                    return i[i.find('=')+2:-1]
+        except subprocess.CalledProcessError:
+            return False
+        except FileNotFoundError:
+            return 'Aapt not found.'
+
+    @staticmethod
+    def getBuildVersionFromDevice(device, pckg):
+        try:
+            out = subprocess.check_output(r'adb -s {} shell dumpsys package {}'.format(device, pckg)).decode().split()
+            for i in out:
+                if 'versionName' in i:
+                    return i[i.find('=')+1:]
+            return False
+        except subprocess.CalledProcessError:
+            return False
 
     @staticmethod
     def getListOfAttachedDevices():

@@ -1,13 +1,13 @@
-import requests
+import subprocess
+import os
 
-url = 'http://byd.jenkins.game-lion.com:8080/view/Huuuge%20Stars/view/Client%20Dev/job/huuuge-stars/job/client-dev/job/hs-ios/lastSuccessfulBuild/'
-user = 'mho'
-pw = 'wtdrgad7JHr5yzeJ'
+build = r'C:\Users\mho\Downloads\MagicCasino-debug-slots-gp-dev-5406.apk'
 
+print(os.path.exists(build))
 
-response = requests.get(url, auth = (user, pw))
+out = subprocess.check_output(r'aapt dump badging "{}"'.format(build)).decode().split()
 
-print(response.text.split())
-for i in response.text.split():
-    if('HuuugeStars') in i:
+for i in out:
+    if 'com.' in i:
         print(i)
+        break
