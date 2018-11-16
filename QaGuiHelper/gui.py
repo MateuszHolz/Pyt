@@ -828,11 +828,21 @@ class BuildInstallerBottomPanel(wx.Panel):
                 time.sleep(1)
                 statusLabel.SetLabel('Checking version...')
                 time.sleep(1)
-                versionOfApk = self.adb.getBuildVersionFromApk(build)
-                versionOnDevice = self.adb.getBuildVersionFromDevice(device, buildPackage)
-                if versionOfApk == versionOnDevice:
+                if self.adb.getBuildVersionFromDevice(device, buildPackage) == self.adb.getBuildVersionFromApk(build):
                     statusLabel.SetLabel('Versions match!')
-                    return
+                    time.sleep(1)
+                    statusLabel.SetLabel('Checking type...')
+                    if self.adb.isApkDebuggable(build) == self.adb.isInstalledPackageDebuggable(device, buildPackage):
+                        statusLabel.SetLabel('Types match!')
+                        time.sleep(1)
+                        statusLabel.SetLabel('Removing local data...')
+                        time.sleep(1)
+                        if self.adb.removeLocalAppData(device, buildPackage):
+                            statusLabel.SetLabel('Done!')
+                            return
+                    else:
+                        statusLabel.SetLabel('Types dont match...')
+                        time.sleep(1)
                 else:
                     statusLabel.SetLabel('Versions dont match')
                 time.sleep(1)
@@ -844,7 +854,11 @@ class BuildInstallerBottomPanel(wx.Panel):
                 statusLabel.SetLabel('Build not installed.')
         time.sleep(1)
         statusLabel.SetLabel('Installing...')
-        statusLabel.SetLabel(self.adb.installBuild(device, build))
+        if self.adb.installBuild(device, build):
+            statusLabel.SetLabel('Done!')
+        else:
+            statusLabel.SetLabel('An error occured.')
+        return
 
 class FileDragAndDropHandler(wx.FileDropTarget):
     def __init__(self, target, parentPanel):
@@ -878,9 +892,35 @@ class Adb():
             return 'An error occured.'
 
     @staticmethod
+    def isApkDebuggable(build):
+        try:
+            out = subprocess.check_output(r'aapt dump badging {}'.format(build)).decode().split()
+            for i in out:
+                if 'application-debuggable' in i:                    
+                    return True
+            return False
+        except subprocess.CalledProcessError:
+            return False
+        except FileNotFoundError:
+            return 'Aapt not found.'
+
+    @staticmethod
+    def isInstalledPackageDebuggable(device, pckg):
+        try:
+            out = subprocess.check_output(r'adb -s {} shell dumpsys package {}'.format(device, pckg)).decode().rsplit('\n')
+            for i in [j.replace(' ', '') for j in out]:
+                if 'flags' in i:
+                    if 'DEBUG' in i:
+                        return True
+            return False
+        except subprocess.CalledProcessError:
+            return
+    
+    @staticmethod
     def removeLocalAppData(device, pckg):
         try:
             subprocess.check_output(r'adb -s {} shell pm clear {}'.format(device, pckg))
+            return True
         except subprocess.CalledProcessError:
             return False
 
@@ -985,11 +1025,11 @@ class Adb():
         try:
             print('starting to install on {}'.format(device))
             raw_out = subprocess.check_output(r'adb -s {} install -r "{}"'.format(device, build), timeout = timeout)
-            return 'Installed!'
+            return True
         except subprocess.CalledProcessError:
-            return 'Error!'
+            return False
         except subprocess.TimeoutExpired:
-            return 'Timed out! ({}s)'.format(timeout)
+            return False
 
     @staticmethod
     def getDeviceIpAddress(device):
