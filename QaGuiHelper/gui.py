@@ -597,7 +597,7 @@ class DeviceInfoPanel(wx.Panel):
         try:
             textCtrl.SetValue(functionToCall(deviceId))
         except RuntimeError:
-            print('got it!')
+            pass
 
 class ScreenshotCaptureFrame(wx.Frame):
     def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, optionsHandler):
@@ -1023,7 +1023,6 @@ class Adb():
     def installBuild(device, build):
         timeout = 60
         try:
-            print('starting to install on {}'.format(device))
             raw_out = subprocess.check_output(r'adb -s {} install -r "{}"'.format(device, build), timeout = timeout)
             return True
         except subprocess.CalledProcessError:
