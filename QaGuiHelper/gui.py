@@ -301,8 +301,6 @@ class JenkinsCredentialsEditPanel(wx.Panel):
             self.parent.parent.Raise()
         return updateJenkinsCredsEvent
 
-
-
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info, optionsHandler):
         wx.GenericProgressDialog.__init__(self, 'Working...', 'Retrieving build information...', style = wx.PD_APP_MODAL)
