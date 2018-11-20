@@ -186,7 +186,7 @@ class OptionsPanel(wx.Panel):
                 rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
                 editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption, editBtn)
+                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption((inputUsername, inputPassword), saveBtn), editBtn)
             sizer.Add(rowSizer, 0, wx.EXPAND | wx.ALL, 5)
         
         sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
@@ -216,39 +216,92 @@ class OptionsPanel(wx.Panel):
 
     def onChangedOption(self, option, value, textCtrl, saveBtn):
         self.changedOptions[option] = value
-        textCtrl.SetValue(value)
+        if isinstance(textCtrl, wx.TextCtrl):
+            textCtrl.SetValue(value)
+        else:
+            for i, j in zip(textCtrl, value):
+                i.SetValue(j)
         saveBtn.Enable()
 
-    def editCredentialsOption(self, event):
-        disabler = wx.WindowDisabler()
-        JenkinsCredentialsEditFrame(self, self.optionsHandler, disabler)
+    def editCredentialsOption(self, jenkinsCredentialControls, saveBtn):
+        def editCredentialsOptionEvent(event):
+            disabler = wx.WindowDisabler()
+            JenkinsCredentialsEditFrame(self, self.optionsHandler, disabler, self.onChangedOption, saveBtn, jenkinsCredentialControls)
+        return editCredentialsOptionEvent
 
 class JenkinsCredentialsEditFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, disabler):
+    def __init__(self, parent, optionsHandler, disabler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
         wx.Frame.__init__(self, parent, title = 'Edit credentials')
         self.parent = parent
         self.disabler = disabler
-        self.panel = JenkinsCredentialsEditPanel(self, mainWindow)
+        self.panel = JenkinsCredentialsEditPanel(self, optionsHandler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls)
         self.bindEvents()
         self.Fit()
         self.Show(True)
     
     def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.Bind(wx.EVT_CLOSE, self.onClose())
 
-    def onClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.parent.Raise()
+    def onClose(self):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            self.parent.Raise()
+        return onCloseEvent
 
 class JenkinsCredentialsEditPanel(wx.Panel):
-    def __init__(self, parent, mainWindow):
+    def __init__(self, parent, optionsHandler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
         wx.Panel.__init__(self, parent)
         self.parent = parent
+        self.saveBtn = saveBtn
+        self.optionsHandler = optionsHandler
+        self.onChangedOptionFunc = onChangedOptionFunc
+        self.jenkinsCredentialControls = jenkinsCredentialControls
         self.createPanel()
 
     def createPanel(self):
-        pass
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        
+        topSizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        userSizer = wx.BoxSizer(wx.VERTICAL)
+        userLabel = wx.StaticText(self, label = 'User')
+        userSizer.Add(userLabel, 0, wx.CENTER | wx.ALL, 3)
+        userInputField = wx.TextCtrl(self, size = (100, -1))
+        userSizer.Add(userInputField, 0, wx.ALL, 3)
+
+        passwordSizer = wx.BoxSizer(wx.VERTICAL)
+        passwordLabel = wx.StaticText(self, label = 'Password')
+        passwordSizer.Add(passwordLabel, 0, wx.CENTER | wx.ALL, 3)
+        passwordInputField = wx.TextCtrl(self, size = (100, -1))
+        passwordSizer.Add(passwordInputField, 0, wx.ALL, 3)
+
+        topSizer.Add(userSizer, 0, wx.EXPAND | wx.ALL, 5)
+        topSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+        topSizer.Add(passwordSizer, 0, wx.EXPAND | wx.ALL, 5)
+
+        bottomSizer = wx.BoxSizer(wx.HORIZONTAL)
+        saveBtn = wx.Button(self, wx.ID_ANY, 'Update')
+        self.Bind(wx.EVT_BUTTON, self.updateJenkinsCreds(userInputField, passwordInputField), saveBtn)
+        bottomSizer.Add(saveBtn, 0, wx.CENTER | wx.EXPAND | wx.BOTTOM | wx.RIGHT | wx.LEFT, 10)
+
+        mainSizer.Add(topSizer, 0)
+        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
+        mainSizer.Add(bottomSizer, 0, wx.CENTER)
+        self.SetSizer(mainSizer)
+        self.Fit()
+
+    def updateJenkinsCreds(self, usernameInputField, passwordInputField):
+        def updateJenkinsCredsEvent(event):
+            newCreds = (usernameInputField.GetValue(), passwordInputField.GetValue())
+            self.onChangedOptionFunc(self.optionsHandler.getOptionsCategories()[2][0], newCreds, self.jenkinsCredentialControls, self.saveBtn)
+            del self.parent.disabler
+            #hackish way to do it - TODO: implement it in some elegant way
+            self.parent.Destroy()
+            self.parent.parent.Raise()
+        return updateJenkinsCredsEvent
+
+
 
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info, optionsHandler):
