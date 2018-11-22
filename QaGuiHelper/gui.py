@@ -16,7 +16,7 @@ class MainFrame(wx.Frame):
         self.adb = Adb()
         self.devicesPanel = DevicesPanel(self, self.adb, self.optionsHandler)
 
-        mainSizer.Add(self.devicesPanel, 1)
+        mainSizer.Add(self.devicesPanel, 1, wx.EXPAND)
 
         fileMenu = wx.Menu()
         options = fileMenu.Append(wx.ID_ANY, 'Options')
@@ -547,12 +547,13 @@ class RefreshButtonPanel(wx.Panel):
 
     def getScreenshotFromDevices(self, event):
         devices = self.parent.checkBoxesPanel.getCheckedDevices()
+        ssFolder = self.optionsHandler.getOption('Screenshots folder')
         if (len(devices)) == 0:
             errorDlg = wx.MessageDialog(self.parent, 'At least 1 device must be selected!', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             return
         disabler = wx.WindowDisabler()
-        ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices, self.optionsHandler)
+        ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices, ssFolder)
 
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckboxesPanel()
@@ -651,13 +652,14 @@ class DeviceInfoPanel(wx.Panel):
             pass
 
 class ScreenshotCaptureFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, optionsHandler):
+    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, ssFolder):
         self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!')
         self.disabler = disabler
         self.mainWindow = mainWindow
 
-        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, optionsHandler.getOption('Screenshots folder'))
+        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, ssFolder)
         self.bindEvents()
+        self.Fit()
         self.Show()
 
     def bindEvents(self):
@@ -675,29 +677,39 @@ class ScreenshotCapturePanel(wx.Panel):
         self.directoryForScreenshots = directoryForScreenshots
         self.listOfDevices = listOfDevices
         self.statusLabels = []
-        self.createWindowContent()
+        self.createControls()
         self.deployScreenshotThreads()
 
-    def createWindowContent(self):
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-        header = wx.BoxSizer(wx.HORIZONTAL)
-        headerLabel = wx.StaticText(self, label = 'Capturing screenshots of {} device(s)'.format(len(self.listOfDevices)), size = (200, 30), style = wx.ALIGN_CENTER)
-        header.Add(headerLabel, 0, wx.CENTER)
-        mainSizer.Add(header, 0, wx.CENTER)
-        for i in self.listOfDevices:
-            row = wx.BoxSizer(wx.HORIZONTAL)
-            nameLabel = wx.StaticText(self, label = i[1], size = (130, 30), style = wx.ALIGN_RIGHT)
-            row.Add(nameLabel, 0, wx.EXPAND | wx.TOP, 10)
-            statusLabel = wx.StaticText(self, label = '...', size = (130, 30), style = wx.ALIGN_CENTER)
-            row.Add(statusLabel, 0, wx.EXPAND | wx.TOP, 10)
-            self.statusLabels.append(statusLabel)
-            mainSizer.Add(row, 0)
+    def createControls(self):
+        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        leftColumn = wx.BoxSizer(wx.VERTICAL)
+        rightColumn = wx.BoxSizer(wx.VERTICAL)
+        columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
 
+        devColumnNameLabel = wx.StaticText(self, label = 'Device', style = wx.CENTER)
+        devColumnNameLabel.SetFont(columnNameFont)
+        leftColumn.Add(devColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
+
+        statColumnNameLabel = wx.StaticText(self, label = 'Status', style = wx.CENTER)
+        statColumnNameLabel.SetFont(columnNameFont)
+        rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
+
+        for i in self.listOfDevices:
+            deviceLabel = wx.StaticText(self, label = i[1], style = wx.CENTER)
+            leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
+
+            statusLabel = wx.StaticText(self, label = 'Ready', style = wx.CENTER)
+            rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
+            self.statusLabels.append(statusLabel)
+
+        mainSizer.Add(leftColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
         self.SetSizer(mainSizer)
-        self.SetAutoLayout(1)
-        mainSizer.Fit(self)
-        self.Show(True)
-    
+        self.Fit()
+
     def deployScreenshotThreads(self):
         if not os.path.exists(self.directoryForScreenshots):
             time.sleep(0.2)
