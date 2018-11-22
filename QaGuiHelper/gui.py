@@ -680,7 +680,9 @@ class ScreenshotCapturePanel(wx.Panel):
         self.deployScreenshotThreads()
 
     def createControls(self):
-        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        listSizer = wx.BoxSizer(wx.HORIZONTAL)
         leftColumn = wx.BoxSizer(wx.VERTICAL)
         rightColumn = wx.BoxSizer(wx.VERTICAL)
         columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
@@ -703,9 +705,20 @@ class ScreenshotCapturePanel(wx.Panel):
             rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
             self.statusLabels.append(statusLabel)
 
-        mainSizer.Add(leftColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
-        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
-        mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+        listSizer.Add(leftColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+        listSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
+        listSizer.Add(rightColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+
+        mainSizer.Add(listSizer, 2, wx.EXPAND | wx.ALL, 5)
+
+        buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
+        openButton = wx.Button(self, wx.ID_ANY, 'Open Folder')
+        buttonSizer.Add(openButton, 1, wx.EXPAND | wx.ALL, 3)
+        closeButton = wx.Button(self, wx.ID_ANY, 'Close')
+        buttonSizer.Add(closeButton, 1, wx.EXPAND | wx.ALL, 3)
+        
+        mainSizer.Add(buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
+
         self.SetSizer(mainSizer)
         self.Fit()
 
