@@ -9,14 +9,13 @@ import wx
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
-        self.mainFrame = wx.Frame.__init__(self, parent, title = title, size=(-1, -1))
-        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.mainFrame = wx.Frame.__init__(self, parent, title = title, style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.optionsHandler = OptionsHandler()
 
         self.adb = Adb()
-        self.devicesPanel = DevicesPanel(self, self.adb, self.optionsHandler)
 
-        mainSizer.Add(self.devicesPanel, 1, wx.EXPAND)
+        mainSizer.Add(DevicesPanel(self, self.adb, self.optionsHandler), 1, wx.EXPAND)
 
         fileMenu = wx.Menu()
         options = fileMenu.Append(wx.ID_ANY, 'Options')
@@ -128,7 +127,7 @@ class JenkinsMenu(wx.Menu):
 
 class OptionsFrame(wx.Frame):
     def __init__(self, parent, disabler, optionsHandler):
-        wx.Frame.__init__(self, parent, title = 'Options')
+        wx.Frame.__init__(self, parent, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.mainWindow = parent
         self.disabler = disabler
         self.panel = OptionsPanel(self, optionsHandler)
@@ -231,7 +230,7 @@ class OptionsPanel(wx.Panel):
 
 class JenkinsCredentialsEditFrame(wx.Frame):
     def __init__(self, parent, optionsHandler, disabler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
-        wx.Frame.__init__(self, parent, title = 'Edit credentials')
+        wx.Frame.__init__(self, parent, title = 'Edit credentials', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.parent = parent
         self.disabler = disabler
         self.panel = JenkinsCredentialsEditPanel(self, optionsHandler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls)
@@ -579,7 +578,7 @@ class RefreshButtonPanel(wx.Panel):
 
 class DeviceInfoFrame(wx.Frame):
     def __init__(self, parent, mainWindow, deviceId, disabler, adb):
-        wx.Frame.__init__(self, parent, title = 'Device Info')
+        wx.Frame.__init__(self, parent, title = 'Device Info', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.mainWindow = mainWindow
         self.disabler = disabler
         self.panel = DeviceInfoPanel(self, deviceId, adb)
@@ -653,7 +652,7 @@ class DeviceInfoPanel(wx.Panel):
 
 class ScreenshotCaptureFrame(wx.Frame):
     def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, ssFolder):
-        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!')
+        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
         self.mainWindow = mainWindow
 
@@ -705,7 +704,7 @@ class ScreenshotCapturePanel(wx.Panel):
             self.statusLabels.append(statusLabel)
 
         mainSizer.Add(leftColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
-        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
         mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
         self.SetSizer(mainSizer)
         self.Fit()
@@ -749,7 +748,7 @@ class ScreenshotCapturePanel(wx.Panel):
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
-        wx.Frame.__init__(self, mainWindow, title = 'Installing builds')
+        wx.Frame.__init__(self, mainWindow, title = 'Installing builds', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
         self.mainWindow = mainWindow
 
