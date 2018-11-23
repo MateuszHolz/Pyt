@@ -672,9 +672,11 @@ class ScreenshotCaptureFrame(wx.Frame):
 class ScreenshotCapturePanel(wx.Panel):
     def __init__(self, parent, adb, listOfDevices, directoryForScreenshots):
         self.panel = wx.Panel.__init__(self, parent)
+        self.parent = parent
         self.adb = adb
         self.directoryForScreenshots = directoryForScreenshots
         self.listOfDevices = listOfDevices
+        self.buttons = []
         self.statusLabels = []
         self.createControls()
         self.deployScreenshotThreads()
@@ -713,11 +715,16 @@ class ScreenshotCapturePanel(wx.Panel):
 
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
         openButton = wx.Button(self, wx.ID_ANY, 'Open Folder')
+        self.buttons.append(openButton)
         buttonSizer.Add(openButton, 1, wx.EXPAND | wx.ALL, 3)
         closeButton = wx.Button(self, wx.ID_ANY, 'Close')
+        self.buttons.append(closeButton)
         buttonSizer.Add(closeButton, 1, wx.EXPAND | wx.ALL, 3)
-        
+
         mainSizer.Add(buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
+
+        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder, openButton)
+        self.Bind(wx.EVT_BUTTON, self.parent.onClose, closeButton)
 
         self.SetSizer(mainSizer)
         self.Fit()
@@ -730,9 +737,14 @@ class ScreenshotCapturePanel(wx.Panel):
             errorDlg.ShowModal()
             self.Close()
             return
+        threads = []
+        for i in self.buttons:
+            i.Disable()
         for i, j in zip(self.listOfDevices, self.statusLabels):
             localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], self.directoryForScreenshots, j, i[1]))
+            threads.append(localThread)
             localThread.start()
+        threading.Thread(target = self.unlockButtonsIfDone, args = (threads, )).start()
         
     def captureAndPullScreenshot(self, device, directory, statusLabel, model):
         statusLabel.SetLabel('Taking screenshot...')
@@ -758,6 +770,18 @@ class ScreenshotCapturePanel(wx.Panel):
             model = model.replace(i, '')
         deviceScreenSize = self.adb.getDeviceScreenSize(device)
         return '{}-{}.png'.format(model, deviceScreenSize)
+
+    def openScreenshotsFolder(self, event):
+        os.startfile(self.directoryForScreenshots)
+
+    def unlockButtonsIfDone(self, threads):
+        while all([i.is_alive() for i in threads]):
+            time.sleep(0.5)
+        for i in self.buttons:
+            try:
+                i.Enable()
+            except RuntimeError:
+                return
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
