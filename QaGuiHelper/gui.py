@@ -715,9 +715,11 @@ class ScreenshotCapturePanel(wx.Panel):
 
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
         openButton = wx.Button(self, wx.ID_ANY, 'Open Folder')
+        openButton.Disable()
         self.buttons.append(openButton)
         buttonSizer.Add(openButton, 1, wx.EXPAND | wx.ALL, 3)
         closeButton = wx.Button(self, wx.ID_ANY, 'Close')
+        closeButton.Disable()
         self.buttons.append(closeButton)
         buttonSizer.Add(closeButton, 1, wx.EXPAND | wx.ALL, 3)
 
@@ -737,16 +739,12 @@ class ScreenshotCapturePanel(wx.Panel):
             errorDlg.ShowModal()
             self.Close()
             return
-        threads = []
-        for i in self.buttons:
-            i.Disable()
+        buttonUnlocker = ButtonUnlocker(len(self.listOfDevices), self.buttons)
         for i, j in zip(self.listOfDevices, self.statusLabels):
-            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], self.directoryForScreenshots, j, i[1]))
-            threads.append(localThread)
+            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], self.directoryForScreenshots, j, i[1], buttonUnlocker))
             localThread.start()
-        threading.Thread(target = self.unlockButtonsIfDone, args = (threads, )).start()
         
-    def captureAndPullScreenshot(self, device, directory, statusLabel, model):
+    def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker):
         statusLabel.SetLabel('Taking screenshot...')
         pathToScreenOnDevice = ''
         fileName = self.getFileName(device, model)
@@ -756,11 +754,13 @@ class ScreenshotCapturePanel(wx.Panel):
         except RuntimeError:
             return
         if not clbk[1]:
+            buttonUnlocker.finishThread()
             return
         pathToScreenOnDevice = clbk[1]
         clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, directory)
         try:            
             statusLabel.SetLabel(clbk)
+            buttonUnlocker.finishThread()
         except RuntimeError:
             return
     
@@ -774,14 +774,26 @@ class ScreenshotCapturePanel(wx.Panel):
     def openScreenshotsFolder(self, event):
         os.startfile(self.directoryForScreenshots)
 
-    def unlockButtonsIfDone(self, threads):
-        while all([i.is_alive() for i in threads]):
-            time.sleep(0.5)
-        for i in self.buttons:
-            try:
+class ButtonUnlocker():
+    def __init__(self, count, btns):
+        print('button unlocker initialized with {} potentially running threads.'.format(count))
+        self.count = count
+        self.semph = threading.Semaphore()
+        self.buttons = btns
+
+    def finishThread(self):
+        print('acquiring semaphore')
+        self.semph.acquire()
+        print('counting down, current count: {}'.format(self.count))
+        self.count -= 1
+        print('count after substracting 1: {}'.format(self.count))
+        if self.count == 0:
+            print('enabling buttons')
+            for i in self.buttons:
                 i.Enable()
-            except RuntimeError:
-                return
+        print('releasing lock')
+        self.semph.release()
+        print('done')
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
