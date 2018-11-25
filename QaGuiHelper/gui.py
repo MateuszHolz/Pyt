@@ -784,16 +784,17 @@ class ButtonUnlocker():
     def finishThread(self):
         print('acquiring semaphore')
         self.semph.acquire()
-        print('counting down, current count: {}'.format(self.count))
-        self.count -= 1
-        print('count after substracting 1: {}'.format(self.count))
-        if self.count == 0:
-            print('enabling buttons')
-            for i in self.buttons:
-                i.Enable()
-        print('releasing lock')
-        self.semph.release()
-        print('done')
+        try:
+            self.count -= 1
+            print('count after substracting: {}'.format(self.count))
+            if self.count == 0:
+                print('enabling buttons')
+                for i in self.buttons:
+                    i.Enable()
+        finally:
+            print('releasing lock')
+            self.semph.release()
+            print('done')
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
