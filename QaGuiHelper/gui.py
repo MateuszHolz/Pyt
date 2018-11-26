@@ -776,25 +776,19 @@ class ScreenshotCapturePanel(wx.Panel):
 
 class ButtonUnlocker():
     def __init__(self, count, btns):
-        print('button unlocker initialized with {} potentially running threads.'.format(count))
         self.count = count
         self.semph = threading.Semaphore()
         self.buttons = btns
 
     def finishThread(self):
-        print('acquiring semaphore')
         self.semph.acquire()
         try:
             self.count -= 1
-            print('count after substracting: {}'.format(self.count))
             if self.count == 0:
-                print('enabling buttons')
                 for i in self.buttons:
                     i.Enable()
         finally:
-            print('releasing lock')
             self.semph.release()
-            print('done')
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
@@ -829,6 +823,7 @@ class BuildInstallerTopPanel(wx.Panel):
         self.parent = parent
         self.buildFolder = buildFolder
         self.buildChosen = ''
+        self.installBuildBtn = None
         self.createPanelContent()
 
     def createPanelContent(self):
@@ -848,13 +843,13 @@ class BuildInstallerTopPanel(wx.Panel):
         bottomRow.SetDropTarget(dragAndDropHandler)
 
         buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
-        installButton = wx.Button(self, wx.ID_ANY, 'Install')
-        buttonsSizer.Add(installButton, 0, wx.EXPAND | wx.ALL, 3)
+        self.installBuildBtn = wx.Button(self, wx.ID_ANY, 'Install')
+        buttonsSizer.Add(self.installBuildBtn, 0, wx.EXPAND | wx.ALL, 3)
         optionsComboBox = wx.ComboBox(self, wx.ID_ANY, value = 'Clean', choices = ('Clean', 'Overwrite'), style = wx.CB_READONLY)
         buttonsSizer.Add(optionsComboBox, 0, wx.EXPAND | wx.ALL, 3)
         mainSizer.Add(buttonsSizer, 0, wx.CENTRE | wx.ALL, 5)
 
-        self.Bind(wx.EVT_BUTTON, self.startInstallingBuild(optionsComboBox), installButton)
+        self.Bind(wx.EVT_BUTTON, self.startInstallingBuild(optionsComboBox), self.installBuildBtn)
         self.Bind(wx.EVT_BUTTON, self.getLatestBuildFromOptionsFolder(bottomRow), chooseLatestButton)
         self.Bind(wx.EVT_BUTTON, self.selectBuild(bottomRow), selectBuildButton)
         self.SetSizer(mainSizer)
@@ -886,14 +881,17 @@ class BuildInstallerBottomPanel(wx.Panel):
     def __init__(self, parent, deviceList, adb):
         wx.Panel.__init__(self, parent)
         self.parent = parent
-        self.deviceList = deviceList
+        self.listOfDevices = deviceList
         self.adb = adb
         self.statusLabels = []
+        self.buttons = []
         self.createControls()
         self.Fit()
 
     def createControls(self):
-        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        columnsSizer = wx.BoxSizer(wx.HORIZONTAL)
         leftColumn = wx.BoxSizer(wx.VERTICAL)
         rightColumn = wx.BoxSizer(wx.VERTICAL)
         columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
@@ -906,7 +904,7 @@ class BuildInstallerBottomPanel(wx.Panel):
         statColumnNameLabel.SetFont(columnNameFont)
         rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
 
-        for i in self.deviceList:
+        for i in self.listOfDevices:
             deviceLabel = wx.StaticText(self, label = i[1], style = wx.CENTER)
             leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.ALL, 3)
@@ -916,9 +914,18 @@ class BuildInstallerBottomPanel(wx.Panel):
             rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.ALL, 3)
             self.statusLabels.append(statusLabel)
 
-        mainSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 5)
-        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
-        mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 5)
+        columnsSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 5)
+        columnsSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        columnsSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 5)
+
+        self.closeBtn = wx.Button(self, wx.ID_ANY, 'Close')
+        self.Bind(wx.EVT_BUTTON, self.parent.onClose, self.closeBtn)
+        self.buttons.append(self.closeBtn)
+        self.buttons.append(self.parent.topPanel.installBuildBtn)
+
+        mainSizer.Add(columnsSizer, 0, wx.EXPAND)
+        mainSizer.Add(self.closeBtn, 0, wx.CENTER | wx.ALL, 5)
+        
         self.SetSizer(mainSizer)
 
     def installBuild(self, build, option):
@@ -927,11 +934,14 @@ class BuildInstallerBottomPanel(wx.Panel):
                                          style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             return
-        for i, j in zip(self.deviceList, self.statusLabels):
-            thread = threading.Thread(target = self.installingThread, args = (i[0], build, j, option))
+        for i in self.buttons:
+            i.Disable()
+        buttonUnlocker = ButtonUnlocker(len(self.listOfDevices), self.buttons)
+        for i, j in zip(self.listOfDevices, self.statusLabels):
+            thread = threading.Thread(target = self.installingThread, args = (i[0], build, j, option, buttonUnlocker))
             thread.start()
 
-    def installingThread(self, device, build, statusLabel, option):
+    def installingThread(self, device, build, statusLabel, option, buttonUnlocker):
         if option == 'Clean':
             buildPackage = self.adb.getPackageNameOfAppFromApk(build)
             statusLabel.SetLabel('Checking if exists...'.format(buildPackage))
@@ -951,6 +961,7 @@ class BuildInstallerBottomPanel(wx.Panel):
                         time.sleep(1)
                         if self.adb.removeLocalAppData(device, buildPackage):
                             statusLabel.SetLabel('Done!')
+                            buttonUnlocker.finishThread()
                             return
                     else:
                         statusLabel.SetLabel('Types dont match...')
@@ -970,6 +981,7 @@ class BuildInstallerBottomPanel(wx.Panel):
             statusLabel.SetLabel('Done!')
         else:
             statusLabel.SetLabel('An error occured.')
+        buttonUnlocker.finishThread()
         return
 
 class FileDragAndDropHandler(wx.FileDropTarget):
@@ -1151,6 +1163,7 @@ class Adb():
         for i in raw:
             if i[0:7] == '192.168':
                 return i[0:len(i)-3]
+        return 'Not set'
 
     @staticmethod
     def getDeviceScreenSize(device):
