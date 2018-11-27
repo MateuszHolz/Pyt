@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 import re
@@ -52,7 +53,8 @@ class OptionsHandler():
         self.__optionsCategories = (
             ('Screenshots folder', 'folder'),
             ('Builds folder', 'folder'),
-            ('Jenkins credentials', 'input')
+            ('Jenkins credentials', 'input'),
+            ('Keep SS on device', 'checkbox')
         )
         self.__options = self.getOptionsIfAlreadyExist(optionsPath, self.optionsFilePath)
 
@@ -186,7 +188,12 @@ class OptionsPanel(wx.Panel):
                 editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_BUTTON, self.editCredentialsOption((inputUsername, inputPassword), saveBtn), editBtn)
-            sizer.Add(rowSizer, 0, wx.EXPAND | wx.ALL, 5)
+            elif j == 'checkbox':
+                checkboxCtrl = wx.CheckBox(self, style = wx.CENTER)
+                checkboxCtrl.SetValue(self.optionsHandler.getOption(i))
+                rowSizer.Add(checkboxCtrl, 0, wx.EXPAND | wx.ALL, 5)
+                self.Bind(wx.EVT_CHECKBOX, self.onSwitchCheckbox(i, checkboxCtrl, saveBtn), checkboxCtrl)
+            sizer.Add(rowSizer, 0, wx.CENTER | wx.ALL, 5)
         
         sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
         sizer.Add(buttonsSizer, 0, wx.CENTER | wx.ALL, 5)
@@ -197,6 +204,11 @@ class OptionsPanel(wx.Panel):
         self.SetSizer(sizer)
         self.Fit()
 
+    def onSwitchCheckbox(self, option, checkboxCtrl, saveBtn):
+        def onSwitchCheckboxEvent(event):
+            self.onChangedOption(option, checkboxCtrl.GetValue(), saveBtn)
+        return onSwitchCheckboxEvent
+
     def saveChanges(self, btn):
         def saveChangesEvent(event):
             for i in self.changedOptions.keys():
@@ -204,22 +216,23 @@ class OptionsPanel(wx.Panel):
             btn.Disable()
         return saveChangesEvent
 
-
     def editFileOption(self, option, valueControl, saveBtn):
         def editOptionEvent(event):
             with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
                 if dlg.ShowModal() == wx.ID_OK:
                     newOption = dlg.GetPath()
-                    self.onChangedOption(option, newOption, valueControl, saveBtn)
+                    self.onChangedOption(option, newOption, saveBtn, valueControl)
         return editOptionEvent
 
-    def onChangedOption(self, option, value, textCtrl, saveBtn):
+    def onChangedOption(self, option, value, saveBtn, textCtrl = None):
         self.changedOptions[option] = value
         if isinstance(textCtrl, wx.TextCtrl):
             textCtrl.SetValue(value)
-        else:
+        elif isinstance(textCtrl, list) or isinstance(textCtrl, tuple):
             for i, j in zip(textCtrl, value):
                 i.SetValue(j)
+        else:
+            pass #checkbox case
         saveBtn.Enable()
 
     def editCredentialsOption(self, jenkinsCredentialControls, saveBtn):
@@ -293,7 +306,7 @@ class JenkinsCredentialsEditPanel(wx.Panel):
     def updateJenkinsCreds(self, usernameInputField, passwordInputField):
         def updateJenkinsCredsEvent(event):
             newCreds = (usernameInputField.GetValue(), passwordInputField.GetValue())
-            self.onChangedOptionFunc(self.optionsHandler.getOptionsCategories()[2][0], newCreds, self.jenkinsCredentialControls, self.saveBtn)
+            self.onChangedOptionFunc(self.optionsHandler.getOptionsCategories()[2][0], newCreds, self.saveBtn, self.jenkinsCredentialControls)
             del self.parent.disabler
             #hackish way to do it - TODO: implement it in some elegant way
             self.parent.Destroy()
@@ -551,6 +564,12 @@ class RefreshButtonPanel(wx.Panel):
             errorDlg = wx.MessageDialog(self.parent, 'At least 1 device must be selected!', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             return
+        if not os.path.exists(ssFolder):
+            time.sleep(0.2)
+            errorDlg = wx.MessageDialog(self.parent, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
+                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return
         disabler = wx.WindowDisabler()
         ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices, ssFolder)
 
@@ -732,13 +751,6 @@ class ScreenshotCapturePanel(wx.Panel):
         self.Fit()
 
     def deployScreenshotThreads(self):
-        if not os.path.exists(self.directoryForScreenshots):
-            time.sleep(0.2)
-            errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
-                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
-            errorDlg.ShowModal()
-            self.Close()
-            return
         buttonUnlocker = ButtonUnlocker(len(self.listOfDevices), self.buttons)
         for i, j in zip(self.listOfDevices, self.statusLabels):
             localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], self.directoryForScreenshots, j, i[1], buttonUnlocker))
@@ -747,8 +759,9 @@ class ScreenshotCapturePanel(wx.Panel):
     def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker):
         statusLabel.SetLabel('Taking screenshot...')
         pathToScreenOnDevice = ''
-        fileName = self.getFileName(device, model)
-        clbk = self.adb.captureScreenshot(device, fileName)
+        rawFileName = self.getFileName(device, model)
+        indexedFileName = self.getFileNameWithIndex(rawFileName, directory)
+        clbk = self.adb.captureScreenshot(device, indexedFileName)
         try:
             statusLabel.SetLabel(clbk[0])
         except RuntimeError:
@@ -763,13 +776,29 @@ class ScreenshotCapturePanel(wx.Panel):
             buttonUnlocker.finishThread()
         except RuntimeError:
             return
+
+    def getFileNameWithIndex(self, rawFileName, directory):
+        currentlyExistingFiles = glob.glob(os.path.join(directory, '{}*'.format(rawFileName)))
+        if len(currentlyExistingFiles) > 0:
+            lastIndex = self.getNextIndexOfFile(max(currentlyExistingFiles, key = self.getIndexOfFile))
+            fileName = '{}_{}.png'.format(rawFileName, lastIndex)
+            return fileName
+        else:
+            fileName = '{}_1.png'.format(rawFileName)
+            return fileName
     
+    def getIndexOfFile(self, f):
+        return int(f[f.find('_')+1:f.find('.png')])
+
+    def getNextIndexOfFile(self, f):
+        return int(f[f.find('_')+1:f.find('.png')])+1
+
     def getFileName(self, device, model):
-        unsupportedChars = (' ', '(', ')')
+        unsupportedChars = (' ', '(', ')', '_')
         for i in unsupportedChars:
             model = model.replace(i, '')
         deviceScreenSize = self.adb.getDeviceScreenSize(device)
-        return '{}-{}.png'.format(model, deviceScreenSize)
+        return '{}-{}'.format(model, deviceScreenSize)
 
     def openScreenshotsFolder(self, event):
         os.startfile(self.directoryForScreenshots)
@@ -865,9 +894,11 @@ class BuildInstallerTopPanel(wx.Panel):
 
     def getLatestBuildFromOptionsFolder(self, textCtrl):
         def getLatestBuildFromOptionsFolderEvent(event):
-            self.setBuild(self.buildFolder, textCtrl)
+            builds = glob.glob(os.path.join(self.buildFolder, '*.apk'))
+            latestBuild = max(builds, key = os.path.getctime)
+            self.setBuild(latestBuild, textCtrl)
         return getLatestBuildFromOptionsFolderEvent
-
+    
     def setBuild(self, build, textCtrl):
         self.buildChosen = build
         textCtrl.SetValue(build)
@@ -942,15 +973,16 @@ class BuildInstallerBottomPanel(wx.Panel):
             thread.start()
 
     def installingThread(self, device, build, statusLabel, option, buttonUnlocker):
+        buildPackage = self.adb.getPackageNameOfAppFromApk(build)
+        buildVer = self.adb.getBuildVersionFromApk(build)
         if option == 'Clean':
-            buildPackage = self.adb.getPackageNameOfAppFromApk(build)
             statusLabel.SetLabel('Checking if exists...'.format(buildPackage))
             if self.adb.isBuildIsAlreadyInstalled(device, buildPackage):
                 statusLabel.SetLabel('Build exists!'.format(buildPackage))
                 time.sleep(1)
                 statusLabel.SetLabel('Checking version...')
                 time.sleep(1)
-                if self.adb.getBuildVersionFromDevice(device, buildPackage) == self.adb.getBuildVersionFromApk(build):
+                if self.adb.getBuildVersionFromDevice(device, buildPackage) == buildVer:
                     statusLabel.SetLabel('Versions match!')
                     time.sleep(1)
                     statusLabel.SetLabel('Checking type...')
@@ -975,6 +1007,13 @@ class BuildInstallerBottomPanel(wx.Panel):
                 statusLabel.SetLabel(clbk)
             else:
                 statusLabel.SetLabel('Build not installed.')
+        elif option == 'Overwrite':
+            buildVerNumerizedOnApk = int(buildVer.split('.')[-1])
+            buildVerNumerizedOnDev = int(self.adb.getBuildVersionFromDevice(device, buildPackage).split('.')[-1])
+            if buildVerNumerizedOnDev > buildVerNumerizedOnApk:
+                statusLabel.SetLabel('Error downgrade!')
+                buttonUnlocker.finishThread()
+                return
         time.sleep(1)
         statusLabel.SetLabel('Installing...')
         if self.adb.installBuild(device, build):
@@ -1115,9 +1154,9 @@ class Adb():
                     continue
         rawList = _l.rsplit()
         tempList = rawList[4:]
-        for i in range(len(tempList)):
-            if i%2 == 0:
-                devices.append((tempList[i].decode(), tempList[i+1].decode()))
+        for idx, i in enumerate(tempList):
+            if idx%2 == 0:
+                devices.append((i.decode(), tempList[idx+1].decode()))
         return devices
     
     @staticmethod
@@ -1174,17 +1213,17 @@ class Adb():
     @staticmethod
     def getBatteryStatus(device):
         out = subprocess.check_output(r'adb -s {} shell dumpsys battery'.format(device), shell = True).decode().split()
-        for i in range(len(out)):
-            if out[i] == 'level:':
-                return out[i+1]+'%'
+        for idx, i in enumerate(out):
+            if i == 'level:':
+                return out[idx+1]+'%'
 
     @staticmethod
     def getPluggedInStatus(device):
         out = subprocess.check_output(r'adb -s {} shell dumpsys battery'.format(device), shell = True).decode().split()
-        for i in range(len(out)):
-            if out[i] == 'AC' or out[i] == 'USB':
-                if out[i+2] == 'true':
-                    return 'True, {} powered'.format(out[i])
+        for idx, i in enumerate(out):
+            if i == 'AC' or i == 'USB':
+                if out[idx+2] == 'true':
+                    return 'True, {} powered'.format(i)
         return 'False'
 
     @staticmethod
@@ -1226,9 +1265,12 @@ class Adb():
     @staticmethod
     def getWifiName(device):
         out = subprocess.check_output(r'adb -s {} shell dumpsys wifi'.format(device), shell = True).decode().split()
-        for i in range(len(out)):
-            if out[i] == 'mWifiInfo':
-                return out[i+2][:-1]
+        for idx, i in enumerate(out):
+            if i == 'mWifiInfo':
+                if out[idx+2][1:] == 'unknown':
+                    return 'Not set'
+                else:
+                    return out[idx+2][:-1]
 
     @staticmethod
     def getListOfHuuugePackages(device):
