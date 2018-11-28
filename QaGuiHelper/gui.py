@@ -46,50 +46,399 @@ class MainFrame(wx.Frame):
         disabler = wx.WindowDisabler()
         OptionsFrame(self, disabler, self.optionsHandler)
 
-class OptionsHandler():
-    def __init__(self):
-        optionsPath = os.path.join(os.getenv('APPDATA'), 'adbgui')
-        self.optionsFilePath = os.path.join(optionsPath, 'options.json')
-        self.__optionsCategories = (
-            ('Screenshots folder', 'folder'),
-            ('Builds folder', 'folder'),
-            ('Jenkins credentials', 'input'),
-            ('Keep SS on device', 'checkbox')
-        )
-        self.__options = self.getOptionsIfAlreadyExist(optionsPath, self.optionsFilePath)
+class OptionsFrame(wx.Frame):
+    def __init__(self, parent, disabler, optionsHandler):
+        wx.Frame.__init__(self, parent, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        self.mainWindow = parent
+        self.disabler = disabler
+        self.changedOptions = {}
+        panel = wx.Panel(self)
 
-    def getOptionsIfAlreadyExist(self, folderPath, filePath):
-        if os.path.exists(folderPath):
-            try:
-                with open (filePath, 'r') as f:
-                    try:
-                        return json.loads(f.read())
-                    except json.decoder.JSONDecodeError:
-                        return {}
-            except FileNotFoundError:
-                return {}
-        else:
-            os.mkdir(folderPath)
-            return {}
+        self.createControls(panel, optionsHandler)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.Fit()
+        self.Show(True)
+        
+    def onClose(self, event):
+        del self.disabler
+        self.Destroy()
+        self.mainWindow.Raise()
 
-    def setOption(self, option, value):
-        self.__options[option] = value
+    def createControls(self, container, optionsHandler):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        first = True
 
-    def getOption(self, option, t = False):
-        try:
-            return self.__options[option]
-        except KeyError:
-            if t:
-                return ('', '')
+        buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        saveBtn = wx.Button(container, wx.ID_ANY, 'Save')
+        saveBtn.Disable()
+        buttonsSizer.Add(saveBtn, 0, wx.CENTER | wx.ALL, 5)
+        
+        closeBtn = wx.Button(container, wx.ID_ANY, 'Close')
+        buttonsSizer.Add(closeBtn, 0, wx.CENTER | wx.ALL, 5)
+
+        for i, j in optionsHandler.getOptionsCategories():
+            rowSizer = wx.BoxSizer(wx.HORIZONTAL)
+            label = wx.StaticText(container, label = i, style = wx.TE_CENTRE, size = (100, 10))
+            rowSizer.Add(label, 0, wx.EXPAND | wx.TOP, 8)
+            if not first:
+                sizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
             else:
-                return ''
+                first = False
+            if j == 'folder':
+                valueCtrl = wx.TextCtrl(container, value = optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
+                rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
+                editBtn = wx.Button(container, wx.ID_ANY, 'Edit')
+                rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
+                self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl, saveBtn), editBtn)
+            elif j == 'input':
+                inputUsername = wx.TextCtrl(container, value = optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
+                rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
+                inputPassword = wx.TextCtrl(container, value = optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
+                rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
+                editBtn = wx.Button(container, wx.ID_ANY, 'Edit')
+                rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
+                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption((inputUsername, inputPassword), saveBtn, optionsHandler), editBtn)
+            elif j == 'checkbox':
+                checkboxCtrl = wx.CheckBox(container, style = wx.CENTER)
+                checkboxCtrl.SetValue(optionsHandler.getOption(i))
+                rowSizer.Add(checkboxCtrl, 0, wx.EXPAND | wx.ALL, 5)
+                self.Bind(wx.EVT_CHECKBOX, self.onSwitchCheckbox(i, checkboxCtrl, saveBtn), checkboxCtrl)
+            sizer.Add(rowSizer, 0, wx.CENTER | wx.ALL, 5)
+        
+        sizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+        sizer.Add(buttonsSizer, 0, wx.CENTER | wx.ALL, 5)
 
-    def saveOptionsToFile(self):
-        with open(self.optionsFilePath, 'w+') as f:
-            json.dump(self.__options, f)
+        self.Bind(wx.EVT_BUTTON, self.saveChanges(saveBtn, optionsHandler), saveBtn)
+        self.Bind(wx.EVT_BUTTON, self.onClose, closeBtn)
+        
+        container.SetSizer(sizer)
+        container.Fit()
 
-    def getOptionsCategories(self):
-        return self.__optionsCategories
+    def saveChanges(self, btn, optionsHandler):
+        def saveChangesEvent(event):
+            for i in self.changedOptions.keys():
+                optionsHandler.setOption(i, self.changedOptions[i])
+            btn.Disable()
+        return saveChangesEvent
+
+    def editFileOption(self, option, valueControl, saveBtn):
+        def editOptionEvent(event):
+            with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
+                if dlg.ShowModal() == wx.ID_OK:
+                    newOption = dlg.GetPath()
+                    self.onChangedOption(option, newOption, saveBtn, valueControl)
+        return editOptionEvent
+
+    def onChangedOption(self, option, value, saveBtn, textCtrl = None):
+        self.changedOptions[option] = value
+        if isinstance(textCtrl, wx.TextCtrl):
+            textCtrl.SetValue(value)
+        elif isinstance(textCtrl, list) or isinstance(textCtrl, tuple):
+            for i, j in zip(textCtrl, value):
+                i.SetValue(j)
+        else:
+            pass #checkbox case
+        saveBtn.Enable()
+
+    def editCredentialsOption(self, jenkinsCredentialControls, saveBtn, optionsHandler):
+        def editCredentialsOptionEvent(event):
+            disabler = wx.WindowDisabler()
+            JenkinsCredentialsEditFrame(self, optionsHandler, disabler, self.onChangedOption, saveBtn, jenkinsCredentialControls)
+        return editCredentialsOptionEvent
+
+    def onSwitchCheckbox(self, option, checkboxCtrl, saveBtn):
+        def onSwitchCheckboxEvent(event):
+            self.onChangedOption(option, checkboxCtrl.GetValue(), saveBtn)
+        return onSwitchCheckboxEvent
+
+class JenkinsCredentialsEditFrame(wx.Frame):
+    def __init__(self, parentFrame, optionsHandler, disabler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
+        wx.Frame.__init__(self, parentFrame, title = 'Edit credentials', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        self.disabler = disabler
+        panel = wx.Panel(self)
+        eventControls = self.createControls(panel)
+
+        self.Bind(wx.EVT_BUTTON, self.updateJenkinsCreds(eventControls, optionsHandler, onChangedOptionFunc, jenkinsCredentialControls), eventControls[0])
+        self.Bind(wx.EVT_CLOSE, self.onClose(parentFrame))
+        self.Fit()
+        self.Show(True)
+
+    def createControls(self, container):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        
+        topSizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        userSizer = wx.BoxSizer(wx.VERTICAL)
+        userLabel = wx.StaticText(container, label = 'User')
+        userSizer.Add(userLabel, 0, wx.CENTER | wx.ALL, 3)
+        userInputField = wx.TextCtrl(container, size = (100, -1))
+        userSizer.Add(userInputField, 0, wx.ALL, 3)
+
+        passwordSizer = wx.BoxSizer(wx.VERTICAL)
+        passwordLabel = wx.StaticText(container, label = 'Password')
+        passwordSizer.Add(passwordLabel, 0, wx.CENTER | wx.ALL, 3)
+        passwordInputField = wx.TextCtrl(container, size = (100, -1))
+        passwordSizer.Add(passwordInputField, 0, wx.ALL, 3)
+
+        topSizer.Add(userSizer, 0, wx.EXPAND | wx.ALL, 5)
+        topSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+        topSizer.Add(passwordSizer, 0, wx.EXPAND | wx.ALL, 5)
+
+        bottomSizer = wx.BoxSizer(wx.HORIZONTAL)
+        saveBtn = wx.Button(container, wx.ID_ANY, 'Update')
+        bottomSizer.Add(saveBtn, 0, wx.CENTER | wx.EXPAND | wx.BOTTOM | wx.RIGHT | wx.LEFT, 10)
+
+        mainSizer.Add(topSizer, 0)
+        mainSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
+        mainSizer.Add(bottomSizer, 0, wx.CENTER)
+        container.SetSizer(mainSizer)
+        container.Fit()
+
+        return saveBtn, userInputField, passwordInputField
+
+    def updateJenkinsCreds(self, eventControls, optionsHandler, onChangedOptionFunc, jenkinsCredentialControls):
+        def updateJenkinsCredsEvent(event):
+            newCreds = (eventControls[1].GetValue(), eventControls[2].GetValue())
+            onChangedOptionFunc(optionsHandler.getOptionsCategories()[2][0], newCreds, eventControls[0], jenkinsCredentialControls)
+            self.Close()
+        return updateJenkinsCredsEvent
+
+    def onClose(self, parentFrame):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            parentFrame.Raise()
+        return onCloseEvent
+
+class DeviceInfoFrame(wx.Frame):
+    def __init__(self, parent, parentFrame, deviceId, disabler, adb):
+        wx.Frame.__init__(self, parent, title = 'Device Info', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        self.disabler = disabler
+        deviceInfoTable = (
+            ('Brand', adb.getBrand),
+            ('Model', adb.getDeviceModel),
+            ('Screen size', adb.getDeviceScreenSize),
+            ('IP Address', adb.getDeviceIpAddress),
+            ('ADB tcpip port', adb.getTcpipPort),
+            ('Battery', adb.getBatteryStatus),
+            ('Plugged in?', adb.getPluggedInStatus),
+            ('OS version', adb.getOsVersion),
+            ('API version', adb.getApiVersion),
+            ('Device timezone', adb.getDeviceTimezone),
+            ('Device language', adb.getDeviceLanguage),
+            ('Marketing name', adb.getMarketingName),
+            ('Wifi name', adb.getWifiName),
+            ('Serial No', adb.getSerialNo))
+
+        panel = wx.Panel(self)
+        deviceInfoControls = self.createControls(panel, deviceInfoTable)
+        self.updateFields(deviceInfoTable, deviceInfoControls, deviceId)
+
+        self.Bind(wx.EVT_CLOSE, self.onClose(parentFrame))
+        self.Fit()
+        self.Show(True)
+
+    def createControls(self, container, deviceInfoTable):
+        deviceInfoControls = []
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        first = True
+        for i in deviceInfoTable:
+            if first:
+                first = False
+            else:
+                mainSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            sizer = wx.BoxSizer(wx.HORIZONTAL)
+            label = wx.StaticText(container, label = i[0], size = (100, -1), style = wx.TE_CENTRE)
+            sizer.Add(label, 0, wx.EXPAND | wx.TOP, label.GetSize()[1]/3.5)
+            content = wx.TextCtrl(container, value = '...', size = (150, -1), style = wx.TE_READONLY)
+            deviceInfoControls.append(content)
+            sizer.Add(content, 0, wx.ALIGN_RIGHT)
+            mainSizer.Add(sizer, 0, wx.ALL, 5)
+        container.SetSizer(mainSizer)
+        container.Fit()
+
+        return deviceInfoControls
+
+    def updateFields(self, deviceInfoTable, deviceInfoControls, deviceId):
+        for func, ctrl in zip(deviceInfoTable, deviceInfoControls):
+            localThread = threading.Thread(target = self.updateSingleControl, args = (ctrl, deviceId, func[1]))
+            localThread.start()
+
+    def updateSingleControl(self, textCtrl, deviceId, functionToCall):
+        try:
+            textCtrl.SetValue(functionToCall(deviceId))
+        except RuntimeError:
+            pass
+
+    def onClose(self, parentFrame):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            parentFrame.Raise()
+        return onCloseEvent
+
+class ScreenshotCaptureFrame(wx.Frame):
+    def __init__(self, parent, mainFrame, disabler, adb, listOfDevices, ssFolder, removeSSPermission):
+        self.frame = wx.Frame.__init__(self, mainFrame, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        self.disabler = disabler
+        panel = wx.Panel(self)
+
+        statusLabels, openButton, closeButton = self.createControls(panel, listOfDevices)
+
+        self.Bind(wx.EVT_CLOSE, self.onClose(mainFrame))
+        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder(ssFolder), openButton)
+        self.Bind(wx.EVT_BUTTON, self.onClose(mainFrame), closeButton)
+
+        self.deployScreenshotThreads(ssFolder, listOfDevices, removeSSPermission, (openButton, closeButton), statusLabels, adb)
+
+        self.Fit()
+        self.Show(True)
+
+    def createControls(self, container, listOfDevices):
+        statusLabels = []
+
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        listSizer = wx.BoxSizer(wx.HORIZONTAL)
+        leftColumn = wx.BoxSizer(wx.VERTICAL)
+        rightColumn = wx.BoxSizer(wx.VERTICAL)
+        columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
+
+        devColumnNameLabel = wx.StaticText(container, label = 'Device', style = wx.CENTER)
+        devColumnNameLabel.SetFont(columnNameFont)
+        leftColumn.Add(devColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
+
+        statColumnNameLabel = wx.StaticText(container, label = 'Status', style = wx.CENTER)
+        statColumnNameLabel.SetFont(columnNameFont)
+        rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
+
+        for i in listOfDevices:
+            deviceLabel = wx.StaticText(container, label = i[1], style = wx.CENTER)
+            leftColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
+
+            statusLabel = wx.StaticText(container, label = 'Ready', style = wx.CENTER)
+            rightColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
+            statusLabels.append(statusLabel)
+
+        listSizer.Add(leftColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+        listSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
+        listSizer.Add(rightColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+
+        mainSizer.Add(listSizer, 2, wx.EXPAND | wx.ALL, 5)
+
+        buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
+        openButton = wx.Button(container, wx.ID_ANY, 'Open Folder')
+        openButton.Disable()
+        buttonSizer.Add(openButton, 1, wx.EXPAND | wx.ALL, 3)
+        closeButton = wx.Button(container, wx.ID_ANY, 'Close')
+        closeButton.Disable()
+        buttonSizer.Add(closeButton, 1, wx.EXPAND | wx.ALL, 3)
+
+        mainSizer.Add(buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
+
+        container.SetSizer(mainSizer)
+        container.Fit()
+
+        return statusLabels, openButton, closeButton
+
+    def deployScreenshotThreads(self, directoryForScreenshots, listOfDevices, removeSSPermission, buttonsToEnable, statusLabels, adb):
+        buttonUnlocker = ButtonUnlocker(len(listOfDevices), buttonsToEnable)
+        for i, j in zip(listOfDevices, statusLabels):
+            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], directoryForScreenshots, j, i[1], buttonUnlocker, removeSSPermission, adb))
+            localThread.start()
+
+    def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker, removeSSPermission, adb):
+        statusLabel.SetLabel('Taking screenshot...')
+        pathToScreenOnDevice = ''
+        rawFileName = self.getFileName(device, model, adb)
+        indexedFileName = self.getFileNameWithIndex(rawFileName, directory)
+        clbk = adb.captureScreenshot(device, indexedFileName)
+        try:
+            statusLabel.SetLabel(clbk[0])
+        except RuntimeError:
+            return
+        if not clbk[1]:
+            buttonUnlocker.finishThread()
+            return
+        pathToScreenOnDevice = clbk[1]
+        clbk = adb.pullScreenshot(device, pathToScreenOnDevice, directory)
+        try:
+            statusLabel.SetLabel(clbk)
+            if not removeSSPermission:
+                buttonUnlocker.finishThread()
+            else:
+                time.sleep(1)
+                statusLabel.SetLabel('Removing...')
+                clbk = adb.deleteFile(device, pathToScreenOnDevice)
+                statusLabel.SetLabel(clbk)
+                buttonUnlocker.finishThread()
+        except RuntimeError:
+            return
+
+    def getFileNameWithIndex(self, rawFileName, directory):
+        currentlyExistingFiles = glob.glob(os.path.join(directory, '{}*'.format(rawFileName)))
+        if len(currentlyExistingFiles) > 0:
+            lastIndex = self.getNextIndexOfFile(max(currentlyExistingFiles, key = self.getIndexOfFile))
+            fileName = '{}_{}.png'.format(rawFileName, lastIndex)
+            return fileName
+        else:
+            fileName = '{}_1.png'.format(rawFileName)
+            return fileName
+    
+    def getIndexOfFile(self, f):
+        return int(f[f.find('_')+1:f.find('.png')])
+
+    def getNextIndexOfFile(self, f):
+        return int(f[f.find('_')+1:f.find('.png')])+1
+
+    def getFileName(self, device, model, adb):
+        unsupportedChars = (' ', '(', ')', '_')
+        for i in unsupportedChars:
+            model = model.replace(i, '')
+        deviceScreenSize = adb.getDeviceScreenSize(device)
+        return '{}-{}'.format(model, deviceScreenSize)
+
+    def openScreenshotsFolder(self, dirForScreenshots):
+        def openScreenshotsFolderEvent(event):
+            os.startfile(dirForScreenshots)
+        return openScreenshotsFolderEvent
+    
+    def onClose(self, mainFrame):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            mainFrame.Raise()
+        return onCloseEvent
+
+class BuildInstallerFrame(wx.Frame):
+    def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
+        wx.Frame.__init__(self, mainWindow, title = 'Installing builds', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        self.disabler = disabler
+        self.mainWindow = mainWindow
+
+        self.mainSizer = wx.BoxSizer(wx.VERTICAL)
+        self.topPanel = BuildInstallerTopPanel(self, optionsHandler.getOption('Builds folder'))
+        self.bottomPanel = BuildInstallerBottomPanel(self, deviceList, adb)
+        self.mainSizer.Add(self.topPanel, 0, wx.EXPAND)
+        self.mainSizer.Add(self.bottomPanel, 0, wx.EXPAND)
+        self.bindEvents()
+        self.SetSizer(self.mainSizer)
+        self.mainSizer.Fit(self)
+        self.Show()
+    
+    def onClose(self, event):
+        del self.disabler
+        self.Destroy()
+        self.mainWindow.Raise()
+
+    def bindEvents(self):
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+
+    def installBuild(self, build):
+        self.bottomPanel.installBuild(build)
 
 class JenkinsMenu(wx.Menu):
     def __init__(self, parent, pathToJsonFile, optionsHandler):
@@ -126,192 +475,6 @@ class JenkinsMenu(wx.Menu):
             buildInfo = RetrieveLinkDialog(self.parent, info, self.optionsHandler).getLink()
             DownloadBuildDialog(self.parent, buildInfo, self.optionsHandler).downloadBuild()
         return getBuildEvent
-
-class OptionsFrame(wx.Frame):
-    def __init__(self, parent, disabler, optionsHandler):
-        wx.Frame.__init__(self, parent, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.mainWindow = parent
-        self.disabler = disabler
-        self.panel = OptionsPanel(self, optionsHandler)
-        self.bindEvents()
-        self.Fit()
-        self.Show(True)
-    
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose)
-    
-    def onClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainWindow.Raise()
-
-class OptionsPanel(wx.Panel):
-    def __init__(self, parent, optionsHandler):
-        wx.Panel.__init__(self, parent)
-        self.parent = parent
-        self.optionsHandler = optionsHandler
-        self.changedOptions = {}
-        self.createPanel()
-
-    def createPanel(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        first = True
-
-        buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        saveBtn = wx.Button(self, wx.ID_ANY, 'Save')
-        saveBtn.Disable()
-        buttonsSizer.Add(saveBtn, 0, wx.CENTER | wx.ALL, 5)
-        
-        closeBtn = wx.Button(self, wx.ID_ANY, 'Close')
-        buttonsSizer.Add(closeBtn, 0, wx.CENTER | wx.ALL, 5)
-
-        for i, j in self.optionsHandler.getOptionsCategories():
-            rowSizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self, label = i, style = wx.TE_CENTRE, size = (100, 10))
-            rowSizer.Add(label, 0, wx.EXPAND | wx.TOP, 8)
-            if not first:
-                sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
-            else:
-                first = False
-            if j == 'folder':
-                valueCtrl = wx.TextCtrl(self, value = self.optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
-                rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
-                editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
-                rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl, saveBtn), editBtn)
-            elif j == 'input':
-                inputUsername = wx.TextCtrl(self, value = self.optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
-                rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
-                inputPassword = wx.TextCtrl(self, value = self.optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
-                rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
-                editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
-                rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption((inputUsername, inputPassword), saveBtn), editBtn)
-            elif j == 'checkbox':
-                checkboxCtrl = wx.CheckBox(self, style = wx.CENTER)
-                checkboxCtrl.SetValue(self.optionsHandler.getOption(i))
-                rowSizer.Add(checkboxCtrl, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_CHECKBOX, self.onSwitchCheckbox(i, checkboxCtrl, saveBtn), checkboxCtrl)
-            sizer.Add(rowSizer, 0, wx.CENTER | wx.ALL, 5)
-        
-        sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
-        sizer.Add(buttonsSizer, 0, wx.CENTER | wx.ALL, 5)
-
-        self.Bind(wx.EVT_BUTTON, self.saveChanges(saveBtn), saveBtn)
-        self.Bind(wx.EVT_BUTTON, self.parent.onClose, closeBtn)
-        
-        self.SetSizer(sizer)
-        self.Fit()
-
-    def onSwitchCheckbox(self, option, checkboxCtrl, saveBtn):
-        def onSwitchCheckboxEvent(event):
-            self.onChangedOption(option, checkboxCtrl.GetValue(), saveBtn)
-        return onSwitchCheckboxEvent
-
-    def saveChanges(self, btn):
-        def saveChangesEvent(event):
-            for i in self.changedOptions.keys():
-                self.optionsHandler.setOption(i, self.changedOptions[i])
-            btn.Disable()
-        return saveChangesEvent
-
-    def editFileOption(self, option, valueControl, saveBtn):
-        def editOptionEvent(event):
-            with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
-                if dlg.ShowModal() == wx.ID_OK:
-                    newOption = dlg.GetPath()
-                    self.onChangedOption(option, newOption, saveBtn, valueControl)
-        return editOptionEvent
-
-    def onChangedOption(self, option, value, saveBtn, textCtrl = None):
-        self.changedOptions[option] = value
-        if isinstance(textCtrl, wx.TextCtrl):
-            textCtrl.SetValue(value)
-        elif isinstance(textCtrl, list) or isinstance(textCtrl, tuple):
-            for i, j in zip(textCtrl, value):
-                i.SetValue(j)
-        else:
-            pass #checkbox case
-        saveBtn.Enable()
-
-    def editCredentialsOption(self, jenkinsCredentialControls, saveBtn):
-        def editCredentialsOptionEvent(event):
-            disabler = wx.WindowDisabler()
-            JenkinsCredentialsEditFrame(self, self.optionsHandler, disabler, self.onChangedOption, saveBtn, jenkinsCredentialControls)
-        return editCredentialsOptionEvent
-
-class JenkinsCredentialsEditFrame(wx.Frame):
-    def __init__(self, parent, optionsHandler, disabler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
-        wx.Frame.__init__(self, parent, title = 'Edit credentials', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.parent = parent
-        self.disabler = disabler
-        self.panel = JenkinsCredentialsEditPanel(self, optionsHandler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls)
-        self.bindEvents()
-        self.Fit()
-        self.Show(True)
-    
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose())
-
-    def onClose(self):
-        def onCloseEvent(event):
-            del self.disabler
-            self.Destroy()
-            self.parent.Raise()
-        return onCloseEvent
-
-class JenkinsCredentialsEditPanel(wx.Panel):
-    def __init__(self, parent, optionsHandler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
-        wx.Panel.__init__(self, parent)
-        self.parent = parent
-        self.saveBtn = saveBtn
-        self.optionsHandler = optionsHandler
-        self.onChangedOptionFunc = onChangedOptionFunc
-        self.jenkinsCredentialControls = jenkinsCredentialControls
-        self.createPanel()
-
-    def createPanel(self):
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-        
-        topSizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        userSizer = wx.BoxSizer(wx.VERTICAL)
-        userLabel = wx.StaticText(self, label = 'User')
-        userSizer.Add(userLabel, 0, wx.CENTER | wx.ALL, 3)
-        userInputField = wx.TextCtrl(self, size = (100, -1))
-        userSizer.Add(userInputField, 0, wx.ALL, 3)
-
-        passwordSizer = wx.BoxSizer(wx.VERTICAL)
-        passwordLabel = wx.StaticText(self, label = 'Password')
-        passwordSizer.Add(passwordLabel, 0, wx.CENTER | wx.ALL, 3)
-        passwordInputField = wx.TextCtrl(self, size = (100, -1))
-        passwordSizer.Add(passwordInputField, 0, wx.ALL, 3)
-
-        topSizer.Add(userSizer, 0, wx.EXPAND | wx.ALL, 5)
-        topSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
-        topSizer.Add(passwordSizer, 0, wx.EXPAND | wx.ALL, 5)
-
-        bottomSizer = wx.BoxSizer(wx.HORIZONTAL)
-        saveBtn = wx.Button(self, wx.ID_ANY, 'Update')
-        self.Bind(wx.EVT_BUTTON, self.updateJenkinsCreds(userInputField, passwordInputField), saveBtn)
-        bottomSizer.Add(saveBtn, 0, wx.CENTER | wx.EXPAND | wx.BOTTOM | wx.RIGHT | wx.LEFT, 10)
-
-        mainSizer.Add(topSizer, 0)
-        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
-        mainSizer.Add(bottomSizer, 0, wx.CENTER)
-        self.SetSizer(mainSizer)
-        self.Fit()
-
-    def updateJenkinsCreds(self, usernameInputField, passwordInputField):
-        def updateJenkinsCredsEvent(event):
-            newCreds = (usernameInputField.GetValue(), passwordInputField.GetValue())
-            self.onChangedOptionFunc(self.optionsHandler.getOptionsCategories()[2][0], newCreds, self.saveBtn, self.jenkinsCredentialControls)
-            del self.parent.disabler
-            #hackish way to do it - TODO: implement it in some elegant way
-            self.parent.Destroy()
-            self.parent.parent.Raise()
-        return updateJenkinsCredsEvent
 
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info, optionsHandler):
@@ -501,7 +664,6 @@ class DevicesCheckboxesPanel(wx.Panel):
         mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 3)
 
         self.SetSizer(mainSizer)
-        mainSizer.Layout()
         self.Fit()
 
     def getCheckedDevices(self):
@@ -595,264 +757,6 @@ class RefreshButtonPanel(wx.Panel):
             else:
                 btn.SetLabel('Deselect all')
         return checkAllEvent
-
-class DeviceInfoFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, deviceId, disabler, adb):
-        wx.Frame.__init__(self, parent, title = 'Device Info', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.mainWindow = mainWindow
-        self.disabler = disabler
-        self.panel = DeviceInfoPanel(self, deviceId, adb)
-        self.bindEvents()
-        self.Fit()
-
-        self.Show(True)
-    
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
-
-    def OnClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainWindow.Raise()
-
-class DeviceInfoPanel(wx.Panel):
-    def __init__(self, parent, deviceId, adb):
-        wx.Panel.__init__(self, parent)
-        self.deviceId = deviceId
-        self.parent = parent
-        self.adb = adb
-        self.deviceInfoControls = []
-        self.deviceInfoTable = (
-            ('Brand', self.adb.getBrand),
-            ('Model', self.adb.getDeviceModel),
-            ('Screen size', self.adb.getDeviceScreenSize),
-            ('IP Address', self.adb.getDeviceIpAddress),
-            ('ADB tcpip port', self.adb.getTcpipPort),
-            ('Battery', self.adb.getBatteryStatus),
-            ('Plugged in?', self.adb.getPluggedInStatus),
-            ('OS version', self.adb.getOsVersion),
-            ('API version', self.adb.getApiVersion),
-            ('Device timezone', self.adb.getDeviceTimezone),
-            ('Device language', self.adb.getDeviceLanguage),
-            ('Marketing name', self.adb.getMarketingName),
-            ('Wifi name', self.adb.getWifiName),
-            ('Serial No', self.adb.getSerialNo))
-        self.createControls()
-        self.updateFields()
-
-    def createControls(self):
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-        first = True
-        for i in self.deviceInfoTable:
-            if first:
-                first = False
-            else:
-                mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            sizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self, label = i[0], size = (100, -1), style = wx.TE_CENTRE)
-            sizer.Add(label, 0, wx.EXPAND | wx.TOP, label.GetSize()[1]/3.5)
-            content = wx.TextCtrl(self, value = '...', size = (150, -1), style = wx.TE_READONLY)
-            self.deviceInfoControls.append(content)
-            sizer.Add(content, 0, wx.ALIGN_RIGHT)
-            mainSizer.Add(sizer, 0, wx.ALL, 5)
-        self.SetSizer(mainSizer)
-        self.SetAutoLayout(1)
-        mainSizer.Fit(self)
-
-    def updateFields(self):
-        for func, ctrl in zip(self.deviceInfoTable, self.deviceInfoControls):
-            localThread = threading.Thread(target = self.updateSingleControl, args = (ctrl, self.deviceId, func[1]))
-            localThread.start()
-
-    def updateSingleControl(self, textCtrl, deviceId, functionToCall):
-        try:
-            textCtrl.SetValue(functionToCall(deviceId))
-        except RuntimeError:
-            pass
-
-class ScreenshotCaptureFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, ssFolder, removeSSPermission):
-        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.disabler = disabler
-        self.mainWindow = mainWindow
-
-        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, ssFolder, removeSSPermission)
-        self.bindEvents()
-        self.Fit()
-        self.Show()
-
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose)
-
-    def onClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainWindow.Raise()
-
-class ScreenshotCapturePanel(wx.Panel):
-    def __init__(self, parent, adb, listOfDevices, directoryForScreenshots, removeSSPermission):
-        self.panel = wx.Panel.__init__(self, parent)
-        self.parent = parent
-        self.adb = adb
-        self.buttons = []
-        self.statusLabels = []
-        self.createControls(directoryForScreenshots, listOfDevices)
-        self.deployScreenshotThreads(directoryForScreenshots, listOfDevices, removeSSPermission)
-
-    def createControls(self, dirForScreenshots, listOfDevices):
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-
-        listSizer = wx.BoxSizer(wx.HORIZONTAL)
-        leftColumn = wx.BoxSizer(wx.VERTICAL)
-        rightColumn = wx.BoxSizer(wx.VERTICAL)
-        columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
-
-        devColumnNameLabel = wx.StaticText(self, label = 'Device', style = wx.CENTER)
-        devColumnNameLabel.SetFont(columnNameFont)
-        leftColumn.Add(devColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
-
-        statColumnNameLabel = wx.StaticText(self, label = 'Status', style = wx.CENTER)
-        statColumnNameLabel.SetFont(columnNameFont)
-        rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
-
-        for i in listOfDevices:
-            deviceLabel = wx.StaticText(self, label = i[1], style = wx.CENTER)
-            leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
-
-            statusLabel = wx.StaticText(self, label = 'Ready', style = wx.CENTER)
-            rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
-            self.statusLabels.append(statusLabel)
-
-        listSizer.Add(leftColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
-        listSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
-        listSizer.Add(rightColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
-
-        mainSizer.Add(listSizer, 2, wx.EXPAND | wx.ALL, 5)
-
-        buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
-        openButton = wx.Button(self, wx.ID_ANY, 'Open Folder')
-        openButton.Disable()
-        self.buttons.append(openButton)
-        buttonSizer.Add(openButton, 1, wx.EXPAND | wx.ALL, 3)
-        closeButton = wx.Button(self, wx.ID_ANY, 'Close')
-        closeButton.Disable()
-        self.buttons.append(closeButton)
-        buttonSizer.Add(closeButton, 1, wx.EXPAND | wx.ALL, 3)
-
-        mainSizer.Add(buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
-
-        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder(dirForScreenshots), openButton)
-        self.Bind(wx.EVT_BUTTON, self.parent.onClose, closeButton)
-
-        self.SetSizer(mainSizer)
-        self.Fit()
-
-    def deployScreenshotThreads(self, directoryForScreenshots, listOfDevices, removeSSPermission):
-        buttonUnlocker = ButtonUnlocker(len(listOfDevices), self.buttons)
-        for i, j in zip(listOfDevices, self.statusLabels):
-            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], directoryForScreenshots, j, i[1], buttonUnlocker, removeSSPermission))
-            localThread.start()
-        
-    def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker, removeSSPermission):
-        statusLabel.SetLabel('Taking screenshot...')
-        pathToScreenOnDevice = ''
-        rawFileName = self.getFileName(device, model)
-        indexedFileName = self.getFileNameWithIndex(rawFileName, directory)
-        clbk = self.adb.captureScreenshot(device, indexedFileName)
-        try:
-            statusLabel.SetLabel(clbk[0])
-        except RuntimeError:
-            return
-        if not clbk[1]:
-            buttonUnlocker.finishThread()
-            return
-        pathToScreenOnDevice = clbk[1]
-        clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, directory)
-        try:
-            statusLabel.SetLabel(clbk)
-            if not removeSSPermission:
-                buttonUnlocker.finishThread()
-            else:
-                time.sleep(1)
-                statusLabel.SetLabel('Removing...')
-                clbk = self.adb.deleteFile(device, pathToScreenOnDevice)
-                statusLabel.SetLabel(clbk)
-                buttonUnlocker.finishThread()
-        except RuntimeError:
-            return
-
-    def getFileNameWithIndex(self, rawFileName, directory):
-        currentlyExistingFiles = glob.glob(os.path.join(directory, '{}*'.format(rawFileName)))
-        if len(currentlyExistingFiles) > 0:
-            lastIndex = self.getNextIndexOfFile(max(currentlyExistingFiles, key = self.getIndexOfFile))
-            fileName = '{}_{}.png'.format(rawFileName, lastIndex)
-            return fileName
-        else:
-            fileName = '{}_1.png'.format(rawFileName)
-            return fileName
-    
-    def getIndexOfFile(self, f):
-        return int(f[f.find('_')+1:f.find('.png')])
-
-    def getNextIndexOfFile(self, f):
-        return int(f[f.find('_')+1:f.find('.png')])+1
-
-    def getFileName(self, device, model):
-        unsupportedChars = (' ', '(', ')', '_')
-        for i in unsupportedChars:
-            model = model.replace(i, '')
-        deviceScreenSize = self.adb.getDeviceScreenSize(device)
-        return '{}-{}'.format(model, deviceScreenSize)
-
-    def openScreenshotsFolder(self, dirForScreenshots):
-        def openScreenshotsFolderEvent(event):
-            os.startfile(dirForScreenshots)
-        return openScreenshotsFolderEvent
-
-class ButtonUnlocker():
-    def __init__(self, count, btns):
-        self.count = count
-        self.semph = threading.Semaphore()
-        self.buttons = btns
-
-    def finishThread(self):
-        self.semph.acquire()
-        try:
-            self.count -= 1
-            if self.count == 0:
-                for i in self.buttons:
-                    i.Enable()
-        finally:
-            self.semph.release()
-
-class BuildInstallerFrame(wx.Frame):
-    def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
-        wx.Frame.__init__(self, mainWindow, title = 'Installing builds', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.disabler = disabler
-        self.mainWindow = mainWindow
-
-        self.mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.topPanel = BuildInstallerTopPanel(self, optionsHandler.getOption('Builds folder'))
-        self.bottomPanel = BuildInstallerBottomPanel(self, deviceList, adb)
-        self.mainSizer.Add(self.topPanel, 0, wx.EXPAND)
-        self.mainSizer.Add(self.bottomPanel, 0, wx.EXPAND)
-        self.bindEvents()
-        self.SetSizer(self.mainSizer)
-        self.mainSizer.Fit(self)
-        self.Show()
-    
-    def onClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainWindow.Raise()
-
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose)
-
-    def installBuild(self, build):
-        self.bottomPanel.installBuild(build)
 
 class BuildInstallerTopPanel(wx.Panel):
     def __init__(self, parent, buildFolder):
@@ -1050,6 +954,67 @@ class FileDragAndDropHandler(wx.FileDropTarget):
                 self.target.SetValue('Dropped file must end with {}'.format(extension))
         return True
 
+class ButtonUnlocker():
+    def __init__(self, count, btns):
+        self.count = count
+        self.semph = threading.Semaphore()
+        self.buttons = btns
+
+    def finishThread(self):
+        self.semph.acquire()
+        try:
+            self.count -= 1
+            if self.count == 0:
+                for i in self.buttons:
+                    i.Enable()
+        finally:
+            self.semph.release()
+
+class OptionsHandler():
+    def __init__(self):
+        optionsPath = os.path.join(os.getenv('APPDATA'), 'adbgui')
+        self.optionsFilePath = os.path.join(optionsPath, 'options.json')
+        self.__optionsCategories = (
+            ('Screenshots folder', 'folder'),
+            ('Builds folder', 'folder'),
+            ('Jenkins credentials', 'input'),
+            ('Keep SS on device', 'checkbox')
+        )
+        self.__options = self.getOptionsIfAlreadyExist(optionsPath, self.optionsFilePath)
+
+    def getOptionsIfAlreadyExist(self, folderPath, filePath):
+        if os.path.exists(folderPath):
+            try:
+                with open (filePath, 'r') as f:
+                    try:
+                        return json.loads(f.read())
+                    except json.decoder.JSONDecodeError:
+                        return {}
+            except FileNotFoundError:
+                return {}
+        else:
+            os.mkdir(folderPath)
+            return {}
+
+    def setOption(self, option, value):
+        self.__options[option] = value
+
+    def getOption(self, option, t = False):
+        try:
+            return self.__options[option]
+        except KeyError:
+            if t:
+                return ('', '')
+            else:
+                return ''
+
+    def saveOptionsToFile(self):
+        with open(self.optionsFilePath, 'w+') as f:
+            json.dump(self.__options, f)
+
+    def getOptionsCategories(self):
+        return self.__optionsCategories
+
 class Adb():
     def __init__(self):
         pass
@@ -1079,7 +1044,7 @@ class Adb():
     def deleteFile(device, fullPath):
         try:
             subprocess.check_output(r'adb -s {} shell rm {}'.format(device, fullPath))
-            return 'Done!'
+            return 'Done deleting'
         except subprocess.CalledProcessError:
             return 'Error!'
 
