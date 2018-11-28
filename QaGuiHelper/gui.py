@@ -11,14 +11,22 @@ import wx
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title = title, style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
         optionsHandler = OptionsHandler()
         adb = Adb()
-
-        mainSizer.Add(DevicesPanel(self, adb, optionsHandler), 1, wx.EXPAND)
-
         menuBar, optionsMenuButton, exitMenuButton = self.createMenuBar(optionsHandler)
 
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        topPanel = wx.Panel(self)
+        captureSSBtn, installBuildsBtn, refreshBtn, selectAllBtn = self.createTopPanelControls(topPanel)
+        mainSizer.Add(topPanel, 1, wx.EXPAND)
+
+        bottomPanel = wx.Panel(self)
+        self.createBottomPanelControls(bottomPanel)
+        mainSizer.Add(bottomPanel, 1, wx.EXPAND)
+
+        self.Bind(wx.EVT_BUTTON, self.updateBottomPanel(mainSizer), refreshBtn)
+        self.Bind(wx.EVT_BUTTON, self.openScreenshotPanel(adb, optionsHandler), captureSSBtn)
         self.Bind(wx.EVT_CLOSE, self.onExit(optionsHandler))
         self.Bind(wx.EVT_MENU, self.showOptions(optionsHandler), optionsMenuButton)
         self.Bind(wx.EVT_MENU, self.onExit(optionsHandler), exitMenuButton)
@@ -27,6 +35,9 @@ class MainFrame(wx.Frame):
         self.SetSizer(mainSizer)
         self.Fit()
         self.Show(True)
+
+    def createTopPanelControls(self, container):
+        raise NotImplemented
 
     def createMenuBar(self, optionsHandler):
         fileMenu = wx.Menu()
@@ -40,7 +51,29 @@ class MainFrame(wx.Frame):
         menuBar.Append(jenkinsMenu, 'Jenkins')
 
         return menuBar, optionsMenuButton, exitMenuButton
-        
+
+    ### EVENTS ###
+
+    def openScreenshotPanel(self, adb, optionsHandler):
+        def openScreenshotPanelEvent(event):
+            ssFolder = optionsHandler.getOption('Screenshot folder')
+            if not os.path.exists(ssFolder):
+                errorDlg = wx.MessageDialog(self.parent, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
+                                            style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+                errorDlg.ShowModal()
+                return
+            winDisabler = wx.WindowDisabler()
+            ScreenshotCaptureFrame(self, winDisabler, adb, optionsHandler)
+
+    def updateBottomPanel(self, mainSizer):
+        def updateBottomPanelEvent(event):
+            mainSizer.Remove(1)
+            bottomPanel = wx.Panel(self)
+            self.createBottomPanelControls(bottomPanel)
+            mainSizer.Add(bottomPanel, 1, wx.EXPAND)
+            self.Fit()
+        return updateBottomPanelEvent
+
     def onExit(self, optionsHandler):
         def onExitEvent(event):
             optionsHandler.saveOptionsToFile()
@@ -53,6 +86,7 @@ class MainFrame(wx.Frame):
             OptionsFrame(self, disabler, optionsHandler)
         return showOptionsEvent
 
+    ### END EVENTS ###
 class OptionsFrame(wx.Frame):
     def __init__(self, parent, disabler, optionsHandler):
         wx.Frame.__init__(self, parent, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
@@ -286,10 +320,11 @@ class DeviceInfoFrame(wx.Frame):
         return onCloseEvent
 
 class ScreenshotCaptureFrame(wx.Frame):
-    def __init__(self, parent, mainFrame, disabler, adb, listOfDevices, ssFolder, removeSSPermission):
+    def __init__(self, mainFrame, disabler, adb, optionsHandler):
         self.frame = wx.Frame.__init__(self, mainFrame, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
         panel = wx.Panel(self)
+        removeSSPermission = optionsHandler.getOption('Keep SS on device')
 
         statusLabels, openButton, closeButton = self.createControls(panel, listOfDevices)
 
@@ -725,26 +760,6 @@ class RefreshButtonPanel(wx.Panel):
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.sizer.Fit(self)
-
-    def getScreenshotFromDevices(self, event):
-        devices = self.parent.checkBoxesPanel.getCheckedDevices()
-        ssFolder = self.optionsHandler.getOption('Screenshots folder')
-        removeCreatedSSPermission = self.optionsHandler.getOption('Keep SS on device')
-        if (len(devices)) == 0:
-            errorDlg = wx.MessageDialog(self.parent, 'At least 1 device must be selected!', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
-            errorDlg.ShowModal()
-            return
-        if not os.path.exists(ssFolder):
-            time.sleep(0.2)
-            errorDlg = wx.MessageDialog(self.parent, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
-                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
-            errorDlg.ShowModal()
-            return
-        disabler = wx.WindowDisabler()
-        ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices, ssFolder, removeCreatedSSPermission)
-
-    def refreshDevicesPanel(self, event):
-        self.parent.refreshCheckboxesPanel()
     
     def installBuild(self, event):
         devices = self.parent.checkBoxesPanel.getCheckedDevices()
