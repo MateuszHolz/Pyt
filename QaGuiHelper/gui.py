@@ -576,71 +576,57 @@ class RefreshButtonPanel(wx.Panel):
         return checkAllEvent
 
 class DeviceInfoFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, deviceId, disabler, adb):
+    def __init__(self, parent, parentFrame, deviceId, disabler, adb):
         wx.Frame.__init__(self, parent, title = 'Device Info', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.mainWindow = mainWindow
         self.disabler = disabler
-        self.panel = DeviceInfoPanel(self, deviceId, adb)
-        self.bindEvents()
+        deviceInfoTable = (
+            ('Brand', adb.getBrand),
+            ('Model', adb.getDeviceModel),
+            ('Screen size', adb.getDeviceScreenSize),
+            ('IP Address', adb.getDeviceIpAddress),
+            ('ADB tcpip port', adb.getTcpipPort),
+            ('Battery', adb.getBatteryStatus),
+            ('Plugged in?', adb.getPluggedInStatus),
+            ('OS version', adb.getOsVersion),
+            ('API version', adb.getApiVersion),
+            ('Device timezone', adb.getDeviceTimezone),
+            ('Device language', adb.getDeviceLanguage),
+            ('Marketing name', adb.getMarketingName),
+            ('Wifi name', adb.getWifiName),
+            ('Serial No', adb.getSerialNo))
+
+        panel = wx.Panel(self)
+        deviceInfoControls = self.createControls(panel, deviceInfoTable)
+        self.updateFields(deviceInfoTable, deviceInfoControls, deviceId)
+
+        self.Bind(wx.EVT_CLOSE, self.onClose(parentFrame))
         self.Fit()
-
         self.Show(True)
-    
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
-    def OnClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainWindow.Raise()
-
-class DeviceInfoPanel(wx.Panel):
-    def __init__(self, parent, deviceId, adb):
-        wx.Panel.__init__(self, parent)
-        self.deviceId = deviceId
-        self.parent = parent
-        self.adb = adb
-        self.deviceInfoControls = []
-        self.deviceInfoTable = (
-            ('Brand', self.adb.getBrand),
-            ('Model', self.adb.getDeviceModel),
-            ('Screen size', self.adb.getDeviceScreenSize),
-            ('IP Address', self.adb.getDeviceIpAddress),
-            ('ADB tcpip port', self.adb.getTcpipPort),
-            ('Battery', self.adb.getBatteryStatus),
-            ('Plugged in?', self.adb.getPluggedInStatus),
-            ('OS version', self.adb.getOsVersion),
-            ('API version', self.adb.getApiVersion),
-            ('Device timezone', self.adb.getDeviceTimezone),
-            ('Device language', self.adb.getDeviceLanguage),
-            ('Marketing name', self.adb.getMarketingName),
-            ('Wifi name', self.adb.getWifiName),
-            ('Serial No', self.adb.getSerialNo))
-        self.createControls()
-        self.updateFields()
-
-    def createControls(self):
+    def createControls(self, container, deviceInfoTable):
+        deviceInfoControls = []
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         first = True
-        for i in self.deviceInfoTable:
+        for i in deviceInfoTable:
             if first:
                 first = False
             else:
-                mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+                mainSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self, label = i[0], size = (100, -1), style = wx.TE_CENTRE)
+            label = wx.StaticText(container, label = i[0], size = (100, -1), style = wx.TE_CENTRE)
             sizer.Add(label, 0, wx.EXPAND | wx.TOP, label.GetSize()[1]/3.5)
-            content = wx.TextCtrl(self, value = '...', size = (150, -1), style = wx.TE_READONLY)
-            self.deviceInfoControls.append(content)
+            content = wx.TextCtrl(container, value = '...', size = (150, -1), style = wx.TE_READONLY)
+            deviceInfoControls.append(content)
             sizer.Add(content, 0, wx.ALIGN_RIGHT)
             mainSizer.Add(sizer, 0, wx.ALL, 5)
-        self.SetSizer(mainSizer)
-        self.SetAutoLayout(1)
-        mainSizer.Fit(self)
+        container.SetSizer(mainSizer)
+        container.Fit()
 
-    def updateFields(self):
-        for func, ctrl in zip(self.deviceInfoTable, self.deviceInfoControls):
-            localThread = threading.Thread(target = self.updateSingleControl, args = (ctrl, self.deviceId, func[1]))
+        return deviceInfoControls
+
+    def updateFields(self, deviceInfoTable, deviceInfoControls, deviceId):
+        for func, ctrl in zip(deviceInfoTable, deviceInfoControls):
+            localThread = threading.Thread(target = self.updateSingleControl, args = (ctrl, deviceId, func[1]))
             localThread.start()
 
     def updateSingleControl(self, textCtrl, deviceId, functionToCall):
@@ -648,6 +634,13 @@ class DeviceInfoPanel(wx.Panel):
             textCtrl.SetValue(functionToCall(deviceId))
         except RuntimeError:
             pass
+
+    def onClose(self, parentFrame):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            parentFrame.Raise()
+        return onCloseEvent
 
 class ScreenshotCaptureFrame(wx.Frame):
     def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, ssFolder, removeSSPermission):
