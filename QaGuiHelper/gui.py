@@ -560,6 +560,7 @@ class RefreshButtonPanel(wx.Panel):
     def getScreenshotFromDevices(self, event):
         devices = self.parent.checkBoxesPanel.getCheckedDevices()
         ssFolder = self.optionsHandler.getOption('Screenshots folder')
+        removeCreatedSSPermission = self.optionsHandler.getOption('Keep SS on device')
         if (len(devices)) == 0:
             errorDlg = wx.MessageDialog(self.parent, 'At least 1 device must be selected!', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
@@ -571,7 +572,7 @@ class RefreshButtonPanel(wx.Panel):
             errorDlg.ShowModal()
             return
         disabler = wx.WindowDisabler()
-        ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices, ssFolder)
+        ScreenshotCaptureFrame(self, self.mainWindow, disabler, self.adb, devices, ssFolder, removeCreatedSSPermission)
 
     def refreshDevicesPanel(self, event):
         self.parent.refreshCheckboxesPanel()
@@ -670,12 +671,12 @@ class DeviceInfoPanel(wx.Panel):
             pass
 
 class ScreenshotCaptureFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, ssFolder):
+    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, ssFolder, removeSSPermission):
         self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
         self.mainWindow = mainWindow
 
-        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, ssFolder)
+        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, ssFolder, removeSSPermission)
         self.bindEvents()
         self.Fit()
         self.Show()
@@ -689,18 +690,16 @@ class ScreenshotCaptureFrame(wx.Frame):
         self.mainWindow.Raise()
 
 class ScreenshotCapturePanel(wx.Panel):
-    def __init__(self, parent, adb, listOfDevices, directoryForScreenshots):
+    def __init__(self, parent, adb, listOfDevices, directoryForScreenshots, removeSSPermission):
         self.panel = wx.Panel.__init__(self, parent)
         self.parent = parent
         self.adb = adb
-        self.directoryForScreenshots = directoryForScreenshots
-        self.listOfDevices = listOfDevices
         self.buttons = []
         self.statusLabels = []
-        self.createControls()
-        self.deployScreenshotThreads()
+        self.createControls(directoryForScreenshots, listOfDevices)
+        self.deployScreenshotThreads(directoryForScreenshots, listOfDevices, removeSSPermission)
 
-    def createControls(self):
+    def createControls(self, dirForScreenshots, listOfDevices):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
 
         listSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -716,7 +715,7 @@ class ScreenshotCapturePanel(wx.Panel):
         statColumnNameLabel.SetFont(columnNameFont)
         rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
 
-        for i in self.listOfDevices:
+        for i in listOfDevices:
             deviceLabel = wx.StaticText(self, label = i[1], style = wx.CENTER)
             leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
@@ -744,19 +743,19 @@ class ScreenshotCapturePanel(wx.Panel):
 
         mainSizer.Add(buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
 
-        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder, openButton)
+        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder(dirForScreenshots), openButton)
         self.Bind(wx.EVT_BUTTON, self.parent.onClose, closeButton)
 
         self.SetSizer(mainSizer)
         self.Fit()
 
-    def deployScreenshotThreads(self):
-        buttonUnlocker = ButtonUnlocker(len(self.listOfDevices), self.buttons)
-        for i, j in zip(self.listOfDevices, self.statusLabels):
-            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], self.directoryForScreenshots, j, i[1], buttonUnlocker))
+    def deployScreenshotThreads(self, directoryForScreenshots, listOfDevices, removeSSPermission):
+        buttonUnlocker = ButtonUnlocker(len(listOfDevices), self.buttons)
+        for i, j in zip(listOfDevices, self.statusLabels):
+            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], directoryForScreenshots, j, i[1], buttonUnlocker, removeSSPermission))
             localThread.start()
         
-    def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker):
+    def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker, removeSSPermission):
         statusLabel.SetLabel('Taking screenshot...')
         pathToScreenOnDevice = ''
         rawFileName = self.getFileName(device, model)
@@ -771,9 +770,16 @@ class ScreenshotCapturePanel(wx.Panel):
             return
         pathToScreenOnDevice = clbk[1]
         clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, directory)
-        try:            
+        try:
             statusLabel.SetLabel(clbk)
-            buttonUnlocker.finishThread()
+            if not removeSSPermission:
+                buttonUnlocker.finishThread()
+            else:
+                time.sleep(1)
+                statusLabel.SetLabel('Removing...')
+                clbk = self.adb.deleteFile(device, pathToScreenOnDevice)
+                statusLabel.SetLabel(clbk)
+                buttonUnlocker.finishThread()
         except RuntimeError:
             return
 
@@ -800,8 +806,10 @@ class ScreenshotCapturePanel(wx.Panel):
         deviceScreenSize = self.adb.getDeviceScreenSize(device)
         return '{}-{}'.format(model, deviceScreenSize)
 
-    def openScreenshotsFolder(self, event):
-        os.startfile(self.directoryForScreenshots)
+    def openScreenshotsFolder(self, dirForScreenshots):
+        def openScreenshotsFolderEvent(event):
+            os.startfile(dirForScreenshots)
+        return openScreenshotsFolderEvent
 
 class ButtonUnlocker():
     def __init__(self, count, btns):
@@ -1068,6 +1076,14 @@ class Adb():
             return 'Aapt not found.'
 
     @staticmethod
+    def deleteFile(device, fullPath):
+        try:
+            subprocess.check_output(r'adb -s {} shell rm {}'.format(device, fullPath))
+            return 'Done!'
+        except subprocess.CalledProcessError:
+            return 'Error!'
+
+    @staticmethod
     def isInstalledPackageDebuggable(device, pckg):
         try:
             out = subprocess.check_output(r'adb -s {} shell dumpsys package {}'.format(device, pckg)).decode().rsplit('\n')
@@ -1260,7 +1276,11 @@ class Adb():
 
     @staticmethod
     def getBrand(device):
-        return subprocess.check_output(r'adb -s {} shell getprop ro.product.brand'.format(device), shell = True)
+        brand = subprocess.check_output(r'adb -s {} shell getprop ro.product.brand'.format(device), shell = True)
+        if len(brand) > 0:
+            return brand
+        else:
+            return 'N/A'
 
     @staticmethod
     def getWifiName(device):
