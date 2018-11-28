@@ -132,87 +132,74 @@ class OptionsFrame(wx.Frame):
         wx.Frame.__init__(self, parent, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.mainWindow = parent
         self.disabler = disabler
-        self.panel = OptionsPanel(self, optionsHandler)
-        self.bindEvents()
+        self.changedOptions = {}
+        panel = wx.Panel(self)
+
+        self.createControls(panel, optionsHandler)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Fit()
         self.Show(True)
-    
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose)
-    
+        
     def onClose(self, event):
         del self.disabler
         self.Destroy()
         self.mainWindow.Raise()
 
-class OptionsPanel(wx.Panel):
-    def __init__(self, parent, optionsHandler):
-        wx.Panel.__init__(self, parent)
-        self.parent = parent
-        self.optionsHandler = optionsHandler
-        self.changedOptions = {}
-        self.createPanel()
-
-    def createPanel(self):
+    def createControls(self, container, optionsHandler):
         sizer = wx.BoxSizer(wx.VERTICAL)
         first = True
 
         buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        saveBtn = wx.Button(self, wx.ID_ANY, 'Save')
+        saveBtn = wx.Button(container, wx.ID_ANY, 'Save')
         saveBtn.Disable()
         buttonsSizer.Add(saveBtn, 0, wx.CENTER | wx.ALL, 5)
         
-        closeBtn = wx.Button(self, wx.ID_ANY, 'Close')
+        closeBtn = wx.Button(container, wx.ID_ANY, 'Close')
         buttonsSizer.Add(closeBtn, 0, wx.CENTER | wx.ALL, 5)
 
-        for i, j in self.optionsHandler.getOptionsCategories():
+        for i, j in optionsHandler.getOptionsCategories():
             rowSizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self, label = i, style = wx.TE_CENTRE, size = (100, 10))
+            label = wx.StaticText(container, label = i, style = wx.TE_CENTRE, size = (100, 10))
             rowSizer.Add(label, 0, wx.EXPAND | wx.TOP, 8)
             if not first:
-                sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+                sizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
             else:
                 first = False
             if j == 'folder':
-                valueCtrl = wx.TextCtrl(self, value = self.optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
+                valueCtrl = wx.TextCtrl(container, value = optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
                 rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
-                editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
+                editBtn = wx.Button(container, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl, saveBtn), editBtn)
             elif j == 'input':
-                inputUsername = wx.TextCtrl(self, value = self.optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
+                inputUsername = wx.TextCtrl(container, value = optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
                 rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
-                inputPassword = wx.TextCtrl(self, value = self.optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
+                inputPassword = wx.TextCtrl(container, value = optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
                 rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
-                editBtn = wx.Button(self, wx.ID_ANY, 'Edit')
+                editBtn = wx.Button(container, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption((inputUsername, inputPassword), saveBtn), editBtn)
+                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption((inputUsername, inputPassword), saveBtn, optionsHandler), editBtn)
             elif j == 'checkbox':
-                checkboxCtrl = wx.CheckBox(self, style = wx.CENTER)
-                checkboxCtrl.SetValue(self.optionsHandler.getOption(i))
+                checkboxCtrl = wx.CheckBox(container, style = wx.CENTER)
+                checkboxCtrl.SetValue(optionsHandler.getOption(i))
                 rowSizer.Add(checkboxCtrl, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_CHECKBOX, self.onSwitchCheckbox(i, checkboxCtrl, saveBtn), checkboxCtrl)
             sizer.Add(rowSizer, 0, wx.CENTER | wx.ALL, 5)
         
-        sizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+        sizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
         sizer.Add(buttonsSizer, 0, wx.CENTER | wx.ALL, 5)
 
-        self.Bind(wx.EVT_BUTTON, self.saveChanges(saveBtn), saveBtn)
-        self.Bind(wx.EVT_BUTTON, self.parent.onClose, closeBtn)
+        self.Bind(wx.EVT_BUTTON, self.saveChanges(saveBtn, optionsHandler), saveBtn)
+        self.Bind(wx.EVT_BUTTON, self.onClose, closeBtn)
         
-        self.SetSizer(sizer)
-        self.Fit()
+        container.SetSizer(sizer)
+        container.Fit()
 
-    def onSwitchCheckbox(self, option, checkboxCtrl, saveBtn):
-        def onSwitchCheckboxEvent(event):
-            self.onChangedOption(option, checkboxCtrl.GetValue(), saveBtn)
-        return onSwitchCheckboxEvent
-
-    def saveChanges(self, btn):
+    def saveChanges(self, btn, optionsHandler):
         def saveChangesEvent(event):
             for i in self.changedOptions.keys():
-                self.optionsHandler.setOption(i, self.changedOptions[i])
+                optionsHandler.setOption(i, self.changedOptions[i])
             btn.Disable()
         return saveChangesEvent
 
@@ -235,11 +222,16 @@ class OptionsPanel(wx.Panel):
             pass #checkbox case
         saveBtn.Enable()
 
-    def editCredentialsOption(self, jenkinsCredentialControls, saveBtn):
+    def editCredentialsOption(self, jenkinsCredentialControls, saveBtn, optionsHandler):
         def editCredentialsOptionEvent(event):
             disabler = wx.WindowDisabler()
-            JenkinsCredentialsEditFrame(self, self.optionsHandler, disabler, self.onChangedOption, saveBtn, jenkinsCredentialControls)
+            JenkinsCredentialsEditFrame(self, optionsHandler, disabler, self.onChangedOption, saveBtn, jenkinsCredentialControls)
         return editCredentialsOptionEvent
+
+    def onSwitchCheckbox(self, option, checkboxCtrl, saveBtn):
+        def onSwitchCheckboxEvent(event):
+            self.onChangedOption(option, checkboxCtrl.GetValue(), saveBtn)
+        return onSwitchCheckboxEvent
 
 class JenkinsCredentialsEditFrame(wx.Frame):
     def __init__(self, parent, optionsHandler, disabler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
