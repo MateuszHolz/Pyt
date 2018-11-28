@@ -480,7 +480,6 @@ class DevicesCheckboxesPanel(wx.Panel):
         mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 3)
 
         self.SetSizer(mainSizer)
-        mainSizer.Layout()
         self.Fit()
 
     def getCheckedDevices(self):
@@ -643,35 +642,25 @@ class DeviceInfoFrame(wx.Frame):
         return onCloseEvent
 
 class ScreenshotCaptureFrame(wx.Frame):
-    def __init__(self, parent, mainWindow, disabler, adb, listOfDevices, ssFolder, removeSSPermission):
-        self.frame = wx.Frame.__init__(self, mainWindow, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+    def __init__(self, parent, mainFrame, disabler, adb, listOfDevices, ssFolder, removeSSPermission):
+        self.frame = wx.Frame.__init__(self, mainFrame, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
-        self.mainWindow = mainWindow
+        panel = wx.Panel(self)
 
-        self.panel = ScreenshotCapturePanel(self, adb, listOfDevices, ssFolder, removeSSPermission)
-        self.bindEvents()
+        statusLabels, openButton, closeButton = self.createControls(panel, listOfDevices)
+
+        self.Bind(wx.EVT_CLOSE, self.onClose(mainFrame))
+        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder(ssFolder), openButton)
+        self.Bind(wx.EVT_BUTTON, self.onClose(mainFrame), closeButton)
+
+        self.deployScreenshotThreads(ssFolder, listOfDevices, removeSSPermission, (openButton, closeButton), statusLabels, adb)
+
         self.Fit()
-        self.Show()
+        self.Show(True)
 
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose)
+    def createControls(self, container, listOfDevices):
+        statusLabels = []
 
-    def onClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainWindow.Raise()
-
-class ScreenshotCapturePanel(wx.Panel):
-    def __init__(self, parent, adb, listOfDevices, directoryForScreenshots, removeSSPermission):
-        self.panel = wx.Panel.__init__(self, parent)
-        self.parent = parent
-        self.adb = adb
-        self.buttons = []
-        self.statusLabels = []
-        self.createControls(directoryForScreenshots, listOfDevices)
-        self.deployScreenshotThreads(directoryForScreenshots, listOfDevices, removeSSPermission)
-
-    def createControls(self, dirForScreenshots, listOfDevices):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
 
         listSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -679,60 +668,57 @@ class ScreenshotCapturePanel(wx.Panel):
         rightColumn = wx.BoxSizer(wx.VERTICAL)
         columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
 
-        devColumnNameLabel = wx.StaticText(self, label = 'Device', style = wx.CENTER)
+        devColumnNameLabel = wx.StaticText(container, label = 'Device', style = wx.CENTER)
         devColumnNameLabel.SetFont(columnNameFont)
         leftColumn.Add(devColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
 
-        statColumnNameLabel = wx.StaticText(self, label = 'Status', style = wx.CENTER)
+        statColumnNameLabel = wx.StaticText(container, label = 'Status', style = wx.CENTER)
         statColumnNameLabel.SetFont(columnNameFont)
         rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
 
         for i in listOfDevices:
-            deviceLabel = wx.StaticText(self, label = i[1], style = wx.CENTER)
-            leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            deviceLabel = wx.StaticText(container, label = i[1], style = wx.CENTER)
+            leftColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
 
-            statusLabel = wx.StaticText(self, label = 'Ready', style = wx.CENTER)
-            rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            statusLabel = wx.StaticText(container, label = 'Ready', style = wx.CENTER)
+            rightColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
-            self.statusLabels.append(statusLabel)
+            statusLabels.append(statusLabel)
 
         listSizer.Add(leftColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
-        listSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
+        listSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
         listSizer.Add(rightColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
 
         mainSizer.Add(listSizer, 2, wx.EXPAND | wx.ALL, 5)
 
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
-        openButton = wx.Button(self, wx.ID_ANY, 'Open Folder')
+        openButton = wx.Button(container, wx.ID_ANY, 'Open Folder')
         openButton.Disable()
-        self.buttons.append(openButton)
         buttonSizer.Add(openButton, 1, wx.EXPAND | wx.ALL, 3)
-        closeButton = wx.Button(self, wx.ID_ANY, 'Close')
+        closeButton = wx.Button(container, wx.ID_ANY, 'Close')
         closeButton.Disable()
-        self.buttons.append(closeButton)
         buttonSizer.Add(closeButton, 1, wx.EXPAND | wx.ALL, 3)
 
         mainSizer.Add(buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
 
-        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder(dirForScreenshots), openButton)
-        self.Bind(wx.EVT_BUTTON, self.parent.onClose, closeButton)
+        container.SetSizer(mainSizer)
+        container.Fit()
 
-        self.SetSizer(mainSizer)
-        self.Fit()
+        return statusLabels, openButton, closeButton
 
-    def deployScreenshotThreads(self, directoryForScreenshots, listOfDevices, removeSSPermission):
-        buttonUnlocker = ButtonUnlocker(len(listOfDevices), self.buttons)
-        for i, j in zip(listOfDevices, self.statusLabels):
-            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], directoryForScreenshots, j, i[1], buttonUnlocker, removeSSPermission))
+    def deployScreenshotThreads(self, directoryForScreenshots, listOfDevices, removeSSPermission, buttonsToEnable, statusLabels, adb):
+        buttonUnlocker = ButtonUnlocker(len(listOfDevices), buttonsToEnable)
+        for i, j in zip(listOfDevices, statusLabels):
+            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], directoryForScreenshots, j, i[1], buttonUnlocker, removeSSPermission, adb))
             localThread.start()
-        
-    def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker, removeSSPermission):
+
+    def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker, removeSSPermission, adb):
         statusLabel.SetLabel('Taking screenshot...')
         pathToScreenOnDevice = ''
-        rawFileName = self.getFileName(device, model)
+        rawFileName = self.getFileName(device, model, adb)
         indexedFileName = self.getFileNameWithIndex(rawFileName, directory)
-        clbk = self.adb.captureScreenshot(device, indexedFileName)
+        clbk = adb.captureScreenshot(device, indexedFileName)
         try:
             statusLabel.SetLabel(clbk[0])
         except RuntimeError:
@@ -741,7 +727,7 @@ class ScreenshotCapturePanel(wx.Panel):
             buttonUnlocker.finishThread()
             return
         pathToScreenOnDevice = clbk[1]
-        clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, directory)
+        clbk = adb.pullScreenshot(device, pathToScreenOnDevice, directory)
         try:
             statusLabel.SetLabel(clbk)
             if not removeSSPermission:
@@ -749,7 +735,7 @@ class ScreenshotCapturePanel(wx.Panel):
             else:
                 time.sleep(1)
                 statusLabel.SetLabel('Removing...')
-                clbk = self.adb.deleteFile(device, pathToScreenOnDevice)
+                clbk = adb.deleteFile(device, pathToScreenOnDevice)
                 statusLabel.SetLabel(clbk)
                 buttonUnlocker.finishThread()
         except RuntimeError:
@@ -771,17 +757,24 @@ class ScreenshotCapturePanel(wx.Panel):
     def getNextIndexOfFile(self, f):
         return int(f[f.find('_')+1:f.find('.png')])+1
 
-    def getFileName(self, device, model):
+    def getFileName(self, device, model, adb):
         unsupportedChars = (' ', '(', ')', '_')
         for i in unsupportedChars:
             model = model.replace(i, '')
-        deviceScreenSize = self.adb.getDeviceScreenSize(device)
+        deviceScreenSize = adb.getDeviceScreenSize(device)
         return '{}-{}'.format(model, deviceScreenSize)
 
     def openScreenshotsFolder(self, dirForScreenshots):
         def openScreenshotsFolderEvent(event):
             os.startfile(dirForScreenshots)
         return openScreenshotsFolderEvent
+    
+    def onClose(self, mainFrame):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            mainFrame.Raise()
+        return onCloseEvent
 
 class ButtonUnlocker():
     def __init__(self, count, btns):
@@ -1051,7 +1044,7 @@ class Adb():
     def deleteFile(device, fullPath):
         try:
             subprocess.check_output(r'adb -s {} shell rm {}'.format(device, fullPath))
-            return 'Done!'
+            return 'Done deleting'
         except subprocess.CalledProcessError:
             return 'Error!'
 
