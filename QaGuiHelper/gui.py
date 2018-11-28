@@ -148,13 +148,14 @@ class MainFrame(wx.Frame):
     def updateBottomPanel(self, mainSizer, adb, bottomPanel, refreshBtn):
         def updateBottomPanelEvent(event):
             print('before destroy', mainSizer.GetChildren())
+            mainSizer.Remove(2)
             bottomPanel.Destroy()
-            return
             print('after destroy', mainSizer.GetChildren())
             newBottomPanel = wx.Panel(self)
             self.createBottomPanelControls(newBottomPanel, adb)
             mainSizer.Add(newBottomPanel, 0, wx.EXPAND)
             self.Bind(wx.EVT_BUTTON, self.updateBottomPanel(mainSizer, adb, newBottomPanel, refreshBtn), refreshBtn)
+            mainSizer.Layout()
             self.Fit()
         return updateBottomPanelEvent
 
