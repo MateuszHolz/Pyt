@@ -10,41 +10,48 @@ import wx
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
-        self.mainFrame = wx.Frame.__init__(self, parent, title = title, style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        wx.Frame.__init__(self, parent, title = title, style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.optionsHandler = OptionsHandler()
+        optionsHandler = OptionsHandler()
+        adb = Adb()
 
-        self.adb = Adb()
+        mainSizer.Add(DevicesPanel(self, adb, optionsHandler), 1, wx.EXPAND)
 
-        mainSizer.Add(DevicesPanel(self, self.adb, self.optionsHandler), 1, wx.EXPAND)
+        menuBar, optionsMenuButton, exitMenuButton = self.createMenuBar(optionsHandler)
 
-        fileMenu = wx.Menu()
-        options = fileMenu.Append(wx.ID_ANY, 'Options')
-        fileMenu.AppendSeparator()
-        ext = fileMenu.Append(wx.ID_ANY, 'Exit')
+        self.Bind(wx.EVT_CLOSE, self.onExit(optionsHandler))
+        self.Bind(wx.EVT_MENU, self.showOptions(optionsHandler), optionsMenuButton)
+        self.Bind(wx.EVT_MENU, self.onExit(optionsHandler), exitMenuButton)
 
-        jenkinsMenu = JenkinsMenu(self, 'links.json', self.optionsHandler)
-            
-        menuBar = wx.MenuBar()
-        menuBar.Append(fileMenu, 'File')
-        menuBar.Append(jenkinsMenu, 'Jenkins')
         self.SetMenuBar(menuBar)
-
-        self.Bind(wx.EVT_MENU, self.showOptions, options)
-        self.Bind(wx.EVT_MENU, self.onExit, ext)
-        self.Bind(wx.EVT_CLOSE, self.onExit)
-
         self.SetSizer(mainSizer)
         self.Fit()
         self.Show(True)
-        
-    def onExit(self, event):
-        self.optionsHandler.saveOptionsToFile()
-        self.Destroy()
 
-    def showOptions(self, event):
-        disabler = wx.WindowDisabler()
-        OptionsFrame(self, disabler, self.optionsHandler)
+    def createMenuBar(self, optionsHandler):
+        fileMenu = wx.Menu()
+        optionsMenuButton = fileMenu.Append(wx.ID_ANY, 'Options')
+        fileMenu.AppendSeparator()
+        exitMenuButton = fileMenu.Append(wx.ID_ANY, 'Exit')
+
+        jenkinsMenu = JenkinsMenu(self, 'links.json', optionsHandler)
+        menuBar = wx.MenuBar()
+        menuBar.Append(fileMenu, 'File')
+        menuBar.Append(jenkinsMenu, 'Jenkins')
+
+        return menuBar, optionsMenuButton, exitMenuButton
+        
+    def onExit(self, optionsHandler):
+        def onExitEvent(event):
+            optionsHandler.saveOptionsToFile()
+            self.Destroy()
+        return onExitEvent
+
+    def showOptions(self, optionsHandler):
+        def showOptionsEvent(event):
+            disabler = wx.WindowDisabler()
+            OptionsFrame(self, disabler, optionsHandler)
+        return showOptionsEvent
 
 class OptionsFrame(wx.Frame):
     def __init__(self, parent, disabler, optionsHandler):
