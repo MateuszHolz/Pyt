@@ -234,76 +234,63 @@ class OptionsFrame(wx.Frame):
         return onSwitchCheckboxEvent
 
 class JenkinsCredentialsEditFrame(wx.Frame):
-    def __init__(self, parent, optionsHandler, disabler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
-        wx.Frame.__init__(self, parent, title = 'Edit credentials', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.parent = parent
+    def __init__(self, parentFrame, optionsHandler, disabler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
+        wx.Frame.__init__(self, parentFrame, title = 'Edit credentials', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
-        self.panel = JenkinsCredentialsEditPanel(self, optionsHandler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls)
-        self.bindEvents()
+        panel = wx.Panel(self)
+        eventControls = self.createControls(panel)
+
+        self.Bind(wx.EVT_BUTTON, self.updateJenkinsCreds(eventControls, optionsHandler, onChangedOptionFunc, jenkinsCredentialControls), eventControls[0])
+        self.Bind(wx.EVT_CLOSE, self.onClose(parentFrame))
         self.Fit()
         self.Show(True)
-    
-    def bindEvents(self):
-        self.Bind(wx.EVT_CLOSE, self.onClose())
 
-    def onClose(self):
-        def onCloseEvent(event):
-            del self.disabler
-            self.Destroy()
-            self.parent.Raise()
-        return onCloseEvent
-
-class JenkinsCredentialsEditPanel(wx.Panel):
-    def __init__(self, parent, optionsHandler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
-        wx.Panel.__init__(self, parent)
-        self.parent = parent
-        self.saveBtn = saveBtn
-        self.optionsHandler = optionsHandler
-        self.onChangedOptionFunc = onChangedOptionFunc
-        self.jenkinsCredentialControls = jenkinsCredentialControls
-        self.createPanel()
-
-    def createPanel(self):
+    def createControls(self, container):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         
         topSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         userSizer = wx.BoxSizer(wx.VERTICAL)
-        userLabel = wx.StaticText(self, label = 'User')
+        userLabel = wx.StaticText(container, label = 'User')
         userSizer.Add(userLabel, 0, wx.CENTER | wx.ALL, 3)
-        userInputField = wx.TextCtrl(self, size = (100, -1))
+        userInputField = wx.TextCtrl(container, size = (100, -1))
         userSizer.Add(userInputField, 0, wx.ALL, 3)
 
         passwordSizer = wx.BoxSizer(wx.VERTICAL)
-        passwordLabel = wx.StaticText(self, label = 'Password')
+        passwordLabel = wx.StaticText(container, label = 'Password')
         passwordSizer.Add(passwordLabel, 0, wx.CENTER | wx.ALL, 3)
-        passwordInputField = wx.TextCtrl(self, size = (100, -1))
+        passwordInputField = wx.TextCtrl(container, size = (100, -1))
         passwordSizer.Add(passwordInputField, 0, wx.ALL, 3)
 
         topSizer.Add(userSizer, 0, wx.EXPAND | wx.ALL, 5)
-        topSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+        topSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
         topSizer.Add(passwordSizer, 0, wx.EXPAND | wx.ALL, 5)
 
         bottomSizer = wx.BoxSizer(wx.HORIZONTAL)
-        saveBtn = wx.Button(self, wx.ID_ANY, 'Update')
-        self.Bind(wx.EVT_BUTTON, self.updateJenkinsCreds(userInputField, passwordInputField), saveBtn)
+        saveBtn = wx.Button(container, wx.ID_ANY, 'Update')
         bottomSizer.Add(saveBtn, 0, wx.CENTER | wx.EXPAND | wx.BOTTOM | wx.RIGHT | wx.LEFT, 10)
 
         mainSizer.Add(topSizer, 0)
-        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
+        mainSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
         mainSizer.Add(bottomSizer, 0, wx.CENTER)
-        self.SetSizer(mainSizer)
-        self.Fit()
+        container.SetSizer(mainSizer)
+        container.Fit()
 
-    def updateJenkinsCreds(self, usernameInputField, passwordInputField):
+        return saveBtn, userInputField, passwordInputField
+
+    def updateJenkinsCreds(self, eventControls, optionsHandler, onChangedOptionFunc, jenkinsCredentialControls):
         def updateJenkinsCredsEvent(event):
-            newCreds = (usernameInputField.GetValue(), passwordInputField.GetValue())
-            self.onChangedOptionFunc(self.optionsHandler.getOptionsCategories()[2][0], newCreds, self.saveBtn, self.jenkinsCredentialControls)
-            del self.parent.disabler
-            #hackish way to do it - TODO: implement it in some elegant way
-            self.parent.Destroy()
-            self.parent.parent.Raise()
+            newCreds = (eventControls[1].GetValue(), eventControls[2].GetValue())
+            onChangedOptionFunc(optionsHandler.getOptionsCategories()[2][0], newCreds, eventControls[0], jenkinsCredentialControls)
+            self.Close()
         return updateJenkinsCredsEvent
+
+    def onClose(self, parentFrame):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            parentFrame.Raise()
+        return onCloseEvent
 
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info, optionsHandler):
