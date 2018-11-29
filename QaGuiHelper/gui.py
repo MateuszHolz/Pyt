@@ -14,20 +14,12 @@ class MainFrame(wx.Frame):
         optionsHandler = OptionsHandler()
         adb = Adb()
         menuBar, optionsMenuButton, exitMenuButton = self.createMenuBar(optionsHandler)
+
         mainPanel = wx.Panel(self)
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
 
-        topPanel = wx.Panel(self)
-        captureSSBtn, installBtn, refreshBtn, selectAllBtn = self.createTopPanelControls(topPanel)
-        mainSizer.Add(topPanel, 0, wx.EXPAND)
+        captureSSBtn, installBtn, refreshBtn, mainSizer, bottomSizer = self.createControls(mainPanel, adb)
 
-        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-
-        bottomPanel = wx.Panel(self)
-        self.createBottomPanelControls(bottomPanel, adb)
-        mainSizer.Add(bottomPanel, 0, wx.EXPAND)
-
-        self.Bind(wx.EVT_BUTTON, self.updateBottomPanel(mainSizer, adb, bottomPanel, refreshBtn), refreshBtn)
+        self.Bind(wx.EVT_BUTTON, self.updateBottomSizer(adb, mainSizer, bottomSizer, mainPanel, refreshBtn), refreshBtn)
         self.Bind(wx.EVT_BUTTON, self.openScreenshotPanel(adb, optionsHandler), captureSSBtn)
         self.Bind(wx.EVT_BUTTON, self.openInstallBuildPanel(adb, optionsHandler), installBtn)
         self.Bind(wx.EVT_CLOSE, self.onExit(optionsHandler))
@@ -35,37 +27,37 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onExit(optionsHandler), exitMenuButton)
 
         self.SetMenuBar(menuBar)
-        self.SetSizer(mainSizer)
-        mainPanel.Fit()
         self.Fit()
         self.Show(True)
 
-    def createTopPanelControls(self, container):
+    def createControls(self, container, adb):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        topRow = wx.BoxSizer(wx.HORIZONTAL)
-        captureSSButton = wx.Button(container, wx.ID_ANY, 'Capture SS')
-        installBuildsButton = wx.Button(container, wx.ID_ANY, 'Install Build')
-        topRow.Add(captureSSButton, 1, wx.ALIGN_CENTER)
-        topRow.Add(installBuildsButton, 1, wx.ALIGN_CENTER)
 
-        bottomRow = wx.BoxSizer(wx.HORIZONTAL)
-        refreshDevicesButton = wx.Button(container, wx.ID_ANY, 'Refresh')
-        bottomRow.Add(refreshDevicesButton, 1, wx.ALIGN_CENTER)
-        checkAllButton = wx.Button(container, wx.ID_ANY, 'Select all')
-        bottomRow.Add(checkAllButton, 1, wx.ALIGN_CENTER)
-
-        mainSizer.Add(topRow, 1, wx.ALIGN_CENTER | wx.TOP | wx.LEFT | wx.RIGHT, 10)
-        mainSizer.Add(bottomRow, 1, wx.ALIGN_CENTER | wx.BOTTOM | wx.LEFT | wx.RIGHT, 10)
+        topSizer, captureSSBtn, installBtn, refreshBtn = self.createButtonSizer(container)
+        mainSizer.Add(topSizer, 0, wx.EXPAND | wx.ALL, 5)
+        bottomSizer = self.createListOfDevicesSizer(container, adb)
+        mainSizer.Add(bottomSizer, 0, wx.EXPAND | wx.ALL, 5)
 
         container.SetSizer(mainSizer)
         container.Fit()
 
-        return captureSSButton, installBuildsButton, refreshDevicesButton, checkAllButton
+        return captureSSBtn, installBtn, refreshBtn, mainSizer, bottomSizer
 
-    def createBottomPanelControls(self, container, adb):
+    def createButtonSizer(self, container):
+        buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
+        captureSSButton = wx.Button(container, wx.ID_ANY, 'Capture SS')
+        buttonsSizer.Add(captureSSButton, 1, wx.EXPAND | wx.ALL, 5)
+        installBuildsButton = wx.Button(container, wx.ID_ANY, 'Install Build')
+        buttonsSizer.Add(installBuildsButton, 1, wx.EXPAND | wx.ALL, 5)
+        refreshDevicesButton = wx.Button(container, wx.ID_ANY, 'Refresh')
+        buttonsSizer.Add(refreshDevicesButton, 1, wx.EXPAND | wx.ALL, 5)
+
+        return buttonsSizer, captureSSButton, installBuildsButton, refreshDevicesButton
+
+    def createListOfDevicesSizer(self, container, adb):
         deviceList = adb.getListOfAttachedDevices()
 
-        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        listOfDevicesSizer = wx.BoxSizer(wx.HORIZONTAL)
         leftColumn = wx.BoxSizer(wx.VERTICAL)
         middleColumn = wx.BoxSizer(wx.VERTICAL)
         rightColumn = wx.BoxSizer(wx.VERTICAL)
@@ -100,14 +92,13 @@ class MainFrame(wx.Frame):
 
             self.Bind(wx.EVT_BUTTON, self.showInfoAboutDevice(i, j, adb), infoButton)
 
-        mainSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 3)
-        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
-        mainSizer.Add(middleColumn, 1, wx.EXPAND | wx.ALL, 3)
-        mainSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
-        mainSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 3)
+        listOfDevicesSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 3)
+        listOfDevicesSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        listOfDevicesSizer.Add(middleColumn, 1, wx.EXPAND | wx.ALL, 3)
+        listOfDevicesSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        listOfDevicesSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 3)
 
-        container.SetSizer(mainSizer)
-        container.Fit()
+        return listOfDevicesSizer
 
     def createMenuBar(self, optionsHandler):
         fileMenu = wx.Menu()
@@ -126,7 +117,7 @@ class MainFrame(wx.Frame):
 
     def openScreenshotPanel(self, adb, optionsHandler):
         def openScreenshotPanelEvent(event):
-            if not os.path.exists(optionsHandler.getOption('Screenshot folder')):
+            if not os.path.exists(optionsHandler.getOption('Screenshots folder')):
                 errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
                                             style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
                 errorDlg.ShowModal()
@@ -143,20 +134,21 @@ class MainFrame(wx.Frame):
                 errorDlg.ShowModal()
                 return
             winDisabler = wx.WindowDisabler()
-            BuildInstallerFrame(self, disabler, adb, optionsHandler)
+            BuildInstallerFrame(self, winDisabler, adb, optionsHandler)
         return installBuildEvent
     
-    def updateBottomPanel(self, mainSizer, adb, bottomPanel, refreshBtn):
-        def updateBottomPanelEvent(event):
-            mainSizer.Remove(2)
-            bottomPanel.Destroy()
-            newBottomPanel = wx.Panel(self)
-            self.createBottomPanelControls(newBottomPanel, adb)
-            mainSizer.Add(newBottomPanel, 0, wx.EXPAND)
-            self.Bind(wx.EVT_BUTTON, self.updateBottomPanel(mainSizer, adb, newBottomPanel, refreshBtn), refreshBtn)
+    def updateBottomSizer(self, adb, mainSizer, bottomSizer, mainPanel, refreshBtn):
+        def updateBottomSizerEvent(event):
+            newBottomSizer = self.createListOfDevicesSizer(mainPanel, adb)
+            mainSizer.Hide(bottomSizer)
             mainSizer.Layout()
+            mainSizer.Replace(bottomSizer, newBottomSizer)
+            self.Bind(wx.EVT_BUTTON, self.updateBottomSizer(adb, mainSizer, newBottomSizer, mainPanel, refreshBtn), refreshBtn)
+            mainPanel.Layout()
+            mainSizer.Layout()
+            mainPanel.Fit()
             self.Fit()
-        return updateBottomPanelEvent
+        return updateBottomSizerEvent
 
     def onExit(self, optionsHandler):
         def onExitEvent(event):
@@ -181,7 +173,6 @@ class MainFrame(wx.Frame):
             DeviceInfoFrame(self, device, winDisabler, adb)
         return showInfoAboutDeviceEvent
 
-    ### END EVENTS ###
 class OptionsFrame(wx.Frame):
     def __init__(self, parent, disabler, optionsHandler):
         wx.Frame.__init__(self, parent, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
@@ -551,7 +542,7 @@ class ScreenshotCaptureFrame(wx.Frame):
         return onCloseEvent
 
 class BuildInstallerFrame(wx.Frame):
-    def __init__(self, mainWindow, disabler, adb, deviceList, optionsHandler):
+    def __init__(self, mainWindow, disabler, adb, optionsHandler):
         wx.Frame.__init__(self, mainWindow, title = 'Installing builds', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
         self.mainWindow = mainWindow
