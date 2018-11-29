@@ -14,7 +14,7 @@ class MainFrame(wx.Frame):
         optionsHandler = OptionsHandler()
         adb = Adb()
         menuBar, optionsMenuButton, exitMenuButton = self.createMenuBar(optionsHandler)
-
+        mainPanel = wx.Panel(self)
         mainSizer = wx.BoxSizer(wx.VERTICAL)
 
         topPanel = wx.Panel(self)
@@ -36,6 +36,7 @@ class MainFrame(wx.Frame):
 
         self.SetMenuBar(menuBar)
         self.SetSizer(mainSizer)
+        mainPanel.Fit()
         self.Fit()
         self.Show(True)
 
@@ -94,7 +95,7 @@ class MainFrame(wx.Frame):
             infoButton = wx.Button(container, label = 'i', style = wx.CENTER, size = (20, 5))
 
             leftColumn.Add(modelLabel, 1, wx.CENTER | wx.ALL, 9)
-            middleColumn.Add(stateLabel, 1, wx.CENTER | wx.ALL, 3)
+            middleColumn.Add(stateLabel, 1, wx.CENTER | wx.ALL, 9)
             rightColumn.Add(infoButton, 1, wx.CENTER | wx.ALL, 3)
 
             self.Bind(wx.EVT_BUTTON, self.showInfoAboutDevice(i, j, adb), infoButton)
@@ -147,10 +148,8 @@ class MainFrame(wx.Frame):
     
     def updateBottomPanel(self, mainSizer, adb, bottomPanel, refreshBtn):
         def updateBottomPanelEvent(event):
-            print('before destroy', mainSizer.GetChildren())
             mainSizer.Remove(2)
             bottomPanel.Destroy()
-            print('after destroy', mainSizer.GetChildren())
             newBottomPanel = wx.Panel(self)
             self.createBottomPanelControls(newBottomPanel, adb)
             mainSizer.Add(newBottomPanel, 0, wx.EXPAND)
@@ -349,8 +348,8 @@ class JenkinsCredentialsEditFrame(wx.Frame):
         return onCloseEvent
 
 class DeviceInfoFrame(wx.Frame):
-    def __init__(self, parent, parentFrame, deviceId, disabler, adb):
-        wx.Frame.__init__(self, parent, title = 'Device Info', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+    def __init__(self, parentFrame, deviceId, disabler, adb):
+        wx.Frame.__init__(self, parentFrame, title = 'Device Info', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
         deviceInfoTable = (
             ('Brand', adb.getBrand),
