@@ -11,51 +11,58 @@ import wx
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title = title, style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        optionsHandler = OptionsHandler()
-        adb = Adb()
-        menuBar, optionsMenuButton, exitMenuButton = self.createMenuBar(optionsHandler)
+        self.optionsHandler = OptionsHandler()
+        self.adb = Adb()
 
-        mainPanel = wx.Panel(self)
+        menuBar, optionsMenuButton, exitMenuButton = self.createMenuBar()
 
-        captureSSBtn, installBtn, refreshBtn, mainSizer, bottomSizer = self.createControls(mainPanel, adb)
+        self.mainPanel = wx.Panel(self)
 
-        self.Bind(wx.EVT_BUTTON, self.updateBottomSizer(adb, mainSizer, bottomSizer, mainPanel, refreshBtn), refreshBtn)
-        self.Bind(wx.EVT_BUTTON, self.openScreenshotPanel(adb, optionsHandler), captureSSBtn)
-        self.Bind(wx.EVT_BUTTON, self.openInstallBuildPanel(adb, optionsHandler), installBtn)
-        self.Bind(wx.EVT_CLOSE, self.onExit(optionsHandler))
-        self.Bind(wx.EVT_MENU, self.showOptions(optionsHandler), optionsMenuButton)
-        self.Bind(wx.EVT_MENU, self.onExit(optionsHandler), exitMenuButton)
+        captureSSBtn, installBtn, refreshBtn, self.mainSizer, self.bottomSizer = self.createControls()
+
+        self.Bind(wx.EVT_BUTTON, self.updateBottomSizer, refreshBtn)
+        self.Bind(wx.EVT_BUTTON, self.openScreenshotPanel, captureSSBtn)
+        self.Bind(wx.EVT_BUTTON, self.openInstallBuildPanel, installBtn)
+        self.Bind(wx.EVT_CLOSE, self.onExit)
+        self.Bind(wx.EVT_MENU, self.showOptions, optionsMenuButton)
+        self.Bind(wx.EVT_MENU, self.onExit, exitMenuButton)
 
         self.SetMenuBar(menuBar)
-        self.Fit()
+        self.scaleTheWindow()
         self.Show(True)
 
-    def createControls(self, container, adb):
+    def scaleTheWindow(self):
+        self.mainPanel.Layout()
+        self.mainSizer.Layout()
+        self.mainPanel.Fit()
+        self.Fit()
+
+    def createControls(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
 
-        topSizer, captureSSBtn, installBtn, refreshBtn = self.createButtonSizer(container)
+        topSizer, captureSSBtn, installBtn, refreshBtn = self.createButtonSizer()
         mainSizer.Add(topSizer, 0, wx.EXPAND | wx.ALL, 5)
-        bottomSizer = self.createListOfDevicesSizer(container, adb)
+        bottomSizer = self.createListOfDevicesSizer()
         mainSizer.Add(bottomSizer, 0, wx.EXPAND | wx.ALL, 5)
 
-        container.SetSizer(mainSizer)
-        container.Fit()
+        self.mainPanel.SetSizer(mainSizer)
+        self.mainPanel.Fit()
 
         return captureSSBtn, installBtn, refreshBtn, mainSizer, bottomSizer
 
-    def createButtonSizer(self, container):
+    def createButtonSizer(self):
         buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
-        captureSSButton = wx.Button(container, wx.ID_ANY, 'Capture SS')
+        captureSSButton = wx.Button(self.mainPanel, wx.ID_ANY, 'Capture SS')
         buttonsSizer.Add(captureSSButton, 1, wx.EXPAND | wx.ALL, 5)
-        installBuildsButton = wx.Button(container, wx.ID_ANY, 'Install Build')
+        installBuildsButton = wx.Button(self.mainPanel, wx.ID_ANY, 'Install Build')
         buttonsSizer.Add(installBuildsButton, 1, wx.EXPAND | wx.ALL, 5)
-        refreshDevicesButton = wx.Button(container, wx.ID_ANY, 'Refresh')
+        refreshDevicesButton = wx.Button(self.mainPanel, wx.ID_ANY, 'Refresh')
         buttonsSizer.Add(refreshDevicesButton, 1, wx.EXPAND | wx.ALL, 5)
 
         return buttonsSizer, captureSSButton, installBuildsButton, refreshDevicesButton
 
-    def createListOfDevicesSizer(self, container, adb):
-        deviceList = adb.getListOfAttachedDevices()
+    def createListOfDevicesSizer(self):
+        deviceList = self.adb.getListOfAttachedDevices()
 
         listOfDevicesSizer = wx.BoxSizer(wx.HORIZONTAL)
         leftColumn = wx.BoxSizer(wx.VERTICAL)
@@ -63,50 +70,51 @@ class MainFrame(wx.Frame):
         rightColumn = wx.BoxSizer(wx.VERTICAL)
         columnNameFont = wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.NORMAL)
 
-        leftColumnLabel = wx.StaticText(container, label = 'Device', style = wx.CENTER)
+        leftColumnLabel = wx.StaticText(self.mainPanel, label = 'Device', style = wx.CENTER)
         leftColumnLabel.SetFont(columnNameFont)
         leftColumn.Add(leftColumnLabel, 1, wx.CENTER | wx.ALL, 3)
 
-        middleColumnLabel = wx.StaticText(container, label = 'State', style = wx.CENTER)
+        middleColumnLabel = wx.StaticText(self.mainPanel, label = 'State', style = wx.CENTER)
         middleColumnLabel.SetFont(columnNameFont)
         middleColumn.Add(middleColumnLabel, 1, wx.CENTER | wx.ALL, 3)
 
-        rightColumnLabel = wx.StaticText(container, label = 'Info', style = wx.CENTER)
+        rightColumnLabel = wx.StaticText(self.mainPanel, label = 'Info', style = wx.CENTER)
         rightColumnLabel.SetFont(columnNameFont)
         rightColumn.Add(rightColumnLabel, 1, wx.CENTER | wx.ALL, 3)
 
         for i, j in deviceList:
-            model = adb.getDeviceModel(i)    
+            model = self.adb.getDeviceModel(i)    
 
-            leftColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            middleColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            rightColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            leftColumn.Add(wx.StaticLine(self.mainPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            middleColumn.Add(wx.StaticLine(self.mainPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            rightColumn.Add(wx.StaticLine(self.mainPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
 
-            modelLabel = wx.StaticText(container, label = model, style = wx.CENTER)
-            stateLabel = wx.StaticText(container, label = j, style = wx.CENTER)
-            infoButton = wx.Button(container, label = 'i', style = wx.CENTER, size = (20, 5))
+            modelLabel = wx.StaticText(self.mainPanel, label = model, style = wx.CENTER)
+            stateLabel = wx.StaticText(self.mainPanel, label = j, style = wx.CENTER)
+            infoButton = wx.Button(self.mainPanel, label = 'i', style = wx.CENTER, size = (20, 5))
+            infoButton.info = i, j
 
             leftColumn.Add(modelLabel, 1, wx.CENTER | wx.ALL, 9)
             middleColumn.Add(stateLabel, 1, wx.CENTER | wx.ALL, 9)
             rightColumn.Add(infoButton, 1, wx.CENTER | wx.ALL, 3)
 
-            self.Bind(wx.EVT_BUTTON, self.showInfoAboutDevice(i, j, adb), infoButton)
+            self.Bind(wx.EVT_BUTTON, self.showInfoAboutDevice, infoButton)
 
         listOfDevicesSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 3)
-        listOfDevicesSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        listOfDevicesSizer.Add(wx.StaticLine(self.mainPanel, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
         listOfDevicesSizer.Add(middleColumn, 1, wx.EXPAND | wx.ALL, 3)
-        listOfDevicesSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
+        listOfDevicesSizer.Add(wx.StaticLine(self.mainPanel, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
         listOfDevicesSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 3)
 
         return listOfDevicesSizer
 
-    def createMenuBar(self, optionsHandler):
+    def createMenuBar(self):
         fileMenu = wx.Menu()
         optionsMenuButton = fileMenu.Append(wx.ID_ANY, 'Options')
         fileMenu.AppendSeparator()
         exitMenuButton = fileMenu.Append(wx.ID_ANY, 'Exit')
 
-        jenkinsMenu = JenkinsMenu(self, 'links.json', optionsHandler)
+        jenkinsMenu = JenkinsMenu(self, 'links.json', self.optionsHandler)
         menuBar = wx.MenuBar()
         menuBar.Append(fileMenu, 'File')
         menuBar.Append(jenkinsMenu, 'Jenkins')
@@ -115,122 +123,103 @@ class MainFrame(wx.Frame):
 
     ### EVENTS ###
 
-    def openScreenshotPanel(self, adb, optionsHandler):
-        def openScreenshotPanelEvent(event):
-            if not os.path.exists(optionsHandler.getOption('Screenshots folder')):
-                errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
-                                            style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
-                errorDlg.ShowModal()
-                return
-            winDisabler = wx.WindowDisabler()
-            ScreenshotCaptureFrame(self, winDisabler, adb, optionsHandler)
-        return openScreenshotPanelEvent
+    def openScreenshotPanel(self, event):
+        if not os.path.exists(self.optionsHandler.getOption('Screenshots folder')):
+            errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
+                                        style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return
+        ScreenshotCaptureFrame(self, self.adb, self.optionsHandler)
 
-    def openInstallBuildPanel(self, adb, optionsHandler):
-        def installBuildEvent(event):
-            if not os.path.exists(optionsHandler.getOption('Builds folder')):
-                errorDlg = wx.MessageDialog(self, "Builds directory doesn't exist! Set it in Options -> Builds Folder", 'Error!',
-                                            style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
-                errorDlg.ShowModal()
-                return
-            winDisabler = wx.WindowDisabler()
-            BuildInstallerFrame(self, winDisabler, adb, optionsHandler)
-        return installBuildEvent
+    def openInstallBuildPanel(self, event):
+        if not os.path.exists(self.optionsHandler.getOption('Builds folder')):
+            errorDlg = wx.MessageDialog(self, "Builds directory doesn't exist! Set it in Options -> Builds Folder", 'Error!',
+                                        style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return
+        BuildInstallerFrame(self, self.adb, self.optionsHandler)
     
-    def updateBottomSizer(self, adb, mainSizer, bottomSizer, mainPanel, refreshBtn):
-        def updateBottomSizerEvent(event):
-            newBottomSizer = self.createListOfDevicesSizer(mainPanel, adb)
-            mainSizer.Hide(bottomSizer)
-            mainSizer.Layout()
-            mainSizer.Replace(bottomSizer, newBottomSizer)
-            self.Bind(wx.EVT_BUTTON, self.updateBottomSizer(adb, mainSizer, newBottomSizer, mainPanel, refreshBtn), refreshBtn)
-            mainPanel.Layout()
-            mainSizer.Layout()
-            mainPanel.Fit()
-            self.Fit()
-        return updateBottomSizerEvent
+    def updateBottomSizer(self, event):
+        newBottomSizer = self.createListOfDevicesSizer()
+        self.mainSizer.Hide(self.bottomSizer)
+        self.mainSizer.Layout()
+        self.mainSizer.Replace(self.bottomSizer, newBottomSizer)
+        self.bottomSizer = newBottomSizer
+        self.scaleTheWindow()
+        self.Fit()
 
-    def onExit(self, optionsHandler):
-        def onExitEvent(event):
-            optionsHandler.saveOptionsToFile()
-            self.Destroy()
-        return onExitEvent
+    def onExit(self, event):
+        self.optionsHandler.saveOptionsToFile()
+        self.Destroy()
 
-    def showOptions(self, optionsHandler):
-        def showOptionsEvent(event):
-            disabler = wx.WindowDisabler()
-            OptionsFrame(self, disabler, optionsHandler)
-        return showOptionsEvent
+    def showOptions(self, event):
+        OptionsFrame(self, self.optionsHandler)
 
-    def showInfoAboutDevice(self, device, state, adb):
-        def showInfoAboutDeviceEvent(event):
-            if state == 'unauthorized':
-                errorDlg = wx.MessageDialog(self, "Unauthorized device! Check authorization dialog on device.", 'Unauthorized device!',
-                                            style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
-                errorDlg.ShowModal()
-                return
-            winDisabler = wx.WindowDisabler()
-            DeviceInfoFrame(self, device, winDisabler, adb)
-        return showInfoAboutDeviceEvent
+    def showInfoAboutDevice(self, event):
+        deviceId, state = event.GetEventObject().info
+        if state == 'unauthorized':
+            errorDlg = wx.MessageDialog(self, "Unauthorized device! Check authorization dialog on device.", 'Unauthorized device!',
+                                        style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return
+        DeviceInfoFrame(self, deviceId, self.adb)
 
 class OptionsFrame(wx.Frame):
-    def __init__(self, mainFrame, disabler, optionsHandler):
+    def __init__(self, mainFrame, optionsHandler):
         wx.Frame.__init__(self, mainFrame, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.disabler = disabler
+        self.disabler = wx.WindowDisabler(self)
+        self.mainFrame = mainFrame
+        self.optionsHandler = optionsHandler
         self.changedOptions = {}
-
-        panel = wx.Panel(self)
-        self.createControls(panel, optionsHandler)
-
-        self.Bind(wx.EVT_CLOSE, self.onClose(mainFrame))
+        self.panel = wx.Panel(self)
+        self.createControls()
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Fit()
         self.Show(True)
         
-    def onClose(self, mainFrame):
-        def onCloseEvent(event):
-            del self.disabler
-            self.Destroy()
-            mainFrame.Raise()
-        return onCloseEvent
+    def onClose(self, event):
+        del self.disabler
+        self.Destroy()
+        self.mainFrame.Raise()
 
-    def createControls(self, container, optionsHandler):
+    def createControls(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
         first = True
 
         buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        saveBtn = wx.Button(container, wx.ID_ANY, 'Save')
+        saveBtn = wx.Button(self.panel, wx.ID_ANY, 'Save')
         saveBtn.Disable()
         buttonsSizer.Add(saveBtn, 0, wx.CENTER | wx.ALL, 5)
         
-        closeBtn = wx.Button(container, wx.ID_ANY, 'Close')
+        closeBtn = wx.Button(self.panel, wx.ID_ANY, 'Close')
         buttonsSizer.Add(closeBtn, 0, wx.CENTER | wx.ALL, 5)
 
-        for i, j in optionsHandler.getOptionsCategories():
+        for i, j in self.optionsHandler.getOptionsCategories():
             rowSizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(container, label = i, style = wx.TE_CENTRE, size = (100, 10))
+            label = wx.StaticText(self.panel, label = i, style = wx.TE_CENTRE, size = (100, 10))
             rowSizer.Add(label, 0, wx.EXPAND | wx.TOP, 8)
             if not first:
-                sizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+                sizer.Add(wx.StaticLine(self.panel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
             else:
                 first = False
             if j == 'folder':
-                valueCtrl = wx.TextCtrl(container, value = optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
+                valueCtrl = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
                 rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
-                editBtn = wx.Button(container, wx.ID_ANY, 'Edit')
+                editBtn = wx.Button(self.panel, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl, saveBtn), editBtn)
             elif j == 'input':
-                inputUsername = wx.TextCtrl(container, value = optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
+                inputUsername = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
                 rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
-                inputPassword = wx.TextCtrl(container, value = optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
+                inputPassword = wx.TextCtrl(container, value = self.optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
                 rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
-                editBtn = wx.Button(container, wx.ID_ANY, 'Edit')
+                editBtn = wx.Button(self.panel, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_BUTTON, self.editCredentialsOption((inputUsername, inputPassword), saveBtn, optionsHandler), editBtn)
             elif j == 'checkbox':
-                checkboxCtrl = wx.CheckBox(container, style = wx.CENTER)
-                checkboxCtrl.SetValue(optionsHandler.getOption(i))
+                checkboxCtrl = wx.CheckBox(self.panel, style = wx.CENTER)
+                checkboxCtrl.SetValue(self.optionsHandler.getOption(i))
                 rowSizer.Add(checkboxCtrl, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_CHECKBOX, self.onSwitchCheckbox(i, checkboxCtrl, saveBtn), checkboxCtrl)
             sizer.Add(rowSizer, 0, wx.CENTER | wx.ALL, 5)
@@ -341,9 +330,9 @@ class JenkinsCredentialsEditFrame(wx.Frame):
         return onCloseEvent
 
 class DeviceInfoFrame(wx.Frame):
-    def __init__(self, parentFrame, deviceId, disabler, adb):
+    def __init__(self, parentFrame, deviceId, adb):
         wx.Frame.__init__(self, parentFrame, title = 'Device Info', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.disabler = disabler
+        self.disabler = wx.WindowDisabler(self)
         deviceInfoTable = (
             ('Brand', adb.getBrand),
             ('Model', adb.getDeviceModel),
