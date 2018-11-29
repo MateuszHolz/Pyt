@@ -174,22 +174,24 @@ class MainFrame(wx.Frame):
         return showInfoAboutDeviceEvent
 
 class OptionsFrame(wx.Frame):
-    def __init__(self, parent, disabler, optionsHandler):
-        wx.Frame.__init__(self, parent, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.mainWindow = parent
+    def __init__(self, mainFrame, disabler, optionsHandler):
+        wx.Frame.__init__(self, mainFrame, title = 'Options', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
         self.changedOptions = {}
-        panel = wx.Panel(self)
 
+        panel = wx.Panel(self)
         self.createControls(panel, optionsHandler)
-        self.Bind(wx.EVT_CLOSE, self.onClose)
+
+        self.Bind(wx.EVT_CLOSE, self.onClose(mainFrame))
         self.Fit()
         self.Show(True)
         
-    def onClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainWindow.Raise()
+    def onClose(self, mainFrame):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            mainFrame.Raise()
+        return onCloseEvent
 
     def createControls(self, container, optionsHandler):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -542,31 +544,34 @@ class ScreenshotCaptureFrame(wx.Frame):
         return onCloseEvent
 
 class BuildInstallerFrame(wx.Frame):
-    def __init__(self, mainWindow, disabler, adb, optionsHandler):
-        wx.Frame.__init__(self, mainWindow, title = 'Installing builds', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+    def __init__(self, mainFrame, disabler, adb, optionsHandler):
+        wx.Frame.__init__(self, mainFrame, title = 'Installing builds', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.disabler = disabler
-        self.mainWindow = mainWindow
 
-        self.mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.topPanel = BuildInstallerTopPanel(self, optionsHandler.getOption('Builds folder'))
-        self.bottomPanel = BuildInstallerBottomPanel(self, deviceList, adb)
-        self.mainSizer.Add(self.topPanel, 0, wx.EXPAND)
-        self.mainSizer.Add(self.bottomPanel, 0, wx.EXPAND)
-        self.bindEvents()
-        self.SetSizer(self.mainSizer)
-        self.mainSizer.Fit(self)
+
         self.Show()
     
-    def onClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainWindow.Raise()
+    def onClose(self, mainFrame):
+        def onCloseEvent(event):
+            del self.disabler
+            self.Destroy()
+            mainFrame.Raise()
+        return onCloseEvent
 
     def bindEvents(self):
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
     def installBuild(self, build):
         self.bottomPanel.installBuild(build)
+
+    def selectBuild(self, textCtrl):
+        def selectBuildEvent(event):
+            with wx.FileDialog(self, 'Choose build', wildcard = '*.apk', style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
+                if fd.ShowModal() == wx.ID_CANCEL:
+                    return ''
+                else:
+                    self.setBuild(fd.GetPath(), textCtrl)
+        return selectBuildEvent
 
 class JenkinsMenu(wx.Menu):
     def __init__(self, parent, pathToJsonFile, optionsHandler):
