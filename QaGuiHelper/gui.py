@@ -172,17 +172,14 @@ class OptionsFrame(wx.Frame):
         self.optionsHandler = optionsHandler
         self.changedOptions = {}
         self.panel = wx.Panel(self)
-        self.createControls()
+        self.saveBtn, self.jenkinsCredentialControls = self.createControls()
+        self.Bind(wx.EVT_BUTTON, self.saveChanges, self.saveBtn)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Fit()
         self.Show(True)
-        
-    def onClose(self, event):
-        del self.disabler
-        self.Destroy()
-        self.mainFrame.Raise()
 
     def createControls(self):
+        jenkinsCredentialsControls = []
         sizer = wx.BoxSizer(wx.VERTICAL)
         first = True
 
@@ -207,48 +204,40 @@ class OptionsFrame(wx.Frame):
                 valueCtrl = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
                 rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
                 editBtn = wx.Button(self.panel, wx.ID_ANY, 'Edit')
+                editBtn.info = i, valueCtrl
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_BUTTON, self.editFileOption(i, valueCtrl, saveBtn), editBtn)
+                self.Bind(wx.EVT_BUTTON, self.editFileOption, editBtn)
             elif j == 'input':
                 inputUsername = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
+                jenkinsCredentialsControls.append(inputUsername)
                 rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
-                inputPassword = wx.TextCtrl(container, value = self.optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
+                inputPassword = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
+                jenkinsCredentialsControls.append(inputPassword)
                 rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
                 editBtn = wx.Button(self.panel, wx.ID_ANY, 'Edit')
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption((inputUsername, inputPassword), saveBtn, optionsHandler), editBtn)
+                self.Bind(wx.EVT_BUTTON, self.editCredentialsOption, editBtn)
             elif j == 'checkbox':
                 checkboxCtrl = wx.CheckBox(self.panel, style = wx.CENTER)
                 checkboxCtrl.SetValue(self.optionsHandler.getOption(i))
+                checkboxCtrl.info = i
                 rowSizer.Add(checkboxCtrl, 0, wx.EXPAND | wx.ALL, 5)
-                self.Bind(wx.EVT_CHECKBOX, self.onSwitchCheckbox(i, checkboxCtrl, saveBtn), checkboxCtrl)
+                self.Bind(wx.EVT_CHECKBOX, self.onSwitchCheckbox, checkboxCtrl)
             sizer.Add(rowSizer, 0, wx.CENTER | wx.ALL, 5)
         
-        sizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+        sizer.Add(wx.StaticLine(self.panel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
         sizer.Add(buttonsSizer, 0, wx.CENTER | wx.ALL, 5)
 
-        self.Bind(wx.EVT_BUTTON, self.saveChanges(saveBtn, optionsHandler), saveBtn)
         self.Bind(wx.EVT_BUTTON, self.onClose, closeBtn)
         
-        container.SetSizer(sizer)
-        container.Fit()
+        self.panel.SetSizer(sizer)
+        self.panel.Fit()
 
-    def saveChanges(self, btn, optionsHandler):
-        def saveChangesEvent(event):
-            for i in self.changedOptions.keys():
-                optionsHandler.setOption(i, self.changedOptions[i])
-            btn.Disable()
-        return saveChangesEvent
+        return saveBtn, jenkinsCredentialsControls
 
-    def editFileOption(self, option, valueControl, saveBtn):
-        def editOptionEvent(event):
-            with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
-                if dlg.ShowModal() == wx.ID_OK:
-                    newOption = dlg.GetPath()
-                    self.onChangedOption(option, newOption, saveBtn, valueControl)
-        return editOptionEvent
+    ### EVENTS ###
 
-    def onChangedOption(self, option, value, saveBtn, textCtrl = None):
+    def onChangedOption(self, option, value, textCtrl = None):
         self.changedOptions[option] = value
         if isinstance(textCtrl, wx.TextCtrl):
             textCtrl.SetValue(value)
@@ -257,160 +246,174 @@ class OptionsFrame(wx.Frame):
                 i.SetValue(j)
         else:
             pass #checkbox case
-        saveBtn.Enable()
+        self.saveBtn.Enable()
 
-    def editCredentialsOption(self, jenkinsCredentialControls, saveBtn, optionsHandler):
-        def editCredentialsOptionEvent(event):
-            disabler = wx.WindowDisabler()
-            JenkinsCredentialsEditFrame(self, optionsHandler, disabler, self.onChangedOption, saveBtn, jenkinsCredentialControls)
-        return editCredentialsOptionEvent
+    def saveChanges(self, event):
+        for i in self.changedOptions.keys():
+            self.optionsHandler.setOption(i, self.changedOptions[i])
+            event.GetEventObject().Disable()
 
-    def onSwitchCheckbox(self, option, checkboxCtrl, saveBtn):
-        def onSwitchCheckboxEvent(event):
-            self.onChangedOption(option, checkboxCtrl.GetValue(), saveBtn)
-        return onSwitchCheckboxEvent
+    def editFileOption(self, event):
+        option, valueCtrl = event.GetEventObject().info
+        with wx.DirDialog(self, 'Choose {} path'.format(option)) as dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                newValue = dlg.GetPath()
+                self.onChangedOption(option, newValue, valueCtrl)
+
+    def editCredentialsOption(self, event):
+        JenkinsCredentialsEditFrame(self, self.optionsHandler, self.jenkinsCredentialControls)
+
+    def onSwitchCheckbox(self, event):
+        option = event.GetEventObject().info
+        self.onChangedOption(option, event.GetEventObject().GetValue(), None)
+
+    def onClose(self, event):
+        del self.disabler
+        self.mainFrame.Raise()
+        self.Destroy()
 
 class JenkinsCredentialsEditFrame(wx.Frame):
-    def __init__(self, parentFrame, optionsHandler, disabler, onChangedOptionFunc, saveBtn, jenkinsCredentialControls):
+    def __init__(self, parentFrame, optionsHandler, jenkinsCredentialControls):
         wx.Frame.__init__(self, parentFrame, title = 'Edit credentials', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.disabler = disabler
-        panel = wx.Panel(self)
-        eventControls = self.createControls(panel)
+        self.parentFrame = parentFrame
+        self.optionsHandler = optionsHandler
+        self.jenkinsCredentialControls = jenkinsCredentialControls
+        self.disabler = wx.WindowDisabler(self)
+        self.panel = wx.Panel(self)
+        self.saveBtn, self.userInputField, self.passwordInputField = self.createControls()
 
-        self.Bind(wx.EVT_BUTTON, self.updateJenkinsCreds(eventControls, optionsHandler, onChangedOptionFunc, jenkinsCredentialControls), eventControls[0])
-        self.Bind(wx.EVT_CLOSE, self.onClose(parentFrame))
+        self.Bind(wx.EVT_BUTTON, self.updateJenkinsCreds, self.saveBtn)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Fit()
         self.Show(True)
 
-    def createControls(self, container):
+    def createControls(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         
         topSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         userSizer = wx.BoxSizer(wx.VERTICAL)
-        userLabel = wx.StaticText(container, label = 'User')
+        userLabel = wx.StaticText(self.panel, label = 'User')
         userSizer.Add(userLabel, 0, wx.CENTER | wx.ALL, 3)
-        userInputField = wx.TextCtrl(container, size = (100, -1))
+        userInputField = wx.TextCtrl(self.panel, size = (100, -1))
         userSizer.Add(userInputField, 0, wx.ALL, 3)
 
         passwordSizer = wx.BoxSizer(wx.VERTICAL)
-        passwordLabel = wx.StaticText(container, label = 'Password')
+        passwordLabel = wx.StaticText(self.panel, label = 'Password')
         passwordSizer.Add(passwordLabel, 0, wx.CENTER | wx.ALL, 3)
-        passwordInputField = wx.TextCtrl(container, size = (100, -1))
+        passwordInputField = wx.TextCtrl(self.panel, size = (100, -1))
         passwordSizer.Add(passwordInputField, 0, wx.ALL, 3)
 
         topSizer.Add(userSizer, 0, wx.EXPAND | wx.ALL, 5)
-        topSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
+        topSizer.Add(wx.StaticLine(self.panel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
         topSizer.Add(passwordSizer, 0, wx.EXPAND | wx.ALL, 5)
 
         bottomSizer = wx.BoxSizer(wx.HORIZONTAL)
-        saveBtn = wx.Button(container, wx.ID_ANY, 'Update')
+        saveBtn = wx.Button(self.panel, wx.ID_ANY, 'Update')
         bottomSizer.Add(saveBtn, 0, wx.CENTER | wx.EXPAND | wx.BOTTOM | wx.RIGHT | wx.LEFT, 10)
 
         mainSizer.Add(topSizer, 0)
-        mainSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
+        mainSizer.Add(wx.StaticLine(self.panel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 5)
         mainSizer.Add(bottomSizer, 0, wx.CENTER)
-        container.SetSizer(mainSizer)
-        container.Fit()
+        self.panel.SetSizer(mainSizer)
+        self.panel.Fit()
 
         return saveBtn, userInputField, passwordInputField
+    
+    ### EVENTS ###
 
-    def updateJenkinsCreds(self, eventControls, optionsHandler, onChangedOptionFunc, jenkinsCredentialControls):
-        def updateJenkinsCredsEvent(event):
-            newCreds = (eventControls[1].GetValue(), eventControls[2].GetValue())
-            onChangedOptionFunc(optionsHandler.getOptionsCategories()[2][0], newCreds, eventControls[0], jenkinsCredentialControls)
-            self.Close()
-        return updateJenkinsCredsEvent
+    def updateJenkinsCreds(self, event):
+        newCreds = self.userInputField.GetValue(), self.passwordInputField.GetValue()
+        self.parentFrame.onChangedOption(self.optionsHandler.getOptionsCategories()[2][0], newCreds, self.jenkinsCredentialControls)
+        self.Close()
 
-    def onClose(self, parentFrame):
-        def onCloseEvent(event):
-            del self.disabler
-            self.Destroy()
-            parentFrame.Raise()
-        return onCloseEvent
+    def onClose(self, event):
+        del self.disabler
+        self.parentFrame.Raise()
+        self.Destroy()
 
 class DeviceInfoFrame(wx.Frame):
     def __init__(self, parentFrame, deviceId, adb):
         wx.Frame.__init__(self, parentFrame, title = 'Device Info', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        self.parentFrame = parentFrame
+        self.deviceId = deviceId
+        self.adb = adb
         self.disabler = wx.WindowDisabler(self)
-        deviceInfoTable = (
-            ('Brand', adb.getBrand),
-            ('Model', adb.getDeviceModel),
-            ('Screen size', adb.getDeviceScreenSize),
-            ('IP Address', adb.getDeviceIpAddress),
-            ('ADB tcpip port', adb.getTcpipPort),
-            ('Battery', adb.getBatteryStatus),
-            ('Plugged in?', adb.getPluggedInStatus),
-            ('OS version', adb.getOsVersion),
-            ('API version', adb.getApiVersion),
-            ('Device timezone', adb.getDeviceTimezone),
-            ('Device language', adb.getDeviceLanguage),
-            ('Marketing name', adb.getMarketingName),
-            ('Wifi name', adb.getWifiName),
-            ('Serial No', adb.getSerialNo))
-
-        panel = wx.Panel(self)
-        deviceInfoControls = self.createControls(panel, deviceInfoTable)
-        self.updateFields(deviceInfoTable, deviceInfoControls, deviceId)
-
-        self.Bind(wx.EVT_CLOSE, self.onClose(parentFrame))
+        self.deviceInfoTable = (
+            ('Brand', self.adb.getBrand),
+            ('Model', self.adb.getDeviceModel),
+            ('Screen size', self.adb.getDeviceScreenSize),
+            ('IP Address', self.adb.getDeviceIpAddress),
+            ('ADB tcpip port', self.adb.getTcpipPort),
+            ('Battery', self.adb.getBatteryStatus),
+            ('Plugged in?', self.adb.getPluggedInStatus),
+            ('OS version', self.adb.getOsVersion),
+            ('API version', self.adb.getApiVersion),
+            ('Device timezone', self.adb.getDeviceTimezone),
+            ('Device language', self.adb.getDeviceLanguage),
+            ('Marketing name', self.adb.getMarketingName),
+            ('Wifi name', self.adb.getWifiName),
+            ('Serial No', self.adb.getSerialNo))
+        self.panel = wx.Panel(self)
+        self.deviceInfoControls = self.createControls()
+        self.updateFields()
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Fit()
         self.Show(True)
 
-    def createControls(self, container, deviceInfoTable):
+    def createControls(self):
         deviceInfoControls = []
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         first = True
-        for i in deviceInfoTable:
+        for i in self.deviceInfoTable:
             if first:
                 first = False
             else:
-                mainSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+                mainSizer.Add(wx.StaticLine(self.panel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(container, label = i[0], size = (100, -1), style = wx.TE_CENTRE)
+            label = wx.StaticText(self.panel, label = i[0], size = (100, -1), style = wx.TE_CENTRE)
             sizer.Add(label, 0, wx.EXPAND | wx.TOP, label.GetSize()[1]/3.5)
-            content = wx.TextCtrl(container, value = '...', size = (150, -1), style = wx.TE_READONLY)
+            content = wx.TextCtrl(self.panel, value = '...', size = (150, -1), style = wx.TE_READONLY)
             deviceInfoControls.append(content)
             sizer.Add(content, 0, wx.ALIGN_RIGHT)
             mainSizer.Add(sizer, 0, wx.ALL, 5)
-        container.SetSizer(mainSizer)
-        container.Fit()
+        self.panel.SetSizer(mainSizer)
+        self.panel.Fit()
 
         return deviceInfoControls
 
-    def updateFields(self, deviceInfoTable, deviceInfoControls, deviceId):
-        for func, ctrl in zip(deviceInfoTable, deviceInfoControls):
-            localThread = threading.Thread(target = self.updateSingleControl, args = (ctrl, deviceId, func[1]))
+    def updateFields(self):
+        for func, ctrl in zip(self.deviceInfoTable, self.deviceInfoControls):
+            localThread = threading.Thread(target = self.updateSingleControl, args = (ctrl, func[1]))
             localThread.start()
 
-    def updateSingleControl(self, textCtrl, deviceId, functionToCall):
+    def updateSingleControl(self, textCtrl, functionToCall):
         try:
-            textCtrl.SetValue(functionToCall(deviceId))
+            textCtrl.SetValue(functionToCall(self.deviceId))
         except RuntimeError:
             pass
 
-    def onClose(self, parentFrame):
-        def onCloseEvent(event):
-            del self.disabler
-            self.Destroy()
-            parentFrame.Raise()
-        return onCloseEvent
+    ### EVENTS ###
+
+    def onClose(self, event):
+        del self.disabler
+        self.Destroy()
+        self.parentFrame.Raise()
 
 class ScreenshotCaptureFrame(wx.Frame):
-    def __init__(self, mainFrame, disabler, adb, optionsHandler):
-        self.frame = wx.Frame.__init__(self, mainFrame, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.disabler = disabler
-        panel = wx.Panel(self)
-        removeSSPermission = optionsHandler.getOption('Keep SS on device')
+    def __init__(self, mainFrame, adb, optionsHandler):
+        wx.Frame.__init__(self, mainFrame, title = 'Capturing screenshots!', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+        self.mainFrame = mainFrame
+        self.adb = adb
+        self.optionsHandler = optionsHandler
+        self.panel = wx.Panel(self)
 
-        statusLabels, openButton, closeButton = self.createControls(panel, listOfDevices)
+        self.statusLabels, self.openButton, self.closeButton = self.createControls()
+        self.deployScreenshotThreads(ssFolder, listOfDevices, (openButton, closeButton), statusLabels, adb)
 
-        self.Bind(wx.EVT_CLOSE, self.onClose(mainFrame))
         self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder(ssFolder), openButton)
-        self.Bind(wx.EVT_BUTTON, self.onClose(mainFrame), closeButton)
-
-        self.deployScreenshotThreads(ssFolder, listOfDevices, removeSSPermission, (openButton, closeButton), statusLabels, adb)
-
+        self.Bind(wx.EVT_BUTTON, self.onClose, closeButton)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Fit()
         self.Show(True)
 
