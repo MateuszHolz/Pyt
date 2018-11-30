@@ -124,7 +124,7 @@ class MainFrame(wx.Frame):
     ### EVENTS ###
 
     def openScreenshotPanel(self, event):
-        if not os.path.exists(self.optionsHandler.getOption('Screenshots folder')):
+        if not os.path.exists(self.optionsHandler.getOption('Screenshots folder', str)):
             errorDlg = wx.MessageDialog(self, "Save screenshots directory doesn't exist! Set it in Options -> Screenshots Folder", 'Error!',
                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
@@ -132,7 +132,7 @@ class MainFrame(wx.Frame):
         ScreenshotCaptureFrame(self, self.adb, self.optionsHandler)
 
     def openInstallBuildPanel(self, event):
-        if not os.path.exists(self.optionsHandler.getOption('Builds folder')):
+        if not os.path.exists(self.optionsHandler.getOption('Builds folder', str)):
             errorDlg = wx.MessageDialog(self, "Builds directory doesn't exist! Set it in Options -> Builds Folder", 'Error!',
                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
@@ -194,24 +194,24 @@ class OptionsFrame(wx.Frame):
 
         for i, j in self.optionsHandler.getOptionsCategories():
             rowSizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self.panel, label = i, style = wx.TE_CENTRE, size = (100, 10))
+            label = wx.StaticText(self.panel, label = i, style = wx.TE_CENTRE, size = (150, 10))
             rowSizer.Add(label, 0, wx.EXPAND | wx.TOP, 8)
             if not first:
                 sizer.Add(wx.StaticLine(self.panel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND | wx.ALL, 3)
             else:
                 first = False
             if j == 'folder':
-                valueCtrl = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i), size = (210, -1), style = wx.TE_READONLY)
+                valueCtrl = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i, str), size = (210, -1), style = wx.TE_READONLY)
                 rowSizer.Add(valueCtrl, 0, wx.EXPAND | wx.ALL, 5)
                 editBtn = wx.Button(self.panel, wx.ID_ANY, 'Edit')
                 editBtn.info = i, valueCtrl
                 rowSizer.Add(editBtn, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_BUTTON, self.editFileOption, editBtn)
             elif j == 'input':
-                inputUsername = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i, True)[0], size = (100, -1), style = wx.TE_READONLY)
+                inputUsername = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i, tuple)[0], size = (100, -1), style = wx.TE_READONLY)
                 jenkinsCredentialsControls.append(inputUsername)
                 rowSizer.Add(inputUsername, 0, wx.EXPAND | wx.ALL, 5)
-                inputPassword = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i, True)[1], size = (100, -1), style = wx.TE_READONLY)
+                inputPassword = wx.TextCtrl(self.panel, value = self.optionsHandler.getOption(i, tuple)[1], size = (100, -1), style = wx.TE_READONLY)
                 jenkinsCredentialsControls.append(inputPassword)
                 rowSizer.Add(inputPassword, 0, wx.EXPAND | wx.ALL, 5)
                 editBtn = wx.Button(self.panel, wx.ID_ANY, 'Edit')
@@ -219,7 +219,7 @@ class OptionsFrame(wx.Frame):
                 self.Bind(wx.EVT_BUTTON, self.editCredentialsOption, editBtn)
             elif j == 'checkbox':
                 checkboxCtrl = wx.CheckBox(self.panel, style = wx.CENTER)
-                checkboxCtrl.SetValue(self.optionsHandler.getOption(i))
+                checkboxCtrl.SetValue(self.optionsHandler.getOption(i, bool))
                 checkboxCtrl.info = i
                 rowSizer.Add(checkboxCtrl, 0, wx.EXPAND | wx.ALL, 5)
                 self.Bind(wx.EVT_CHECKBOX, self.onSwitchCheckbox, checkboxCtrl)
@@ -406,78 +406,64 @@ class ScreenshotCaptureFrame(wx.Frame):
         self.mainFrame = mainFrame
         self.adb = adb
         self.optionsHandler = optionsHandler
+        self.checkboxesState = True
+        self.directory = self.optionsHandler.getOption('Screenshots folder', str)
+        self.disabler = wx.WindowDisabler(self)
         self.panel = wx.Panel(self)
 
-        self.statusLabels, self.openButton, self.closeButton = self.createControls()
-        self.deployScreenshotThreads(ssFolder, listOfDevices, (openButton, closeButton), statusLabels, adb)
+        self.openButton, self.closeButton, self.captureButton, self.checkAllButton, self.devicesSizer = self.createControls()
 
-        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder(ssFolder), openButton)
-        self.Bind(wx.EVT_BUTTON, self.onClose, closeButton)
+        self.Bind(wx.EVT_BUTTON, self.switchAllCheckboxes, self.checkAllButton)
+        self.Bind(wx.EVT_BUTTON, self.captureScreenshots, self.captureButton)
+        self.Bind(wx.EVT_BUTTON, self.openScreenshotsFolder, self.openButton)
+        self.Bind(wx.EVT_BUTTON, self.onClose, self.closeButton)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Fit()
         self.Show(True)
 
-    def createControls(self, container, listOfDevices):
-        statusLabels = []
-
+    def createControls(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-
-        listSizer = wx.BoxSizer(wx.HORIZONTAL)
-        leftColumn = wx.BoxSizer(wx.VERTICAL)
-        rightColumn = wx.BoxSizer(wx.VERTICAL)
-        columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
-
-        devColumnNameLabel = wx.StaticText(container, label = 'Device', style = wx.CENTER)
-        devColumnNameLabel.SetFont(columnNameFont)
-        leftColumn.Add(devColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
-
-        statColumnNameLabel = wx.StaticText(container, label = 'Status', style = wx.CENTER)
-        statColumnNameLabel.SetFont(columnNameFont)
-        rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
-
-        for i in listOfDevices:
-            deviceLabel = wx.StaticText(container, label = i[1], style = wx.CENTER)
-            leftColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
-
-            statusLabel = wx.StaticText(container, label = 'Ready', style = wx.CENTER)
-            rightColumn.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.CENTER | wx.ALL, 10)
-            statusLabels.append(statusLabel)
-
-        listSizer.Add(leftColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
-        listSizer.Add(wx.StaticLine(container, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
-        listSizer.Add(rightColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
-
-        mainSizer.Add(listSizer, 2, wx.EXPAND | wx.ALL, 5)
+        devicesList = self.adb.getListOfAttachedDevices()
+        devicesSizer = AuthorizedDevicesSizer(self.panel, devicesList, self.adb)
+        mainSizer.Add(devicesSizer, 2, wx.EXPAND | wx.ALL, 5)
 
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
-        openButton = wx.Button(container, wx.ID_ANY, 'Open Folder')
-        openButton.Disable()
-        buttonSizer.Add(openButton, 1, wx.EXPAND | wx.ALL, 3)
-        closeButton = wx.Button(container, wx.ID_ANY, 'Close')
-        closeButton.Disable()
-        buttonSizer.Add(closeButton, 1, wx.EXPAND | wx.ALL, 3)
 
-        mainSizer.Add(buttonSizer, 0, wx.EXPAND | wx.ALL, 5)
+        captureButton = wx.Button(self.panel, wx.ID_ANY, 'Capture')
+        buttonSizer.Add(captureButton, 0, wx.EXPAND | wx.ALL, 3)
 
-        container.SetSizer(mainSizer)
-        container.Fit()
+        openButton = wx.Button(self.panel, wx.ID_ANY, 'Open Folder')
+        buttonSizer.Add(openButton, 0, wx.EXPAND | wx.ALL, 3)
 
-        return statusLabels, openButton, closeButton
+        checkAllButton = wx.Button(self.panel, wx.ID_ANY, 'Check all')
+        buttonSizer.Add(checkAllButton, 0, wx.EXPAND | wx.ALL, 3)
 
-    def deployScreenshotThreads(self, directoryForScreenshots, listOfDevices, removeSSPermission, buttonsToEnable, statusLabels, adb):
-        buttonUnlocker = ButtonUnlocker(len(listOfDevices), buttonsToEnable)
-        for i, j in zip(listOfDevices, statusLabels):
-            localThread = threading.Thread(target = self.captureAndPullScreenshot, args = (i[0], directoryForScreenshots, j, i[1], buttonUnlocker, removeSSPermission, adb))
+        closeButton = wx.Button(self.panel, wx.ID_ANY, 'Close')
+        buttonSizer.Add(closeButton, 0, wx.EXPAND | wx.ALL, 3)
+
+        mainSizer.Add(buttonSizer, 0, wx.CENTER | wx.ALL, 5)
+
+        self.panel.SetSizer(mainSizer)
+        self.panel.Fit()
+
+        return openButton, closeButton, captureButton, checkAllButton, devicesSizer
+
+    def captureScreenshots(self, event):
+        checkedDevices = self.devicesSizer.getCheckedDevices()
+        if len(checkedDevices) == 0:
+            return
+        buttonUnlocker = ButtonUnlocker(len(checkedDevices), (self.openButton, self.closeButton, self.captureButton, self.checkAllButton))
+        for i in checkedDevices:
+            localThread = threading.Thread(target = self.captureThread, args = (i[0], i[1], i[3], buttonUnlocker))
             localThread.start()
 
-    def captureAndPullScreenshot(self, device, directory, statusLabel, model, buttonUnlocker, removeSSPermission, adb):
-        statusLabel.SetLabel('Taking screenshot...')
+    def captureThread(self, device, model, statusLabel, buttonUnlocker):
+        removeSSPermission = self.optionsHandler.getOption('Remove SS from device', bool)
         pathToScreenOnDevice = ''
-        rawFileName = self.getFileName(device, model, adb)
-        indexedFileName = self.getFileNameWithIndex(rawFileName, directory)
-        clbk = adb.captureScreenshot(device, indexedFileName)
+        rawFileName = self.getFileName(device, model)
+        indexedFileName = self.getFileNameWithIndex(rawFileName)
+        statusLabel.SetLabel('Taking screenshot...')
+        clbk = self.adb.captureScreenshot(device, indexedFileName)
         try:
             statusLabel.SetLabel(clbk[0])
         except RuntimeError:
@@ -486,7 +472,7 @@ class ScreenshotCaptureFrame(wx.Frame):
             buttonUnlocker.finishThread()
             return
         pathToScreenOnDevice = clbk[1]
-        clbk = adb.pullScreenshot(device, pathToScreenOnDevice, directory)
+        clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, self.directory)
         try:
             statusLabel.SetLabel(clbk)
             if not removeSSPermission:
@@ -494,76 +480,220 @@ class ScreenshotCaptureFrame(wx.Frame):
             else:
                 time.sleep(1)
                 statusLabel.SetLabel('Removing...')
-                clbk = adb.deleteFile(device, pathToScreenOnDevice)
+                clbk = self.adb.deleteFile(device, pathToScreenOnDevice)
                 statusLabel.SetLabel(clbk)
                 buttonUnlocker.finishThread()
         except RuntimeError:
             return
 
-    def getFileNameWithIndex(self, rawFileName, directory):
-        currentlyExistingFiles = glob.glob(os.path.join(directory, '{}*'.format(rawFileName)))
+    def getFileNameWithIndex(self, rawFileName):
+        currentlyExistingFiles = glob.glob(os.path.join(self.directory, '{}*'.format(rawFileName)))
         if len(currentlyExistingFiles) > 0:
-            lastIndex = self.getNextIndexOfFile(max(currentlyExistingFiles, key = self.getIndexOfFile))
+            lastIndex = self.getIndexOfFile(max(currentlyExistingFiles, key = self.getIndexOfFile), nextIndx = True)
             fileName = '{}_{}.png'.format(rawFileName, lastIndex)
             return fileName
         else:
             fileName = '{}_1.png'.format(rawFileName)
             return fileName
     
-    def getIndexOfFile(self, f):
-        return int(f[f.find('_')+1:f.find('.png')])
+    def getIndexOfFile(self, f, nextIndx = False):
+        curIndex = int(f[f.find('_')+1:f.find('.png')])
+        if nextIndx:
+            return curIndex+1
+        else:
+            return curIndex
 
-    def getNextIndexOfFile(self, f):
-        return int(f[f.find('_')+1:f.find('.png')])+1
-
-    def getFileName(self, device, model, adb):
+    def getFileName(self, device, model):
         unsupportedChars = (' ', '(', ')', '_')
         for i in unsupportedChars:
             model = model.replace(i, '')
-        deviceScreenSize = adb.getDeviceScreenSize(device)
+        deviceScreenSize = self.adb.getDeviceScreenSize(device)
         return '{}-{}'.format(model, deviceScreenSize)
 
-    def openScreenshotsFolder(self, dirForScreenshots):
-        def openScreenshotsFolderEvent(event):
-            os.startfile(dirForScreenshots)
-        return openScreenshotsFolderEvent
+    def openScreenshotsFolder(self, event):
+        os.startfile(self.directory)
     
-    def onClose(self, mainFrame):
-        def onCloseEvent(event):
-            del self.disabler
-            self.Destroy()
-            mainFrame.Raise()
-        return onCloseEvent
+    def switchAllCheckboxes(self, event):
+        self.devicesSizer.switchCheckboxes(self.checkboxesState)
+        self.checkboxesState = not self.checkboxesState
+        event.GetEventObject().SetLabel('Uncheck all' if self.checkboxesState == False else 'Check all')
+
+    def onClose(self, event):
+        del self.disabler
+        self.mainFrame.Raise()
+        self.Destroy()
 
 class BuildInstallerFrame(wx.Frame):
-    def __init__(self, mainFrame, disabler, adb, optionsHandler):
+    def __init__(self, mainFrame, adb, optionsHandler):
         wx.Frame.__init__(self, mainFrame, title = 'Installing builds', style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.disabler = disabler
+        self.mainFrame = mainFrame
+        self.adb = adb
+        self.optionsHandler = optionsHandler
+        self.checkboxesState = True
+        self.buildChosen = ''
+        self.disabler = wx.WindowDisabler(self)
+        self.panel = wx.Panel(self)
 
+        self.selectBuildButton, self.chooseLatestBuildButton, self.chosenBuildTextCtrl, self.devicesSizer, self.installBuildButton, self.checkAllButton, self.closeButton, self.optionsCombobox = self.createControls()
 
-        self.Show()
-    
-    def onClose(self, mainFrame):
-        def onCloseEvent(event):
-            del self.disabler
-            self.Destroy()
-            mainFrame.Raise()
-        return onCloseEvent
+        self.Bind(wx.EVT_BUTTON, self.selectBuild, self.selectBuildButton)
+        self.Bind(wx.EVT_BUTTON, self.getLatestBuildFromOptionsFolder, self.chooseLatestBuildButton)
+        self.Bind(wx.EVT_BUTTON, self.installBuild, self.installBuildButton)
+        self.Bind(wx.EVT_BUTTON, self.switchAllCheckboxes, self.checkAllButton)
+        self.Bind(wx.EVT_BUTTON, self.onClose, self.closeButton)
 
-    def bindEvents(self):
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
-    def installBuild(self, build):
-        self.bottomPanel.installBuild(build)
+        self.Fit()
+        self.Show()
 
-    def selectBuild(self, textCtrl):
-        def selectBuildEvent(event):
-            with wx.FileDialog(self, 'Choose build', wildcard = '*.apk', style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
-                if fd.ShowModal() == wx.ID_CANCEL:
-                    return ''
+    def createControls(self):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        #top part of frame
+
+        buildsManageSizer = wx.BoxSizer(wx.VERTICAL)
+
+        buildsButtonsSizer = wx.BoxSizer(wx.HORIZONTAL)
+        selectBuildButton = wx.Button(self.panel, wx.ID_ANY, 'Select build')
+        buildsButtonsSizer.Add(selectBuildButton, 1, wx.EXPAND | wx.ALL, 5)
+        chooseLatestButton = wx.Button(self.panel, wx.ID_ANY, 'Get latest from default folder')
+        buildsButtonsSizer.Add(chooseLatestButton, 1, wx.EXPAND | wx.ALL, 5)
+
+        chosenBuildTextCtrl = wx.TextCtrl(self.panel, value = 'Drag and drop build here', style = wx.TE_READONLY | wx.TE_CENTRE)
+        dragAndDropHandler = FileDragAndDropHandler(chosenBuildTextCtrl, self.panel)
+        chosenBuildTextCtrl.SetDropTarget(dragAndDropHandler)
+
+        buildsManageSizer.Add(buildsButtonsSizer, 0, wx.EXPAND | wx.ALL, 5)
+        buildsManageSizer.Add(chosenBuildTextCtrl, 0, wx.CENTRE | wx.EXPAND | wx.ALL, 5)
+
+        mainSizer.Add(buildsManageSizer, 0, wx.EXPAND | wx.ALL, 5)
+
+        #middle part of frame
+
+        devicesList = self.adb.getListOfAttachedDevices()
+        devicesSizer = AuthorizedDevicesSizer(self.panel, devicesList, self.adb)
+
+        mainSizer.Add(devicesSizer, 1, wx.EXPAND | wx.ALL, 5)
+
+        #bottom part of frame
+
+        buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        installBuildButton = wx.Button(self.panel, wx.ID_ANY, 'Install')
+        buttonSizer.Add(installBuildButton, 0, wx.EXPAND | wx.ALL, 3)
+
+        optionCombobox = wx.ComboBox(self.panel, wx.ID_ANY, value = 'Clean', choices = ('Clean', 'Overwrite'), style = wx.CB_READONLY)
+        buttonSizer.Add(optionCombobox, 0, wx.EXPAND | wx.ALL, 3)
+
+        checkAllButton = wx.Button(self.panel, wx.ID_ANY, 'Select all')
+        buttonSizer.Add(checkAllButton, 0, wx.EXPAND | wx.ALL, 3)
+
+        closeButton = wx.Button(self.panel, wx.ID_ANY, 'Close')
+        buttonSizer.Add(closeButton, 0, wx.EXPAND | wx.ALL, 3)
+
+        mainSizer.Add(buttonSizer, 0, wx.CENTER | wx.ALL, 5)
+
+        self.panel.SetSizer(mainSizer)
+        self.panel.Fit()
+
+        return selectBuildButton, chooseLatestButton, chosenBuildTextCtrl, devicesSizer, installBuildButton, checkAllButton, closeButton, optionCombobox
+
+    def setBuild(self, build):
+        self.buildChosen = build
+        self.chosenBuildTextCtrl.SetValue(self.buildChosen)
+    
+    ### EVENTS ###
+
+    def installBuild(self, event):
+        option = self.optionsCombobox.GetValue()
+        checkedDevices = self.devicesSizer.getCheckedDevices()
+        if len(checkedDevices) == 0:
+            return
+        if not self.buildChosen.endswith('.apk'):
+            errorDlg = wx.MessageDialog(self, "Please choose build!", 'Error!',
+                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return
+        buttonUnlocker = ButtonUnlocker(len(checkedDevices), (self.selectBuildButton, self.chooseLatestBuildButton, self.installBuildButton, self.checkAllButton, self.closeButton, self.optionsCombobox))
+        for i in checkedDevices:
+            thread = threading.Thread(target = self.installingThread, args = (i[0], self.buildChosen, i[3], option, buttonUnlocker))
+            thread.start()
+
+    def installingThread(self, device, build, statusLabel, option, buttonUnlocker):
+        buildPackage = self.adb.getPackageNameOfAppFromApk(build)
+        buildVer = self.adb.getBuildVersionFromApk(build)
+        if option == 'Clean':
+            statusLabel.SetLabel('Checking if exists...'.format(buildPackage))
+            statusLabel.Refresh()
+            if self.adb.isBuildIsAlreadyInstalled(device, buildPackage):
+                statusLabel.SetLabel('Build exists!'.format(buildPackage))
+                time.sleep(1)
+                statusLabel.SetLabel('Checking version...')
+                time.sleep(1)
+                if self.adb.getBuildVersionFromDevice(device, buildPackage) == buildVer:
+                    statusLabel.SetLabel('Versions match!')
+                    time.sleep(1)
+                    statusLabel.SetLabel('Checking type...')
+                    if self.adb.isApkDebuggable(build) == self.adb.isInstalledPackageDebuggable(device, buildPackage):
+                        statusLabel.SetLabel('Types match!')
+                        time.sleep(1)
+                        statusLabel.SetLabel('Removing local data...')
+                        time.sleep(1)
+                        if self.adb.removeLocalAppData(device, buildPackage):
+                            statusLabel.SetLabel('Done!')
+                            buttonUnlocker.finishThread()
+                            return
+                    else:
+                        statusLabel.SetLabel('Types dont match...')
+                        time.sleep(1)
                 else:
-                    self.setBuild(fd.GetPath(), textCtrl)
-        return selectBuildEvent
+                    statusLabel.SetLabel('Versions dont match')
+                time.sleep(1)
+                statusLabel.SetLabel('Uninstalling {}'.format(buildPackage))
+                time.sleep(1)
+                clbk = self.adb.uninstallApp(device, buildPackage)
+                statusLabel.SetLabel(clbk)
+            else:
+                statusLabel.SetLabel('Build not installed.')
+        elif option == 'Overwrite':
+            buildVerNumerizedOnApk = int(buildVer.split('.')[-1])
+            buildVerNumerizedOnDev = int(self.adb.getBuildVersionFromDevice(device, buildPackage).split('.')[-1])
+            if buildVerNumerizedOnDev > buildVerNumerizedOnApk:
+                statusLabel.SetLabel('Error downgrade!')
+                buttonUnlocker.finishThread()
+                return
+        time.sleep(1)
+        statusLabel.SetLabel('Installing...')
+        if self.adb.installBuild(device, build):
+            statusLabel.SetLabel('Done!')
+        else:
+            statusLabel.SetLabel('An error occured.')
+        buttonUnlocker.finishThread()
+        return
+
+    def selectBuild(self, event):
+        with wx.FileDialog(self, 'Choose build', wildcard = '*.apk', style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
+            if fd.ShowModal() == wx.ID_CANCEL:
+                return ''
+            else:
+                self.setBuild(fd.GetPath())
+
+    def getLatestBuildFromOptionsFolder(self, event):
+        buildFolder = self.optionsHandler.getOption('Builds folder', str)
+        builds = glob.glob(os.path.join(buildFolder, '*.apk'))
+        latestBuild = max(builds, key = os.path.getctime)
+        self.setBuild(latestBuild)
+
+    def switchAllCheckboxes(self, event):
+        self.devicesSizer.switchCheckboxes(self.checkboxesState)
+        self.checkboxesState = not self.checkboxesState
+        event.GetEventObject().SetLabel('Uncheck all' if self.checkboxesState == False else 'Check all')
+    
+    def onClose(self, event):
+        del self.disabler
+        self.mainFrame.Raise()
+        self.Destroy()
 
 class JenkinsMenu(wx.Menu):
     def __init__(self, parent, pathToJsonFile, optionsHandler):
@@ -593,7 +723,7 @@ class JenkinsMenu(wx.Menu):
 
     def getBuild(self, info):
         def getBuildEvent(event):
-            if len(self.optionsHandler.getOption('Jenkins credentials')) != 2:
+            if len(self.optionsHandler.getOption('Jenkins credentials', tuple)) != 2:
                 errorDlg = wx.MessageDialog(self.parent, 'Please provide your jenkins credentials (file -> options)', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
                 errorDlg.ShowModal()
                 return
@@ -601,13 +731,93 @@ class JenkinsMenu(wx.Menu):
             DownloadBuildDialog(self.parent, buildInfo, self.optionsHandler).downloadBuild()
         return getBuildEvent
 
+class AuthorizedDevicesSizer(wx.BoxSizer):
+    def __init__(self, parentPanel, devicesList, adb):
+        wx.BoxSizer.__init__(self, wx.HORIZONTAL)
+        self.parentPanel = parentPanel
+        self.adb = adb
+        self.devicesList = self.getAuthorizedDevices(devicesList)
+        '''
+        self.lst is a list of tuples
+        each tuple contain 4 elements:
+        [0] - device id (used in adb methods call)
+        [1] - device model (retrieved by adb method)
+        [2] - checkbox object reference - to get info whether checkbox is ticked or not
+        [3] - status control - used in screenshot capture flow that sets status according to callback from adb method
+        '''
+        self.lst = self.createControls()
+
+    def createControls(self):
+        localLst = []
+
+        modelColumn = wx.BoxSizer(wx.VERTICAL)
+        checkboxColumn = wx.BoxSizer(wx.VERTICAL)
+        statusColumn = wx.BoxSizer(wx.VERTICAL)
+
+        columnHeaderFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
+
+        modelColumnHeader = wx.StaticText(self.parentPanel, label = 'Device', style = wx.CENTER)
+        modelColumnHeader.SetFont(columnHeaderFont)
+        modelColumn.Add(modelColumnHeader, 0, wx.CENTER | wx.ALL, 3)
+
+        checkboxColumnHeader = wx.StaticText(self.parentPanel, label = 'Check', style = wx.CENTER)
+        checkboxColumnHeader.SetFont(columnHeaderFont)
+        checkboxColumn.Add(checkboxColumnHeader, 0, wx.CENTER | wx.ALL, 3)
+
+        statusColumnHeader = wx.StaticText(self.parentPanel, label = 'Status', style = wx.CENTER)
+        statusColumnHeader.SetFont(columnHeaderFont)
+        statusColumn.Add(statusColumnHeader, 0, wx.CENTER | wx.ALL, 3)
+
+        for i in self.devicesList:
+            model = self.adb.getDeviceModel(i)
+
+            deviceLabel = wx.StaticText(self.parentPanel, label = model, style = wx.CENTER)
+            modelColumn.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            modelColumn.Add(deviceLabel, 0, wx.CENTER | wx.ALL, 10)
+
+            checkbox = wx.CheckBox(self.parentPanel, style = wx.CENTER)
+            checkboxColumn.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            checkboxColumn.Add(checkbox, 0, wx.CENTER | wx.ALL, 10)
+
+            statusLabel = wx.StaticText(self.parentPanel, label = 'Ready')
+            statusColumn.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
+            statusColumn.Add(statusLabel, 0, wx.CENTER | wx.EXPAND | wx.ALL, 10)
+
+            localLst.append((i, model, checkbox, statusLabel))
+
+        self.Add(modelColumn, 3, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+        self.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
+        self.Add(checkboxColumn, 1, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+        self.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
+        self.Add(statusColumn, 3, wx.EXPAND | wx.CENTER | wx.ALL, 5)
+
+        return localLst
+    
+    def getAuthorizedDevices(self, rawList):
+        activeList = []
+        for i in rawList:
+            if i[1] == 'device':
+                activeList.append(i[0])
+        return activeList
+
+    def getCheckedDevices(self):
+        checkedDevices = []
+        for i in self.lst:
+            if i[2].GetValue() == True:
+                checkedDevices.append(i)
+        return checkedDevices
+
+    def switchCheckboxes(self, state):
+        for i in self.lst:
+            i[2].SetValue(state)
+
 class RetrieveLinkDialog(wx.GenericProgressDialog):
     def __init__(self, parent, info, optionsHandler):
         wx.GenericProgressDialog.__init__(self, 'Working...', 'Retrieving build information...', style = wx.PD_APP_MODAL)
         self.parent = parent
         self.optionsHandler = optionsHandler
         self.info = info
-        self.auth = self.optionsHandler.getOption('Jenkins credentials')
+        self.auth = self.optionsHandler.getOption('Jenkins credentials', tuple)
 
     def getLink(self):
         if self.info[1] == '':
@@ -688,7 +898,7 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
         self.dlg = wx.GenericProgressDialog.__init__(self, 'Downloading build!', self.info[0][1])
 
     def downloadBuild(self):
-        buildFolder = self.optionsHandler.getOption('Builds folder')
+        buildFolder = self.optionsHandler.getOption('Builds folder', str)
         response = requests.get(self.info[0][0], auth = (self.info[1][0], self.info[1][1]), stream = True)
         with open(os.path.join(buildFolder, self.info[0][1]), 'wb') as f:
             buildSize = float(self.info[0][2]) * 1048576 
@@ -702,183 +912,6 @@ class DownloadBuildDialog(wx.GenericProgressDialog):
                 if updateCount % 50 == 0:
                     progressInMb = str(float(self.info[0][2]) * (curProgress / 100))
                     self.Update(curProgress, '{} \n {}MB / {}MB'.format(self.info[0][1], progressInMb[:progressInMb.find('.')+3], self.info[0][2]))
-
-class BuildInstallerTopPanel(wx.Panel):
-    def __init__(self, parent, buildFolder):
-        self.panel = wx.Panel.__init__(self, parent)
-        self.parent = parent
-        self.buildFolder = buildFolder
-        self.buildChosen = ''
-        self.installBuildBtn = None
-        self.createPanelContent()
-
-    def createPanelContent(self):
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-
-        topRow = wx.BoxSizer(wx.HORIZONTAL)
-        selectBuildButton = wx.Button(self, wx.ID_ANY, 'Select build')
-        topRow.Add(selectBuildButton, 1, wx.ALL, 5)
-        chooseLatestButton = wx.Button(self, wx.ID_ANY, 'Get latest from default folder')
-        topRow.Add(chooseLatestButton, 2, wx.ALL, 5)
-        mainSizer.Add(topRow, 0, wx.EXPAND)
-
-        bottomRow = wx.TextCtrl(self, value = 'Drag and drop build here', style = wx.TE_READONLY | wx.TE_CENTRE)
-        mainSizer.Add(bottomRow, 0, wx.EXPAND | wx.ALL, 5)
-
-        dragAndDropHandler = FileDragAndDropHandler(bottomRow, self)
-        bottomRow.SetDropTarget(dragAndDropHandler)
-
-        buttonsSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.installBuildBtn = wx.Button(self, wx.ID_ANY, 'Install')
-        buttonsSizer.Add(self.installBuildBtn, 0, wx.EXPAND | wx.ALL, 3)
-        optionsComboBox = wx.ComboBox(self, wx.ID_ANY, value = 'Clean', choices = ('Clean', 'Overwrite'), style = wx.CB_READONLY)
-        buttonsSizer.Add(optionsComboBox, 0, wx.EXPAND | wx.ALL, 3)
-        mainSizer.Add(buttonsSizer, 0, wx.CENTRE | wx.ALL, 5)
-
-        self.Bind(wx.EVT_BUTTON, self.startInstallingBuild(optionsComboBox), self.installBuildBtn)
-        self.Bind(wx.EVT_BUTTON, self.getLatestBuildFromOptionsFolder(bottomRow), chooseLatestButton)
-        self.Bind(wx.EVT_BUTTON, self.selectBuild(bottomRow), selectBuildButton)
-        self.SetSizer(mainSizer)
-
-    def selectBuild(self, textCtrl):
-        def selectBuildEvent(event):
-            with wx.FileDialog(self, 'Choose build', wildcard = '*.apk', style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fd:
-                if fd.ShowModal() == wx.ID_CANCEL:
-                    return ''
-                else:
-                    self.setBuild(fd.GetPath(), textCtrl)
-        return selectBuildEvent
-
-    def getLatestBuildFromOptionsFolder(self, textCtrl):
-        def getLatestBuildFromOptionsFolderEvent(event):
-            builds = glob.glob(os.path.join(self.buildFolder, '*.apk'))
-            latestBuild = max(builds, key = os.path.getctime)
-            self.setBuild(latestBuild, textCtrl)
-        return getLatestBuildFromOptionsFolderEvent
-    
-    def setBuild(self, build, textCtrl):
-        self.buildChosen = build
-        textCtrl.SetValue(build)
-
-    def startInstallingBuild(self, comboBoxCtrl):
-        def startInstallingBuildEvent(event):
-            self.parent.bottomPanel.installBuild(self.buildChosen, comboBoxCtrl.GetStringSelection())
-        return startInstallingBuildEvent
-
-class BuildInstallerBottomPanel(wx.Panel):
-    def __init__(self, parent, deviceList, adb):
-        wx.Panel.__init__(self, parent)
-        self.parent = parent
-        self.listOfDevices = deviceList
-        self.adb = adb
-        self.statusLabels = []
-        self.buttons = []
-        self.createControls()
-        self.Fit()
-
-    def createControls(self):
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-
-        columnsSizer = wx.BoxSizer(wx.HORIZONTAL)
-        leftColumn = wx.BoxSizer(wx.VERTICAL)
-        rightColumn = wx.BoxSizer(wx.VERTICAL)
-        columnNameFont = wx.Font(14, wx.MODERN, wx.ITALIC, wx.LIGHT)
-
-        devColumnNameLabel = wx.StaticText(self, label = 'Device', style = wx.CENTER)
-        devColumnNameLabel.SetFont(columnNameFont)
-        leftColumn.Add(devColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
-
-        statColumnNameLabel = wx.StaticText(self, label = 'Status', style = wx.CENTER)
-        statColumnNameLabel.SetFont(columnNameFont)
-        rightColumn.Add(statColumnNameLabel, 0, wx.CENTER | wx.ALL, 3)
-
-        for i in self.listOfDevices:
-            deviceLabel = wx.StaticText(self, label = i[1], style = wx.CENTER)
-            leftColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            leftColumn.Add(deviceLabel, 0, wx.EXPAND | wx.ALL, 3)
-
-            statusLabel = wx.StaticText(self, label = 'Ready', style = wx.CENTER)
-            rightColumn.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
-            rightColumn.Add(statusLabel, 0, wx.EXPAND | wx.ALL, 3)
-            self.statusLabels.append(statusLabel)
-
-        columnsSizer.Add(leftColumn, 1, wx.EXPAND | wx.ALL, 5)
-        columnsSizer.Add(wx.StaticLine(self, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND)
-        columnsSizer.Add(rightColumn, 1, wx.EXPAND | wx.ALL, 5)
-
-        self.closeBtn = wx.Button(self, wx.ID_ANY, 'Close')
-        self.Bind(wx.EVT_BUTTON, self.parent.onClose, self.closeBtn)
-        self.buttons.append(self.closeBtn)
-        self.buttons.append(self.parent.topPanel.installBuildBtn)
-
-        mainSizer.Add(columnsSizer, 0, wx.EXPAND)
-        mainSizer.Add(self.closeBtn, 0, wx.CENTER | wx.ALL, 5)
-        
-        self.SetSizer(mainSizer)
-
-    def installBuild(self, build, option):
-        if not build.endswith('.apk'):
-            errorDlg = wx.MessageDialog(self, "Please choose build!", 'Error!',
-                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
-            errorDlg.ShowModal()
-            return
-        for i in self.buttons:
-            i.Disable()
-        buttonUnlocker = ButtonUnlocker(len(self.listOfDevices), self.buttons)
-        for i, j in zip(self.listOfDevices, self.statusLabels):
-            thread = threading.Thread(target = self.installingThread, args = (i[0], build, j, option, buttonUnlocker))
-            thread.start()
-
-    def installingThread(self, device, build, statusLabel, option, buttonUnlocker):
-        buildPackage = self.adb.getPackageNameOfAppFromApk(build)
-        buildVer = self.adb.getBuildVersionFromApk(build)
-        if option == 'Clean':
-            statusLabel.SetLabel('Checking if exists...'.format(buildPackage))
-            if self.adb.isBuildIsAlreadyInstalled(device, buildPackage):
-                statusLabel.SetLabel('Build exists!'.format(buildPackage))
-                time.sleep(1)
-                statusLabel.SetLabel('Checking version...')
-                time.sleep(1)
-                if self.adb.getBuildVersionFromDevice(device, buildPackage) == buildVer:
-                    statusLabel.SetLabel('Versions match!')
-                    time.sleep(1)
-                    statusLabel.SetLabel('Checking type...')
-                    if self.adb.isApkDebuggable(build) == self.adb.isInstalledPackageDebuggable(device, buildPackage):
-                        statusLabel.SetLabel('Types match!')
-                        time.sleep(1)
-                        statusLabel.SetLabel('Removing local data...')
-                        time.sleep(1)
-                        if self.adb.removeLocalAppData(device, buildPackage):
-                            statusLabel.SetLabel('Done!')
-                            buttonUnlocker.finishThread()
-                            return
-                    else:
-                        statusLabel.SetLabel('Types dont match...')
-                        time.sleep(1)
-                else:
-                    statusLabel.SetLabel('Versions dont match')
-                time.sleep(1)
-                statusLabel.SetLabel('Uninstalling {}'.format(buildPackage))
-                time.sleep(1)
-                clbk = self.adb.uninstallApp(device, buildPackage)
-                statusLabel.SetLabel(clbk)
-            else:
-                statusLabel.SetLabel('Build not installed.')
-        elif option == 'Overwrite':
-            buildVerNumerizedOnApk = int(buildVer.split('.')[-1])
-            buildVerNumerizedOnDev = int(self.adb.getBuildVersionFromDevice(device, buildPackage).split('.')[-1])
-            if buildVerNumerizedOnDev > buildVerNumerizedOnApk:
-                statusLabel.SetLabel('Error downgrade!')
-                buttonUnlocker.finishThread()
-                return
-        time.sleep(1)
-        statusLabel.SetLabel('Installing...')
-        if self.adb.installBuild(device, build):
-            statusLabel.SetLabel('Done!')
-        else:
-            statusLabel.SetLabel('An error occured.')
-        buttonUnlocker.finishThread()
-        return
 
 class FileDragAndDropHandler(wx.FileDropTarget):
     def __init__(self, target, parentPanel):
@@ -904,6 +937,8 @@ class ButtonUnlocker():
         self.count = count
         self.semph = threading.Semaphore()
         self.buttons = btns
+        for i in self.buttons:
+            i.Disable()
 
     def finishThread(self):
         self.semph.acquire()
@@ -917,20 +952,17 @@ class ButtonUnlocker():
 
 class OptionsHandler():
     def __init__(self):
-        optionsPath = os.path.join(os.getenv('APPDATA'), 'adbgui')
-        self.optionsFilePath = os.path.join(optionsPath, 'options.json')
-        self.__optionsCategories = (
-            ('Screenshots folder', 'folder'),
-            ('Builds folder', 'folder'),
-            ('Jenkins credentials', 'input'),
-            ('Keep SS on device', 'checkbox')
-        )
-        self.__options = self.getOptionsIfAlreadyExist(optionsPath, self.optionsFilePath)
+        self.optionsPath = os.path.join(os.getenv('APPDATA'), 'adbgui')
+        self.optionsFilePath = os.path.join(self.optionsPath, 'options.json')
+        self.optionsCats = ('Screenshots folder', 'Builds folder', 'Jenkins credentials', 'Remove SS from device')
+        self.optionsTypes = ('folder', 'folder', 'input', 'checkbox')
+        self.__optionsCategories = [(i, j) for i, j in zip(self.optionsCats, self.optionsTypes)]
+        self.__options = self.getOptionsIfAlreadyExist()
 
-    def getOptionsIfAlreadyExist(self, folderPath, filePath):
-        if os.path.exists(folderPath):
+    def getOptionsIfAlreadyExist(self):
+        if os.path.exists(self.optionsPath):
             try:
-                with open (filePath, 'r') as f:
+                with open(self.optionsFilePath, 'r') as f:
                     try:
                         return json.loads(f.read())
                     except json.decoder.JSONDecodeError:
@@ -938,20 +970,27 @@ class OptionsHandler():
             except FileNotFoundError:
                 return {}
         else:
-            os.mkdir(folderPath)
+            os.mkdir(self.optionsPath)
             return {}
 
     def setOption(self, option, value):
         self.__options[option] = value
 
-    def getOption(self, option, t = False):
+    def getOption(self, option, type):
+        if option not in self.optionsCats:
+            assert(False)
+            sys.exit(1)
         try:
             return self.__options[option]
         except KeyError:
-            if t:
+            if type == tuple:
                 return ('', '')
-            else:
+            elif type == str:
                 return ''
+            elif type == bool:
+                return False
+            else:
+                assert(False)
 
     def saveOptionsToFile(self):
         with open(self.optionsFilePath, 'w+') as f:
