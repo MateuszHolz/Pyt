@@ -1,8 +1,8 @@
 import json
 import wx
 
-import downloadbuilddialog
-import retrievelinkdialog
+from DownloadBuildDialog import DownloadBuildDialog
+from RetrieveLinkDialog import RetrieveLinkDialog
 
 class JenkinsMenu(wx.Menu):
     def __init__(self, parent, pathToJsonFile, optionsHandler):
@@ -36,6 +36,6 @@ class JenkinsMenu(wx.Menu):
                 errorDlg = wx.MessageDialog(self.parent, 'Please provide your jenkins credentials (file -> options)', 'Error!', style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
                 errorDlg.ShowModal()
                 return
-            buildInfo = retrievelinkdialog.RetrieveLinkDialog(self.parent, info, self.optionsHandler).getLink()
-            downloadbuilddialog.DownloadBuildDialog(self.parent, buildInfo, self.optionsHandler).downloadBuild()
+            buildInfo = RetrieveLinkDialog(self.parent, info, self.optionsHandler).getLink()
+            DownloadBuildDialog(self.parent, buildInfo, self.optionsHandler).downloadBuild()
         return getBuildEvent

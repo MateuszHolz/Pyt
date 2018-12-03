@@ -1,19 +1,19 @@
 import os ##to do: implement method to check if directory exists in optionsHandler class
 import wx
 
-import adb
-import buildinstallerframe
-import deviceinfoframe
-import jenkinsmenu
-import optionshandler
-import optionsframe
-import screenshotcaptureframe
+from Adb import Adb
+from BuildInstallerFrame import BuildInstallerFrame
+from DeviceInfoFrame import DeviceInfoFrame
+from JenkinsMenu import JenkinsMenu
+from OptionsHandler import OptionsHandler
+from OptionsFrame import OptionsFrame
+from ScreenshotCaptureFrame import ScreenshotCaptureFrame
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title = title, style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
-        self.optionsHandler = optionshandler.OptionsHandler()
-        self.adb = adb.Adb()
+        self.optionsHandler = OptionsHandler()
+        self.adb = Adb()
 
         menuBar, optionsMenuButton, exitMenuButton = self.createMenuBar()
 
@@ -115,7 +115,7 @@ class MainFrame(wx.Frame):
         fileMenu.AppendSeparator()
         exitMenuButton = fileMenu.Append(wx.ID_ANY, 'Exit')
 
-        jenkinsMenu = jenkinsmenu.JenkinsMenu(self, 'links.json', self.optionsHandler)
+        jenkinsMenu = JenkinsMenu(self, 'links.json', self.optionsHandler)
         menuBar = wx.MenuBar()
         menuBar.Append(fileMenu, 'File')
         menuBar.Append(jenkinsMenu, 'Jenkins')
@@ -130,7 +130,7 @@ class MainFrame(wx.Frame):
                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             return
-        screenshotcaptureframe.ScreenshotCaptureFrame(self, self.adb, self.optionsHandler)
+        ScreenshotCaptureFrame(self, self.adb, self.optionsHandler)
 
     def openInstallBuildPanel(self, event):
         if not os.path.exists(self.optionsHandler.getOption('Builds folder', str)):
@@ -138,7 +138,7 @@ class MainFrame(wx.Frame):
                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             return
-        buildinstallerframe.BuildInstallerFrame(self, self.adb, self.optionsHandler)
+        BuildInstallerFrame(self, self.adb, self.optionsHandler)
     
     def updateBottomSizer(self, event):
         newBottomSizer = self.createListOfDevicesSizer()
@@ -163,7 +163,7 @@ class MainFrame(wx.Frame):
                                         style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             return
-        deviceinfoframe.DeviceInfoFrame(self, deviceId, self.adb)
+        DeviceInfoFrame(self, deviceId, self.adb)
 
 if __name__ == '__main__':
     app = wx.App(False)

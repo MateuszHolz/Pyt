@@ -1,5 +1,6 @@
-import jenkinscredentialseditframe
 import wx
+
+from JenkinsCredentialsEditFrame import JenkinsCredentialsEditFrame
 
 class OptionsFrame(wx.Frame):
     def __init__(self, mainFrame, optionsHandler):
@@ -98,7 +99,7 @@ class OptionsFrame(wx.Frame):
                 self.onChangedOption(option, newValue, valueCtrl)
 
     def editCredentialsOption(self, event):
-        jenkinscredentialseditframe.JenkinsCredentialsEditFrame(self, self.optionsHandler, self.jenkinsCredentialControls)
+        JenkinsCredentialsEditFrame(self, self.optionsHandler, self.jenkinsCredentialControls)
 
     def onSwitchCheckbox(self, event):
         option = event.GetEventObject().info

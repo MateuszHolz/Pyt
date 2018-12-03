@@ -4,9 +4,9 @@ import time
 import threading
 import wx
 
-import authorizeddevicessizer
-import buttonunlocker
-import filedraganddrophandler
+from AuthorizedDevicesSizer import AuthorizedDevicesSizer
+from ButtonUnlocker import ButtonUnlocker
+from FileDragAndDropHandler import FileDragAndDropHandler
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainFrame, adb, optionsHandler):
@@ -46,7 +46,7 @@ class BuildInstallerFrame(wx.Frame):
         buildsButtonsSizer.Add(chooseLatestButton, 1, wx.EXPAND | wx.ALL, 5)
 
         chosenBuildTextCtrl = wx.TextCtrl(self.panel, value = 'Drag and drop build here', style = wx.TE_READONLY | wx.TE_CENTRE)
-        dragAndDropHandler = filedraganddrophandler.FileDragAndDropHandler(chosenBuildTextCtrl, self.panel)
+        dragAndDropHandler = FileDragAndDropHandler(chosenBuildTextCtrl, self.panel)
         chosenBuildTextCtrl.SetDropTarget(dragAndDropHandler)
 
         buildsManageSizer.Add(buildsButtonsSizer, 0, wx.EXPAND | wx.ALL, 5)
@@ -57,7 +57,7 @@ class BuildInstallerFrame(wx.Frame):
         #middle part of frame
 
         devicesList = self.adb.getListOfAttachedDevices()
-        devicesSizer = authorizeddevicessizer.AuthorizedDevicesSizer(self.panel, devicesList, self.adb)
+        devicesSizer = AuthorizedDevicesSizer(self.panel, devicesList, self.adb)
 
         mainSizer.Add(devicesSizer, 1, wx.EXPAND | wx.ALL, 5)
 
@@ -100,7 +100,7 @@ class BuildInstallerFrame(wx.Frame):
                                          style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
             errorDlg.ShowModal()
             return
-        buttonUnlocker = buttonunlocker.ButtonUnlocker(len(checkedDevices), (self.selectBuildButton, self.chooseLatestBuildButton, self.installBuildButton, self.checkAllButton, self.closeButton, self.optionsCombobox))
+        buttonUnlocker = ButtonUnlocker(len(checkedDevices), (self.selectBuildButton, self.chooseLatestBuildButton, self.installBuildButton, self.checkAllButton, self.closeButton, self.optionsCombobox))
         for i in checkedDevices:
             thread = threading.Thread(target = self.installingThread, args = (i[0], self.buildChosen, i[3], option, buttonUnlocker))
             thread.start()

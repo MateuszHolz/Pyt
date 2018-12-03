@@ -4,8 +4,8 @@ import threading
 import time
 import wx
 
-import authorizeddevicessizer
-import buttonunlocker
+from AuthorizedDevicesSizer import AuthorizedDevicesSizer
+from ButtonUnlocker import ButtonUnlocker
 
 class ScreenshotCaptureFrame(wx.Frame):
     def __init__(self, mainFrame, adb, optionsHandler):
@@ -31,7 +31,7 @@ class ScreenshotCaptureFrame(wx.Frame):
     def createControls(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         devicesList = self.adb.getListOfAttachedDevices()
-        devicesSizer = authorizeddevicessizer.AuthorizedDevicesSizer(self.panel, devicesList, self.adb)
+        devicesSizer = AuthorizedDevicesSizer(self.panel, devicesList, self.adb)
         mainSizer.Add(devicesSizer, 2, wx.EXPAND | wx.ALL, 5)
 
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -59,7 +59,7 @@ class ScreenshotCaptureFrame(wx.Frame):
         checkedDevices = self.devicesSizer.getCheckedDevices()
         if len(checkedDevices) == 0:
             return
-        buttonUnlocker = buttonunlocker.ButtonUnlocker(len(checkedDevices), (self.openButton, self.closeButton, self.captureButton, self.checkAllButton))
+        buttonUnlocker = ButtonUnlocker(len(checkedDevices), (self.openButton, self.closeButton, self.captureButton, self.checkAllButton))
         for i in checkedDevices:
             localThread = threading.Thread(target = self.captureThread, args = (i[0], i[1], i[3], buttonUnlocker))
             localThread.start()
