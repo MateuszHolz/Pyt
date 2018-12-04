@@ -143,8 +143,8 @@ class MainFrame(wx.Frame):
     def updateBottomSizer(self, event):
         newBottomSizer = self.createListOfDevicesSizer()
         self.mainSizer.Hide(self.bottomSizer)
-        self.mainSizer.Layout()
         self.mainSizer.Replace(self.bottomSizer, newBottomSizer)
+        self.mainSizer.Layout()
         self.bottomSizer = newBottomSizer
         self.scaleTheWindow()
         self.Fit()
@@ -154,7 +154,7 @@ class MainFrame(wx.Frame):
         self.Destroy()
 
     def showOptions(self, event):
-        optionsframe.OptionsFrame(self, self.optionsHandler)
+        OptionsFrame(self, self.optionsHandler)
 
     def showInfoAboutDevice(self, event):
         deviceId, state = event.GetEventObject().info

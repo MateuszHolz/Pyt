@@ -116,7 +116,7 @@ class BuildInstallerFrame(wx.Frame):
                 time.sleep(1)
                 statusLabel.SetLabel('Checking version...')
                 time.sleep(1)
-                if self.adb.getBuildVersionFromDevice(device, buildPackage) == buildVer:
+                if self.adb.getBuildVersionNameFromDevice(device, buildPackage) == buildVer:
                     statusLabel.SetLabel('Versions match!')
                     time.sleep(1)
                     statusLabel.SetLabel('Checking type...')

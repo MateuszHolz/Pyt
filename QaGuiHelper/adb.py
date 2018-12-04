@@ -20,10 +20,10 @@ class Adb():
             out = subprocess.check_output(r'aapt dump badging {}'.format(build)).decode().split()
             for i in out:
                 if 'application-debuggable' in i:                    
-                    return True
-            return False
+                    return 'True'
+            return 'False'
         except subprocess.CalledProcessError:
-            return False
+            return 'False'
         except FileNotFoundError:
             return 'Aapt not found.'
 
@@ -42,10 +42,10 @@ class Adb():
             for i in [j.replace(' ', '') for j in out]:
                 if 'flags' in i:
                     if 'DEBUG' in i:
-                        return True
-            return False
+                        return 'True'
+            return 'False'
         except subprocess.CalledProcessError:
-            return
+            return 'Error'
     
     @staticmethod
     def removeLocalAppData(device, pckg):
@@ -92,7 +92,17 @@ class Adb():
             return 'Aapt not found.'
 
     @staticmethod
-    def getBuildVersionFromDevice(device, pckg):
+    def getBuildVersionCodeFromDevice(device, pckg):
+        try:
+            out = subprocess.check_output(r'adb -s {} shell dumpsys package {}'.format(device, pckg)).decode().split()
+            for i in out:
+                if 'versionCode' in i:
+                    return i[i.find('=')+1:]
+        except subprocess.CalledProcessError:
+            return 'Error!'
+
+    @staticmethod
+    def getBuildVersionNameFromDevice(device, pckg):
         try:
             out = subprocess.check_output(r'adb -s {} shell dumpsys package {}'.format(device, pckg)).decode().split()
             for i in out:
@@ -124,7 +134,8 @@ class Adb():
         tempList = rawList[4:]
         for idx, i in enumerate(tempList):
             if idx%2 == 0:
-                devices.append((i.decode(), tempList[idx+1].decode()))
+                status = tempList[idx+1].decode()
+                devices.append((i.decode(), 'Authorized' if status == 'device' else 'Unauthorized'))
         return devices
     
     @staticmethod
@@ -245,15 +256,15 @@ class Adb():
                     return out[idx+2][:-1]
 
     @staticmethod
-    def getListOfHuuugePackages(device):
+    def getListOfInstalledPackages(device):
         packages = []
         list = ('huuuge', 'gamelion')
         output = subprocess.check_output(r'adb -s {} shell pm list packages'.format(device), shell = True).decode().split()
-        for i in list:
-            for j in output:
-                if i in j:
-                    packages.append(j)
-        return packages[0][8:]
+        for package in list:
+            for line in output:
+                if package in line:
+                    packages.append(line[8:])
+        return packages
     
     @staticmethod
     def getTcpipPort(device):

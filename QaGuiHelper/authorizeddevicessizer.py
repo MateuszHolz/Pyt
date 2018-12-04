@@ -8,7 +8,7 @@ class AuthorizedDevicesSizer(wx.BoxSizer):
         self.devicesList = self.getAuthorizedDevices(devicesList)
         '''
         self.lst is a list of tuples
-        each tuple contain 4 elements:
+        each tuple contains 4 elements:
         [0] - device id (used in adb methods call)
         [1] - device model (retrieved by adb method)
         [2] - checkbox object reference - to get info whether checkbox is ticked or not
@@ -37,8 +37,8 @@ class AuthorizedDevicesSizer(wx.BoxSizer):
         statusColumnHeader.SetFont(columnHeaderFont)
         statusColumn.Add(statusColumnHeader, 0, wx.CENTER | wx.ALL, 3)
 
-        for i in self.devicesList:
-            model = self.adb.getDeviceModel(i)
+        for deviceId in self.devicesList:
+            model = self.adb.getDeviceModel(deviceId)
 
             deviceLabel = wx.StaticText(self.parentPanel, label = model, style = wx.CENTER)
             modelColumn.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
@@ -52,7 +52,7 @@ class AuthorizedDevicesSizer(wx.BoxSizer):
             statusColumn.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             statusColumn.Add(statusLabel, 0, wx.CENTER | wx.EXPAND | wx.ALL, 10)
 
-            localLst.append((i, model, checkbox, statusLabel))
+            localLst.append((deviceId, model, checkbox, statusLabel))
 
         self.Add(modelColumn, 3, wx.EXPAND | wx.CENTER | wx.ALL, 5)
         self.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_VERTICAL), 0, wx.EXPAND | wx.ALL, 5)
@@ -65,7 +65,7 @@ class AuthorizedDevicesSizer(wx.BoxSizer):
     def getAuthorizedDevices(self, rawList):
         activeList = []
         for i in rawList:
-            if i[1] == 'device':
+            if i[1] == 'Authorized':
                 activeList.append(i[0])
         return activeList
 

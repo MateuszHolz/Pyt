@@ -1,13 +1,9 @@
 import subprocess
-import os
 
-build = r'C:\Users\mho\Downloads\MagicCasino-debug-slots-gp-dev-5406.apk'
+cmd = r'adb -s 9889d64547504e4352 shell dumpsys package com.huuuge.stars.slots'
 
-print(os.path.exists(build))
-
-out = subprocess.check_output(r'aapt dump badging "{}"'.format(build)).decode().split()
+out = subprocess.check_output(cmd).decode().split()
 
 for i in out:
-    if 'com.' in i:
-        print(i)
-        break
+        if 'versionCode' in i:
+                print(i[i.find('=')+1:])
