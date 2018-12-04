@@ -53,7 +53,7 @@ class DeviceInfoFrame(wx.Frame):
             elif i[2] == 'button':
                 btn = wx.Button(self.panel, wx.ID_ANY, 'Show')
                 deviceInfoControls.append(btn)
-                sizer.Add(btn, 0, wx.ALIGN_RIGHT)
+                sizer.Add(btn, 0, wx.LEFT, 20)
             mainSizer.Add(sizer, 0, wx.ALL, 5)
     
         closeBtn = wx.Button(self.panel, wx.ID_ANY, 'Close')
