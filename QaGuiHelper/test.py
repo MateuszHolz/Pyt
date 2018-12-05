@@ -1,9 +1,8 @@
 import subprocess
 
-cmd = r'adb -s 9889d64547504e4352 shell dumpsys package com.huuuge.stars.slots'
+cmd = r'adb -s FA87D1F00513 get-state'
 
-out = subprocess.check_output(cmd).decode().split()
 
-for i in out:
-        if 'versionCode' in i:
-                print(i[i.find('=')+1:])
+process = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+output, err = process.communicate()
+print(output)

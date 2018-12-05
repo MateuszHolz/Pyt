@@ -142,13 +142,12 @@ class Adb():
     def captureScreenshot(device, filename):
         dirOnDevice = os.path.join('sdcard/', filename)
         timeout = 10
-        try:
-            subprocess.check_output(r'adb -s {} shell screencap "{}"'.format(device, dirOnDevice), timeout = timeout)
-            return ('Pulling file...', dirOnDevice)
-        except subprocess.CalledProcessError:
-            return ('An error occured while taking screenshot!', False)
-        except subprocess.TimeoutExpired:
-            return ('Timed out! ({}s)'.format(timeout), False)
+        command = r'adb -s {} shell screencap "{}"'.format(device, dirOnDevice)
+        proc = subprocess.Popen(command, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+        output, error = proc.communicate()
+        print(output)
+        print(error)
+        return
 
     @staticmethod
     def pullScreenshot(device, fullPathOnDevice, destinationDirectory):
@@ -165,7 +164,7 @@ class Adb():
     def installBuild(device, build):
         timeout = 60
         try:
-            raw_out = subprocess.check_output(r'adb -s {} install -r "{}"'.format(device, build), timeout = timeout)
+            subprocess.check_output(r'adb -s {} install -r "{}"'.format(device, build), timeout = timeout)
             return True
         except subprocess.CalledProcessError:
             return False
@@ -185,9 +184,12 @@ class Adb():
 
     @staticmethod
     def getDeviceScreenSize(device):
-        rawData = subprocess.check_output(r"adb -s {} shell wm size".format(device)).decode().split()
-        res = re.sub('x', ' ', rawData[2]).split()
-        return "{}x{}".format(res[1], res[0])
+        try:
+            rawData = subprocess.check_output(r"adb -s {} shell wm size".format(device)).decode().split()
+            res = re.sub('x', ' ', rawData[2]).split()
+            return "{}x{}".format(res[1], res[0])
+        except subprocess.CalledProcessError:
+            return 'Error!'
 
     @staticmethod
     def getBatteryStatus(device):
@@ -276,8 +278,24 @@ class Adb():
 
     @staticmethod
     def getSerialNo(device):
-        serial = subprocess.check_output(r'adb -s {} shell getprop ro.boot.serialno'.format(device), shell = True).rstrip()
-        if len(serial) > 0:
-            return serial
+        cmd = r'adb -s {} shell getprop ro.boot.serialno'.format(device)
+        process = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+        out, _ = process.communicate()
+        outNormalized = out.decode().rstrip()
+        if len(outNormalized) > 0:
+            return outNormalized
         else:
             return 'Not set'
+
+    @staticmethod
+    def checkIfDeviceStatusIsFine(device):
+        try:
+            output = subprocess.check_output(r'adb -s {} get-state'.format(device), stderr = subprocess.STDOUT).decode().rstrip()
+            if output == 'device':
+                return True, 'Ok'
+            else:
+                return False, 'Not authorized'
+        except subprocess.CalledProcessError as err:
+            print('\n\n', err.output, '\n\n')
+            return False, err.output.decode().rstrip()
+
