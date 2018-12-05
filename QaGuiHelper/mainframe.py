@@ -19,11 +19,11 @@ class MainFrame(wx.Frame):
 
         self.mainPanel = wx.Panel(self)
 
-        captureSSBtn, installBtn, refreshBtn, self.mainSizer, self.bottomSizer = self.createControls()
+        self.captureSSBtn, self.installBtn, self.refreshBtn, self.mainSizer, self.bottomSizer = self.createControls()
 
-        self.Bind(wx.EVT_BUTTON, self.updateBottomSizer, refreshBtn)
-        self.Bind(wx.EVT_BUTTON, self.openScreenshotPanel, captureSSBtn)
-        self.Bind(wx.EVT_BUTTON, self.openInstallBuildPanel, installBtn)
+        self.Bind(wx.EVT_BUTTON, self.updateBottomSizer, self.refreshBtn)
+        self.Bind(wx.EVT_BUTTON, self.openScreenshotPanel, self.captureSSBtn)
+        self.Bind(wx.EVT_BUTTON, self.openInstallBuildPanel, self.installBtn)
         self.Bind(wx.EVT_CLOSE, self.onExit)
         self.Bind(wx.EVT_MENU, self.showOptions, optionsMenuButton)
         self.Bind(wx.EVT_MENU, self.onExit, exitMenuButton)
