@@ -84,13 +84,13 @@ class MainFrame(wx.Frame):
         rightColumn.Add(rightColumnLabel, 1, wx.CENTER | wx.ALL, 3)
 
         for i, j in deviceList:
-            model = self.adb.getDeviceModel(i)    
+            _, model = self.adb.getProperty(i, 'ro.product.model')    
 
             leftColumn.Add(wx.StaticLine(self.mainPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             middleColumn.Add(wx.StaticLine(self.mainPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
             rightColumn.Add(wx.StaticLine(self.mainPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)
 
-            modelLabel = wx.StaticText(self.mainPanel, label = model, style = wx.CENTER)
+            modelLabel = wx.StaticText(self.mainPanel, label = model[:15], style = wx.CENTER)
             stateLabel = wx.StaticText(self.mainPanel, label = j, style = wx.CENTER)
             infoButton = wx.Button(self.mainPanel, label = 'i', style = wx.CENTER, size = (20, 5))
             infoButton.info = i, j

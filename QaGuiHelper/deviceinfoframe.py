@@ -11,20 +11,20 @@ class DeviceInfoFrame(wx.Frame):
         self.adb = adb
         self.disabler = wx.WindowDisabler(self)
         self.deviceInfoTable = (
-            ('Brand', self.adb.getBrand, 'field'),
-            ('Model', self.adb.getDeviceModel, 'field'),
+            ('Brand', self.adb.getProperty, 'field', 'ro.product.brand'),
+            ('Model', self.adb.getProperty, 'field', 'ro.product.model'),
             ('Screen size', self.adb.getDeviceScreenSize, 'field'),
             ('IP Address', self.adb.getDeviceIpAddress, 'field'),
-            ('ADB tcpip port', self.adb.getTcpipPort, 'field'),
+            ('ADB tcpip port', self.adb.getProperty, 'field', 'service.adb.tcp.port'),
             ('Battery', self.adb.getBatteryStatus, 'field'),
             ('Plugged in?', self.adb.getPluggedInStatus, 'field'),
-            ('OS version', self.adb.getOsVersion, 'field'),
-            ('API version', self.adb.getApiVersion, 'field'),
-            ('Device timezone', self.adb.getDeviceTimezone, 'field'),
-            ('Device language', self.adb.getDeviceLanguage, 'field'),
-            ('Marketing name', self.adb.getMarketingName, 'field'),
+            ('OS version', self.adb.getProperty, 'field', 'ro.build.version.release'),
+            ('API version', self.adb.getProperty, 'field', 'ro.build.version.sdk'),
+            ('Device timezone', self.adb.getProperty, 'field', 'persist.sys.timezone'),
+            ('Device language', self.adb.getProperty, 'field', 'persist.sys.locale'),
+            ('Marketing name', self.adb.getProperty, 'field', 'ro.config.marketing_name'),
             ('Wifi name', self.adb.getWifiName, 'field'),
-            ('Serial No', self.adb.getSerialNo, 'field'),
+            ('Serial No', self.adb.getProperty, 'field', 'ro.boot.serialno'),
             ('Installed packages', self.adb.getListOfInstalledPackages, 'button'))
         self.installedPackagesList = None
         self.panel = wx.Panel(self)
@@ -65,27 +65,46 @@ class DeviceInfoFrame(wx.Frame):
         return deviceInfoControls, btn, closeBtn
 
     def updateFields(self):
-        for func, target in zip(self.deviceInfoTable, self.deviceInfoControls):
-            localThread = threading.Thread(target = self.updateSingleControl, args = (target, func[1]))
+        for functionInfo, target in zip(self.deviceInfoTable, self.deviceInfoControls):
+            if len(functionInfo) > 3:
+                args = (target, functionInfo[1], functionInfo[3])
+            else:
+                args = (target, functionInfo[1])    
+            localThread = threading.Thread(target = self.updateSingleControl, args = args)
             localThread.start()
 
-    def updateSingleControl(self, target, functionToCall):
-        if type(target) == wx.TextCtrl:            
+    def updateSingleControl(self, target, functionToCall, propertyArg = None):
+        localArgs = None
+        if propertyArg == None:
+            localArgs = (self.deviceId, )
+        else:
+            localArgs = (self.deviceId, propertyArg)
+        status, msg = functionToCall(*localArgs)
+        if type(target) == wx.TextCtrl:
             try:
-                target.SetValue(functionToCall(self.deviceId))
+                target.SetValue(msg)
             except RuntimeError:
                 pass
         elif type(target) == wx.Button:
-            target.Disable()
-            target.info = functionToCall(self.deviceId)
-            target.Enable()
+            try:
+                target.Disable()
+                target.info = status, msg
+                target.Enable()
+            except RuntimeError:
+                pass
         else:
             assert(False)
 
     ### EVENTS ###
 
     def showPackages(self, event):
-        InstalledPackagesListFrame(self, self.deviceId, self.adb, event.GetEventObject().info)
+        status, message = event.GetEventObject().info
+        if status == False:
+            errorDlg = wx.MessageDialog(self, message, 'Error!',
+                                        style = wx.CENTRE | wx.STAY_ON_TOP | wx.ICON_ERROR)
+            errorDlg.ShowModal()
+            return        
+        InstalledPackagesListFrame(self, self.deviceId, self.adb, message)
 
     def onClose(self, event):
         del self.disabler
