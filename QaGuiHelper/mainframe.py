@@ -1,4 +1,5 @@
 import os ##to do: implement method to check if directory exists in optionsHandler class
+import sys
 import wx
 
 from Adb import Adb
@@ -152,6 +153,7 @@ class MainFrame(wx.Frame):
     def onExit(self, event):
         self.optionsHandler.saveOptionsToFile()
         self.Destroy()
+        sys.exit(0)
 
     def showOptions(self, event):
         OptionsFrame(self, self.optionsHandler)

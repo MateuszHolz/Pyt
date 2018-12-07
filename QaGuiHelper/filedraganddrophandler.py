@@ -1,20 +1,17 @@
 import wx
 
 class FileDragAndDropHandler(wx.FileDropTarget):
-    def __init__(self, target, parentPanel):
+    def __init__(self, parentPanel):
         wx.FileDropTarget.__init__(self)
-        self.target = target
         self.parentPanel = parentPanel
 
     def OnDropFiles(self, x, y, filenames):
         extension = '.apk'
         if len(filenames) > 1:
-            self.parentPanel.setBuild('', self.target)
-            self.target.SetValue('Only 1 file at time is allowed!')
+            self.parentPanel.setBuild('Only 1 build at a time allowed.', False)
         else:
             if filenames[0].endswith(extension):
-                self.parentPanel.setBuild(filenames[0], self.target)
+                self.parentPanel.setBuild(filenames[0])
             else:
-                self.parentPanel.setBuild('', self.target)
-                self.target.SetValue('Dropped file must end with {}'.format(extension))
+                self.parentPanel.setBuild('File must end with .apk!', False)
         return True

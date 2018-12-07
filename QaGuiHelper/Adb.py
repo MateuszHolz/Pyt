@@ -1,15 +1,26 @@
 import os
 import re
 import subprocess
+import time
 
 class Adb():
     def __init__(self):
         pass
 
     @staticmethod
-    def getOutputOfCmd(cmd, timeout = 15, outputAsList = False):
+    def getOutputOfCmd(cmd, timeout = 15, outputAsList = False, ensureThatAdbServerExists = False):
         out = None
         err = None
+        if ensureThatAdbServerExists == True:
+            c = r'adb start-server'
+            adbCheckProcess = subprocess.Popen(c, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            outB, errB = adbCheckProcess.communicate()
+            if len(outB) == 0:
+                pass
+            elif len(outB) > 0 and 'daemon started successfully' in outB.decode().rstrip():
+                pass
+            else:
+                assert(False)
         process = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         try:
             outputBytes, errorBytes = process.communicate(timeout = timeout)
@@ -116,27 +127,13 @@ class Adb():
     @staticmethod
     def getListOfAttachedDevices():
         devices = []
-        retries = 0
-        while True:
-            if retries > 4:
-                break
-            else:
-                try:
-                    _l = subprocess.check_output(r"adb devices", shell = True)
-                    if "doesn't" in _l.decode():
-                        retries += 1
-                        continue
-                    else:
-                        break
-                except subprocess.CalledProcessError:
-                    retries += 1
-                    continue
-        rawList = _l.rsplit()
-        tempList = rawList[4:]
+        cmd = r'adb devices'
+        outList, errStr = Adb.getOutputOfCmd(cmd, ensureThatAdbServerExists = True, outputAsList = True)
+        tempList = outList[4:]
         for idx, i in enumerate(tempList):
             if idx%2 == 0:
-                status = tempList[idx+1].decode()
-                devices.append((i.decode(), 'Authorized' if status == 'device' else 'Unauthorized'))
+                status = tempList[idx+1]
+                devices.append((i, 'Authorized' if status == 'device' else 'Unauthorized'))
         return devices
     
     @staticmethod
