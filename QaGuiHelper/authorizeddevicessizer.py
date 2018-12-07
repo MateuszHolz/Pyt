@@ -38,7 +38,7 @@ class AuthorizedDevicesSizer(wx.BoxSizer):
         statusColumn.Add(statusColumnHeader, 0, wx.CENTER | wx.ALL, 3)
 
         for deviceId in self.devicesList:
-            model = self.adb.getDeviceModel(deviceId)
+            _, model = self.adb.getProperty(deviceId, 'ro.product.model')
 
             deviceLabel = wx.StaticText(self.parentPanel, label = model, style = wx.CENTER)
             modelColumn.Add(wx.StaticLine(self.parentPanel, size = (2, 2), style = wx.LI_HORIZONTAL), 0, wx.EXPAND)

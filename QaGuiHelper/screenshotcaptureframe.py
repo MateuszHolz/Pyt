@@ -69,27 +69,32 @@ class ScreenshotCaptureFrame(wx.Frame):
         pathToScreenOnDevice = ''
         rawFileName = self.getFileName(device, model)
         indexedFileName = self.getFileNameWithIndex(rawFileName)
-        statusLabel.SetLabel('Taking screenshot...')
-        clbk = self.adb.captureScreenshot(device, indexedFileName)
         try:
-            statusLabel.SetLabel(clbk[0])
-        except RuntimeError:
-            return
-        if not clbk[1]:
-            buttonUnlocker.finishThread()
-            return
-        pathToScreenOnDevice = clbk[1]
-        clbk = self.adb.pullScreenshot(device, pathToScreenOnDevice, self.directory)
-        try:
-            statusLabel.SetLabel(clbk)
-            if not removeSSPermission:
+            statusLabel.SetLabel('Taking screenshot...')
+            status, msg, dirOnDevice = self.adb.captureScreenshot(device, indexedFileName)
+            statusLabel.SetLabel(msg)
+            if status == False:
                 buttonUnlocker.finishThread()
+                return
+            time.sleep(1)
+            statusLabel.SetLabel('Pulling screenshot')
+            time.sleep(1)
+            status, msg = self.adb.pullScreenshot(device, dirOnDevice, self.directory)
+            statusLabel.SetLabel(msg)
+            if status == False:
+                buttonUnlocker.finishThread()
+                return
             else:
-                time.sleep(1)
-                statusLabel.SetLabel('Removing...')
-                clbk = self.adb.deleteFile(device, pathToScreenOnDevice)
-                statusLabel.SetLabel(clbk)
-                buttonUnlocker.finishThread()
+                if not removeSSPermission:
+                    buttonUnlocker.finishThread()
+                    return
+                else:
+                    time.sleep(1)
+                    statusLabel.SetLabel('Removing...')
+                    _, msg = self.adb.deleteFile(device, pathToScreenOnDevice)
+                    statusLabel.SetLabel(msg)
+                    buttonUnlocker.finishThread()
+                    return
         except RuntimeError:
             return
 
@@ -114,8 +119,11 @@ class ScreenshotCaptureFrame(wx.Frame):
         unsupportedChars = (' ', '(', ')', '_')
         for i in unsupportedChars:
             model = model.replace(i, '')
-        deviceScreenSize = self.adb.getDeviceScreenSize(device)
-        return '{}-{}'.format(model, deviceScreenSize)
+        status, deviceScreenSize = self.adb.getDeviceScreenSize(device)
+        if status == False:
+            return 'unknown'
+        else:
+            return '{}-{}'.format(model, deviceScreenSize)
 
     def openScreenshotsFolder(self, event):
         os.startfile(self.directory)

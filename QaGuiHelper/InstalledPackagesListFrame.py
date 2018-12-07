@@ -77,7 +77,11 @@ class InstalledPackagesListFrame(wx.Frame):
             threading.Thread(target = self.updateField, args = (functionToCall, packageName, textCtrl)).start()
 
     def updateField(self, functionToCall, packageName, textCtrl):
-        textCtrl.SetValue(functionToCall(self.deviceId, packageName))
+        try:
+            _, msg = functionToCall(self.deviceId, packageName)
+            textCtrl.SetValue(msg)
+        except RuntimeError:
+            return
 
     ### EVENTS ###
 

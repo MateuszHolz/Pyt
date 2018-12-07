@@ -106,54 +106,56 @@ class BuildInstallerFrame(wx.Frame):
             thread.start()
 
     def installingThread(self, device, build, statusLabel, option, buttonUnlocker):
-        buildPackage = self.adb.getPackageNameOfAppFromApk(build)
-        buildVer = self.adb.getBuildVersionFromApk(build)
+        statusOfBuildPackage, buildPackage = self.adb.getPackageNameOfAppFromApk(build)
+        statusOfBuildVer, buildVer = self.adb.getBuildVersionFromApk(build)
         if option == 'Clean':
-            statusLabel.SetLabel('Checking if exists...'.format(buildPackage))
-            statusLabel.Refresh()
-            if self.adb.isBuildIsAlreadyInstalled(device, buildPackage):
-                statusLabel.SetLabel('Build exists!'.format(buildPackage))
+            if statusOfBuildPackage == False or statusOfBuildVer == False:
+                statusLabel.SetLabel('Couldnt retrieve build pckg...')
                 time.sleep(1)
-                statusLabel.SetLabel('Checking version...')
-                time.sleep(1)
-                if self.adb.getBuildVersionNameFromDevice(device, buildPackage) == buildVer:
-                    statusLabel.SetLabel('Versions match!')
+            else:
+                statusLabel.SetLabel('Checking if {} exists...'.format(buildPackage))
+                statusLabel.Refresh()
+                status, msg = self.adb.isBuildIsAlreadyInstalled(device, buildPackage)
+                if status == True:
+                    statusLabel.SetLabel(msg)
                     time.sleep(1)
-                    statusLabel.SetLabel('Checking type...')
-                    if self.adb.isApkDebuggable(build) == self.adb.isInstalledPackageDebuggable(device, buildPackage):
-                        statusLabel.SetLabel('Types match!')
+                    statusLabel.SetLabel('Checking version...')
+                    time.sleep(1)
+                    _, buildVerOnDevice = self.adb.getBuildVersionNameFromDevice(device, buildPackage)
+                    if buildVerOnDevice == buildVer:
+                        statusLabel.SetLabel('Versions match!')
                         time.sleep(1)
-                        statusLabel.SetLabel('Removing local data...')
-                        time.sleep(1)
-                        if self.adb.removeLocalAppData(device, buildPackage):
-                            statusLabel.SetLabel('Done!')
+                        statusLabel.SetLabel('Checking type...')
+                        _, debugBuildMsg = self.adb.isInstalledPackageDebuggable(device, buildPackage)
+                        _, debugApkMsg = self.adb.isApkDebuggable(build)
+                        if debugBuildMsg == debugApkMsg:
+                            statusLabel.SetLabel('Types match!')
+                            time.sleep(1)
+                            statusLabel.SetLabel('Removing local data...')
+                            time.sleep(1)
+                            status, msg = self.adb.removeLocalAppData(device, buildPackage)
+                            statusLabel.SetLabel(msg)
                             buttonUnlocker.finishThread()
                             return
+                        else:
+                            statusLabel.SetLabel('Types dont match...')
+                            time.sleep(1)
                     else:
-                        statusLabel.SetLabel('Types dont match...')
-                        time.sleep(1)
+                        statusLabel.SetLabel('Versions dont match')
+                    time.sleep(1)
+                    statusLabel.SetLabel('Uninstalling {}'.format(buildPackage))
+                    time.sleep(1)
+                    status, msg = self.adb.uninstallApp(device, buildPackage)
+                    statusLabel.SetLabel(msg)
+                    if status == False:
+                        buttonUnlocker.finishThread()
+                        return
                 else:
-                    statusLabel.SetLabel('Versions dont match')
-                time.sleep(1)
-                statusLabel.SetLabel('Uninstalling {}'.format(buildPackage))
-                time.sleep(1)
-                clbk = self.adb.uninstallApp(device, buildPackage)
-                statusLabel.SetLabel(clbk)
-            else:
-                statusLabel.SetLabel('Build not installed.')
-        elif option == 'Overwrite':
-            buildVerNumerizedOnApk = int(buildVer.split('.')[-1])
-            buildVerNumerizedOnDev = int(self.adb.getBuildVersionFromDevice(device, buildPackage).split('.')[-1])
-            if buildVerNumerizedOnDev > buildVerNumerizedOnApk:
-                statusLabel.SetLabel('Error downgrade!')
-                buttonUnlocker.finishThread()
-                return
+                    statusLabel.SetLabel('Build not installed.')
         time.sleep(1)
         statusLabel.SetLabel('Installing...')
-        if self.adb.installBuild(device, build):
-            statusLabel.SetLabel('Done!')
-        else:
-            statusLabel.SetLabel('An error occured.')
+        _, msg = self.adb.installBuild(device, build)
+        statusLabel.SetLabel(msg)
         buttonUnlocker.finishThread()
         return
 
