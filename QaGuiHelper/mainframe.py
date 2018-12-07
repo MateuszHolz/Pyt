@@ -3,12 +3,12 @@ import sys
 import wx
 
 from Adb import Adb
-from BuildInstallerFrame import BuildInstallerFrame
-from DeviceInfoFrame import DeviceInfoFrame
-from JenkinsMenu import JenkinsMenu
-from OptionsHandler import OptionsHandler
-from OptionsFrame import OptionsFrame
-from ScreenshotCaptureFrame import ScreenshotCaptureFrame
+from buildinstallerframe import BuildInstallerFrame
+from deviceinfoframe import DeviceInfoFrame
+from jenkinsmenu import JenkinsMenu
+from optionshandler import OptionsHandler
+from optionsframe import OptionsFrame
+from screenshotcaptureframe import ScreenshotCaptureFrame
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, title):

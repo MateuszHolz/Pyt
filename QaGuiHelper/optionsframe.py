@@ -1,6 +1,6 @@
 import wx
 
-from JenkinsCredentialsEditFrame import JenkinsCredentialsEditFrame
+from jenkinscredentialseditframe import JenkinsCredentialsEditFrame
 
 class OptionsFrame(wx.Frame):
     def __init__(self, mainFrame, optionsHandler):

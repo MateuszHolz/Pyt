@@ -1,8 +1,8 @@
 import json
 import wx
 
-from DownloadBuildDialog import DownloadBuildDialog
-from RetrieveLinkDialog import RetrieveLinkDialog
+from downloadbuilddialog import DownloadBuildDialog
+from retrievelinkdialog import RetrieveLinkDialog
 
 class JenkinsMenu(wx.Menu):
     def __init__(self, parent, pathToJsonFile, optionsHandler):

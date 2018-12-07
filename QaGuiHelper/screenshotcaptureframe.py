@@ -4,8 +4,8 @@ import threading
 import time
 import wx
 
-from AuthorizedDevicesSizer import AuthorizedDevicesSizer
-from ButtonUnlocker import ButtonUnlocker
+from authorizeddevicessizer import AuthorizedDevicesSizer
+from buttonunlocker import ButtonUnlocker
 
 class ScreenshotCaptureFrame(wx.Frame):
     def __init__(self, mainFrame, adb, optionsHandler):

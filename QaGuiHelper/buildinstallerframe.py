@@ -4,9 +4,9 @@ import time
 import threading
 import wx
 
-from AuthorizedDevicesSizer import AuthorizedDevicesSizer
-from ButtonUnlocker import ButtonUnlocker
-from FileDragAndDropHandler import FileDragAndDropHandler
+from authorizeddevicessizer import AuthorizedDevicesSizer
+from buttonunlocker import ButtonUnlocker
+from filedraganddrophandler import FileDragAndDropHandler
 
 class BuildInstallerFrame(wx.Frame):
     def __init__(self, mainFrame, adb, optionsHandler):
