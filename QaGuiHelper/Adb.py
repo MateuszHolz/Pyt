@@ -182,6 +182,17 @@ class Adb():
         return False, 'Not found'
 
     @staticmethod
+    def getBuildVersionCodeFromDevice(device, pckg):
+        cmd = r'adb -s {} shell dumpsys package {}'.format(device, pckg)
+        outList, errStr = Adb.getOutputOfCmd(cmd, outputAsList = True)
+        if len(errStr) > 0:
+            return False, Adb.handleErrorMsg(errStr)
+        for i in outList:
+            if 'versionCode' in i:
+                return True, i[i.find('=')+1:]
+        return False, 'Not found'
+
+    @staticmethod
     def getDeviceIpAddress(device):
         cmd = r"adb -s {} shell ip addr show wlan0".format(device)
         outList, errStr = Adb.getOutputOfCmd(cmd, outputAsList = True)
