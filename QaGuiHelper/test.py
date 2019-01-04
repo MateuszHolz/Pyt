@@ -1,7 +1,6 @@
 import requests
 import sys
 
-cmd = r'adb start-server'
 url = "https://www3999.playercdn.net/185/0/YU2prL5PaX0xjiNiL1D3og/1546642788/180728/dYQIGYFu4GQjHU4.mp4"
 
 file_name = 'chirurdzy-s02-e13'
