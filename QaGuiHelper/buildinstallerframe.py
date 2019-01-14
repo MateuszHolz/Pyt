@@ -46,7 +46,7 @@ class BuildInstallerFrame(wx.Frame):
         buildsButtonsSizer.Add(chooseLatestButton, 1, wx.EXPAND | wx.ALL, 5)
 
         chosenBuildTextCtrl = wx.TextCtrl(self.panel, value = 'Drag and drop build here', style = wx.TE_READONLY | wx.TE_CENTRE)
-        dragAndDropHandler = FileDragAndDropHandler(chosenBuildTextCtrl, self.panel)
+        dragAndDropHandler = FileDragAndDropHandler(chosenBuildTextCtrl)
         chosenBuildTextCtrl.SetDropTarget(dragAndDropHandler)
 
         buildsManageSizer.Add(buildsButtonsSizer, 0, wx.EXPAND | wx.ALL, 5)
